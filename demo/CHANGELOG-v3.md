@@ -1,5 +1,42 @@
 # Giá Gốc demo v3: nhật ký thay đổi
 
+## v3.1: giao diện gọn
+
+Theo yêu cầu người vận hành: bỏ hết câu chữ giải thích, thiết kế lại cho gọn, dễ thao tác. Engine, công thức tính và `selfTest()` không đổi.
+
+### Đã xóa
+- 11 đoạn mở đầu `<p class="lead">` ở mọi trang.
+- Thanh "Kịch bản demo" (`#scen`, `SCEN`, `runScen`, `data-scen*`, CSS, `runScen` trong `window.__giagoc`), nhãn "Bản demo", dòng "Demo cho quy trình…", "(dữ liệu mẫu · bản demo)" ở chân sidebar.
+- Nút và hộp "Chú giải thuật ngữ" (giữ `<abbr title>`), phụ đề mô tả trong menu "+ Lập chứng từ", phụ đề thương hiệu.
+- Các ghi chú `.note` / `msg info` chỉ mang tính giải thích, tĩnh và sinh bằng JS: ghi chú danh mục, kho, giá thành, khóa sổ; ghi chú dòng đối chiếu và `reconNote`; `whNote`, `nxtNote`, `lotNote`; ghi chú biểu đồ; ghi chú chi tiết chứng từ (hủy, chế độ, PX BTP, 413, sửa/hủy, chứng từ hệ thống, nút "Xem PX0001 / BL0001"); ghi chú trong 8 báo cáo; ghi chú `#explain` (R1, đích danh, BQ, FIFO, chuyển kho, "đi tiếp vào giá thành"); ghi chú truy xuất; `VAT_NOTE` và `BTP_NOTE` cùng mọi nơi dùng; ghi chú trong form PN, PX, HD, TL, CK, KK, CT, BL, KH, NK, ITEM, LSX, QC lô, hủy, mở khóa, đặt lại; ghi chú phím tắt trong tour; câu "bản demo…" trong tooltip Chế độ / Giá xuất, toast đổi phương pháp, checkbox mở khóa.
+- Đoạn "Vì sao phải đúng thứ tự" và 2 mục "Thử" ở trang Khóa sổ.
+- Người thực hiện trong nhật ký đổi từ "Khách demo" sang "Người dùng" / "Kế toán trưởng".
+- Grep phần hiển thị (mọi trang, 14 form, 8 báo cáo, cả `title` / `aria-label`): không còn "bản demo", "Demo cho", "chưa làm", "chưa xác minh", "R1(", "Kịch bản"; "dữ liệu mẫu" chỉ còn ở nút / hộp xác nhận / toast "Đặt lại dữ liệu mẫu".
+
+### Cố ý giữ (dữ liệu, trạng thái, thông báo)
+- Đơn vị "triệu đồng" của biểu đồ, `docCount`, "loại X" trên dòng NK, công đoạn / hao hụt trong danh mục và ghi chú lệnh SX, "Đối tượng tập hợp chi phí" và định mức trong form PX, "Số chứng từ sẽ cấp", số giờ công suất (rút gọn "/ 1.000 giờ công suất · dưới 20%"), "Đã trừ X đ hỏng ngoài định mức … vào 632".
+- Dòng kiểm tra thẻ giá thành rút còn công thức số `DDĐK + C − DDCK − hỏng = Z: …`.
+- Pill trạng thái: Cân / Lệch (cân đối phát sinh), Từ 911 / Từ số dư TK 5–8 (KQKD), Khớp / Lệch sổ cái (sổ cái, công nợ); tiêu thức phân bổ rút còn "Tiêu thức: NCTT · BTP-CL 57,1% · …".
+- Mọi thông báo lỗi / cảnh báo / thông tin sinh theo dữ liệu (tồn âm, lệch đơn giá, lùi ngày, giá vốn tạm tính, bán dưới giá vốn, tiền mặt ≥ 5 triệu…) và toast kết quả.
+- `#explain`: công thức số và bảng nguồn; dòng mô tả đổi thành bảng nhỏ (Diễn giải, SL, Giá trị, Đơn giá).
+- Tour: không tự bật nữa, mở bằng nút "?" trên thanh trên; 10 bước vẫn trỏ đúng phần tử đang có.
+
+### Đổi giao diện
+- Bố cục fluid: bỏ `max-width` vùng nội dung. Sidebar 220px, thu gọn còn 64px chỉ icon (nút "‹" cạnh logo, nhớ bằng `localStorage['giagoc-side']`, bọc try/catch). ≤1080px sidebar thành menu ngang; ≤900px thanh trên gói Chế độ / Giá xuất / Sáng-tối / Đặt lại vào nút "Thiết lập".
+- Thanh trên 1 dòng, sticky (cao 57px ở 1366 và 1920): tiêu đề trang · Kỳ 01/2026 + Đang mở / Đã khóa · Chế độ · Giá xuất · "?" · "+ Lập chứng từ".
+- Chân sidebar: "Nhà máy chế biến mắm", nút sáng/tối dạng icon, "Đặt lại dữ liệu mẫu" dạng nút chữ nhỏ.
+- Tổng quan: 4 ô KPI (số lớn + 1 dòng phụ ngắn); "Việc cần làm" 1 dòng / mục có nút hành động (Khóa sổ, Xem lô, Giá thành, Mở PX…, Mở khóa); biểu đồ; đối chiếu kho – sổ cái (cột "Sổ kho", tên TK xuống dòng, không bị cắt cột ở 1366+); cơ cấu giá thành. Lưới 2 cột tự co giãn (`minmax(max(480px, 50%), 1fr)`), KPI `auto-fit`.
+- Kho & lô: bộ lọc kho thành segmented control (Tất cả / BBT / BT / NTH) trong header bảng N-X-T, bỏ panel riêng. Bộ lọc chứng từ, nút Excel đưa vào header bảng.
+- Bảng: header sticky trong vùng cuộn (`thead` sticky, `max-height: 100vh − 150px`), hàng ~34px, số canh phải + tabular-nums, dòng cộng nổi nhẹ, hover rõ; cột đầu sticky khi cuộn ngang ở ≤1080px. "Sao chép cho Excel" thành nút nhỏ "Excel" có icon, `aria-label` "Sao chép … cho Excel".
+- Chi tiết chứng từ: nút Nguồn đơn giá / Sửa / Hủy / Excel lên đầu panel. Khóa sổ: panel bên là "Kết quả kỳ" (tiến độ, Nợ = Có, kho – sổ cái, tồn âm, doanh thu, giá vốn, lãi gộp, lợi nhuận).
+- Form drawer rộng 1080px, trường xếp lưới tự co (3 cột desktop, 1 cột mobile), footer luôn thấy và không xuống dòng; "Bút toán & ảnh hưởng dự kiến" gói trong `<details>` đóng sẵn (tiêu đề hiện tổng tiền), lỗi chặn lưu vẫn hiện ngay. Hộp hủy chứng từ và ô "Ảnh hưởng" cũng gập danh sách chứng từ tính lại.
+- Một màu nhấn, viền nhẹ, khoảng cách lưới 8px, giữ token sáng / tối.
+
+### Đã kiểm tra (Playwright, Chromium, chặn font)
+- `node --check` phần script: đạt. `__giagoc.selfTest()`: 960 tổ hợp, 0 lỗi; số chính trùng v3 (doanh thu 225.990.000, giá vốn 154.605.503, z BTP 71.848,61, ML5 44.597,95, MT2 39.371,15, 154 = 23.426.252, tồn kho 284.266.497, lợi nhuận 71.462.497).
+- 1920×1000, 1366×768, 390×844, 10 trang: 0 pageerror / console error, không "NaN" / "undefined", `scrollWidth ≤ innerWidth` ở mọi trang; vùng nội dung lấp 100% phần còn lại sau sidebar (cả khi thu gọn); bảng đối chiếu không cắt cột ở 1366 và 1920.
+- Kiểm tra bằng thao tác giao diện thật (chỉ click / gõ / chọn trên phần tử nhìn thấy), 1920×1000 và 390×844: 48/48 bước đạt — mở 10 trang từ menu; lập PN, PX, NK, CK, HD, TL, KK, CT qua "+ Lập chứng từ" và thấy trong danh sách; để trống số lượng và bán vượt tồn đều báo lỗi, không lưu; sửa (lý do) và hủy chứng từ qua nút; "Chạy tất cả" khóa đủ 12 bước, lập chứng từ khi khóa bị chặn, mở khóa qua hộp thoại; đổi Chế độ và Giá xuất trên thanh trên; lọc kho NTH; chọn vật tư, bấm dòng xuất xem nguồn giá; tour 10 bước bằng nút "?"; sáng / tối; thu gọn sidebar (64px, nhớ sau khi tải lại).
+
 Tệp: `gia-goc-demo.html`. Vẫn là một file, vanilla JS, không dùng script ngoài (chỉ giữ font Google). Bản v3 chuyển demo từ xưởng bàn ghế gỗ sang **nhà máy chế biến mắm** theo tài liệu HỆ THỐNG.docx, sửa lỗi B1–B5 và thêm các yêu cầu cốt lõi của khách: lô (mã lót hàng), giá thực tế đích danh, giá thành phân bước 2 giai đoạn, 3 kho, QC, ngoại tệ, lệnh sản xuất, trang Báo cáo.
 
 Key lưu trữ đổi sang `localStorage['giagoc-demo-v3']` và tour `giagoc-tour-v2`, nên dữ liệu v2 cũ không làm vỡ trang (bị bỏ qua, nạp dữ liệu mẫu mới). Vẫn không có `<meta name="viewport">` (giữ nguyên quyết định ở v2.1).

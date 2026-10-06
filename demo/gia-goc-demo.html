@@ -4,26 +4,26 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
 <style>
-/* Giá Gốc demo v3 (ngành mắm) — app shell: sidebar phân hệ, thanh kịch bản demo, thanh kỳ kế toán, vùng làm việc dạng sổ. Mực tím cho thao tác, đỏ con dấu cho khóa sổ. */
+/* Giá Gốc v3.1 (ngành mắm) — app shell gọn: sidebar thu gọn được, thanh trên 1 dòng, vùng nội dung lấp toàn chiều rộng. */
 :root{
-  --bg:#f2f4f8; --surface:#ffffff; --surface-2:#eceff5; --zebra:#f6f7fa; --fg:#17202d; --muted:#525d6f; --line:#d8dde6;
-  --accent:#3d3fa6; --accent-soft:#e6e6f7; --on-accent:#ffffff; --stamp:#b92525; --stamp-soft:#fbe9e9;
+  --bg:#f3f5f9; --surface:#ffffff; --surface-2:#eef1f6; --hover:#f4f5fb; --fg:#17202d; --muted:#525d6f; --line:#dde2ea;
+  --accent:#3d3fa6; --accent-soft:#e8e8f8; --on-accent:#ffffff; --stamp:#b92525; --stamp-soft:#fbe9e9;
   --ok:#1a6e45; --ok-soft:#e2f3ea; --warn:#8a5300; --warn-soft:#fbf0dc;
   --c-nvl:#3d3fa6; --c-nc:#2f8f83; --c-sxc:#c27c1a; --c-dd:#8a93a6; --c-btp:#8a4fb0;
   --scrim:rgba(15,18,28,.42); --shadow:0 10px 40px rgba(15,18,28,.18);
   --font-ui:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --font-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
-  --r:10px;
+  --r:8px; --side:220px;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --bg:#11141b; --surface:#191e28; --surface-2:#232a38; --zebra:#1c222d; --fg:#e5e8ee; --muted:#a3abba; --line:#2f3646;
+  --bg:#11141b; --surface:#191e28; --surface-2:#232a38; --hover:#202634; --fg:#e5e8ee; --muted:#a3abba; --line:#2f3646;
   --accent:#a9acff; --accent-soft:#2a2d52; --on-accent:#11141b; --stamp:#ff7a7a; --stamp-soft:#3d2023;
   --ok:#5cd19a; --ok-soft:#173226; --warn:#f2b155; --warn-soft:#3a2c14;
   --c-nvl:#8f92ff; --c-nc:#4fc2b4; --c-sxc:#e9a54a; --c-dd:#7c8598; --c-btp:#c99be8;
   --scrim:rgba(0,0,0,.6); --shadow:0 10px 40px rgba(0,0,0,.5); color-scheme:dark;
 }}
 :root[data-theme="dark"]{
-  --bg:#11141b; --surface:#191e28; --surface-2:#232a38; --zebra:#1c222d; --fg:#e5e8ee; --muted:#a3abba; --line:#2f3646;
+  --bg:#11141b; --surface:#191e28; --surface-2:#232a38; --hover:#202634; --fg:#e5e8ee; --muted:#a3abba; --line:#2f3646;
   --accent:#a9acff; --accent-soft:#2a2d52; --on-accent:#11141b; --stamp:#ff7a7a; --stamp-soft:#3d2023;
   --ok:#5cd19a; --ok-soft:#173226; --warn:#f2b155; --warn-soft:#3a2c14;
   --c-nvl:#8f92ff; --c-nc:#4fc2b4; --c-sxc:#e9a54a; --c-dd:#7c8598; --c-btp:#c99be8;
@@ -43,42 +43,45 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 .vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .skip{position:absolute;left:-999px;top:8px;z-index:50;background:var(--accent);color:var(--on-accent);padding:8px 12px;border-radius:8px}
 .skip:focus{left:8px}
-.app{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh}
-.side{background:var(--surface);border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;height:100vh;overflow-y:auto}
-.brand{display:flex;align-items:center;gap:10px;padding-inline:6px}
-.brand-mark{width:34px;height:34px;border-radius:8px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-weight:700;font-size:15px;letter-spacing:.02em;flex:none}
-.brand b{display:block;font-size:16px;letter-spacing:-.01em}
-.brand span{font-size:11.5px;color:var(--muted)}
+/* Khung ứng dụng */
+.app{display:grid;grid-template-columns:var(--side) minmax(0,1fr);min-height:100vh}
+.app.collapsed{--side:64px}
+.side{background:var(--surface);border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:16px;position:sticky;top:0;height:100vh;overflow-y:auto;overflow-x:hidden}
+.brand{display:flex;align-items:center;gap:10px;padding-inline:4px;min-height:32px}
+.brand-mark{width:32px;height:32px;border-radius:8px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-weight:700;font-size:14px;letter-spacing:.02em;flex:none}
+.brand b{font-size:16px;letter-spacing:-.01em;flex:1;white-space:nowrap}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px;line-height:1;display:grid;place-items:center;flex:none;color:var(--fg);padding:0}
+.icon-btn:hover{background:var(--surface-2)}
+.icon-btn svg{width:18px;height:18px}
+.icon-btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.icon-btn.ghost:hover{background:var(--surface-2);color:var(--fg)}
 .nav{display:flex;flex-direction:column;gap:2px}
-.nav button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--muted);font-weight:500}
+.nav button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--muted);font-weight:500;white-space:nowrap;min-height:36px}
 .nav button:hover{background:var(--surface-2);color:var(--fg)}
 .nav button[aria-current="page"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
 .nav button:focus-visible{outline:2px solid var(--accent)}
 .nav .ico{width:18px;height:18px;flex:none}
-.nav-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding-inline:10px;margin-top:6px}
-.side-foot{margin-top:auto;font-size:12px;color:var(--muted);padding-inline:6px;display:flex;flex-direction:column;gap:8px}
-.side-foot .btn{justify-content:flex-start}
+.nav-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:8px 10px 2px;white-space:nowrap}
+.side-foot{margin-top:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-inline:4px;font-size:12.5px;color:var(--muted)}
+.side-foot .site{flex:1 1 100%;font-weight:600;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.linkbtn{border:0;background:none;padding:4px 2px;color:var(--muted);font-size:12.5px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.linkbtn:hover{color:var(--stamp)}
+.app.collapsed .brand b,.app.collapsed .nl,.app.collapsed .nav-label,.app.collapsed .side-foot .site,.app.collapsed .side-foot .linkbtn{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.app.collapsed .brand{flex-direction:column}
+.app.collapsed .nav button{justify-content:center;padding:9px 0}
+.app.collapsed .side-foot{justify-content:center}
+.app.collapsed #btnSide svg{transform:rotate(180deg)}
 .main{min-width:0;display:flex;flex-direction:column}
-/* Thanh kịch bản demo */
-.scen{display:flex;align-items:center;gap:8px;padding:8px 24px;background:var(--surface);border-bottom:1px solid var(--line);flex-wrap:wrap}
-.scen .tag{font-size:11.5px;font-weight:700;color:var(--warn);background:var(--warn-soft);border-radius:999px;padding:2px 9px;white-space:nowrap}
-.scen ol{list-style:none;margin:0;padding:0;display:flex;gap:6px;flex-wrap:wrap;flex:1;min-width:0}
-.scen li button{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 11px 4px 5px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--fg)}
-.scen li button:hover{background:var(--surface-2)}
-.scen li button .n{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--muted);font-size:11px;flex:none}
-.scen li button[aria-current="step"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
-.scen li button[aria-current="step"] .n{background:var(--accent);color:var(--on-accent)}
-.scen li button.seen .n{background:var(--ok);color:var(--on-accent)}
-.scen .mob{display:none;align-items:center;gap:6px;flex:1;min-width:0}
-.scen .mob b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:6}
-.top h1{font-size:18px;margin:0;letter-spacing:-.01em;display:flex;align-items:center;gap:12px}
+/* Thanh trên 1 dòng */
+.top{display:flex;align-items:center;gap:8px 12px;padding:10px 24px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:6;min-height:57px}
+.top h1{font-size:17px;margin:0;letter-spacing:-.01em;display:flex;align-items:center;gap:10px;white-space:nowrap;min-width:0}
 .top .spacer{flex:1}
-.settings{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
-.field{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
-.field select,.field input,.inp{background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:5px 8px;color:var(--fg);min-height:32px}
+.settings{display:flex;align-items:center;gap:8px 12px}
+.field{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.field select,.field input,.inp{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:4px 8px;color:var(--fg);min-height:32px}
 .field select:disabled,.field input:disabled{opacity:.6;cursor:not-allowed}
-.mini-stamp{border:2px solid var(--stamp);color:var(--stamp);border-radius:50%;width:48px;height:48px;display:grid;place-items:center;font-size:8.5px;font-weight:700;line-height:1.1;text-align:center;transform:rotate(-12deg);text-transform:uppercase;flex:none}
+.period{display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.mini-stamp{border:2px solid var(--stamp);color:var(--stamp);border-radius:50%;width:40px;height:40px;display:grid;place-items:center;font-size:7.5px;font-weight:700;line-height:1.1;text-align:center;transform:rotate(-12deg);text-transform:uppercase;flex:none}
 .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
 .pill.ok{background:var(--ok-soft);color:var(--ok)}
 .pill.warn{background:var(--warn-soft);color:var(--warn)}
@@ -86,38 +89,47 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 .pill.info{background:var(--accent-soft);color:var(--accent)}
 .pill.mute{background:var(--surface-2);color:var(--muted)}
 .chip{display:inline-flex;align-items:center;font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--warn-soft);color:var(--warn);white-space:nowrap;vertical-align:2px}
-.lockbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 24px;background:var(--stamp-soft);color:var(--stamp);font-size:13px;font-weight:500;border-bottom:1px solid var(--line)}
+.lockbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 24px;background:var(--stamp-soft);color:var(--stamp);font-size:13px;font-weight:600;border-bottom:1px solid var(--line)}
 .impact{margin:16px 24px 0;border:1px solid var(--warn);background:var(--surface);border-radius:var(--r);padding:12px 16px;display:flex;flex-direction:column;gap:8px}
 .impact-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .impact-head h2{font-size:14px;margin:0}
 .impact table td{white-space:nowrap}
-.view{padding:22px 24px 48px;display:flex;flex-direction:column;gap:18px;max-width:1320px;width:100%}
+.impact .tbl-wrap{align-self:flex-start;max-width:100%}
+.impact table{width:auto;min-width:min(100%,760px)}
+/* Vùng nội dung: lấp toàn chiều rộng */
+.view{padding:16px 24px 40px;display:flex;flex-direction:column;gap:16px;width:100%}
 .view[hidden]{display:none!important}
-.lead{margin:0;max-width:78ch;font-size:14px;border-left:3px solid var(--accent);padding-left:12px}
 .grid{display:grid;gap:16px}
-.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
-.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
-.g32{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}
+.kpis{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+.duo{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(480px,calc((100% - 16px) / 2))),1fr))}
+.split{display:grid;gap:16px;grid-template-columns:minmax(0,1fr) minmax(380px,36%)}
+.split.wide-side{grid-template-columns:minmax(0,1fr) minmax(420px,42%)}
+.cards{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(560px,calc((100% - 16px) / 2))),1fr))}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0;display:flex;flex-direction:column;gap:12px}
 .panel h2{font-size:14.5px;margin:0;letter-spacing:-.005em}
-.panel-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.panel-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;min-height:32px}
 .panel-head .spacer{flex:1}
-.kpi .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.kpi .val{font-size:24px;font-weight:700;letter-spacing:-.02em;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
-.kpi .val small{font-size:14px;color:var(--muted);font-weight:500}
-.kpi .sub{font-size:12.5px;color:var(--muted)}
-.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;max-width:100%}
+.kpi{gap:4px;padding:14px 16px}
+.kpi .label{font-size:12px;color:var(--muted);font-weight:600}
+.kpi .val{font-size:24px;font-weight:700;letter-spacing:-.02em;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;line-height:1.25}
+.kpi .val small{font-size:13px;color:var(--muted);font-weight:500}
+.kpi .sub{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Bảng */
+.tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px;max-width:100%}
+.view .tbl-wrap{max-height:calc(100vh - 150px)}
 table{border-collapse:collapse;width:100%;font-size:13px}
+thead{position:sticky;top:0;z-index:2}
 th,td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface)}
 th{background:var(--surface-2);font-weight:600;font-size:12px;color:var(--muted)}
 td.n,th.n{text-align:right}
 td.wrap{white-space:normal;min-width:200px}
 #postTbl td:nth-child(2),.prev td:nth-child(2){white-space:normal;min-width:130px}
+#recon td:nth-child(2){white-space:normal;min-width:0}
+#whTbl td{white-space:normal;min-width:90px}
 tr:last-child td{border-bottom:0}
-.tbl-wrap tbody tr:nth-child(even) td{background:var(--zebra)}
-.tbl-wrap th:first-child,.tbl-wrap td:first-child{position:sticky;left:0;z-index:1}
-.tbl-wrap tfoot td{font-weight:700;background:var(--surface-2)}
-.tbl-wrap tbody tr.sub td{font-weight:600;background:var(--surface-2)}
+.tbl-wrap tbody tr:hover td{background:var(--hover)}
+.tbl-wrap tfoot td{font-weight:700;background:var(--surface-2);border-top:1px solid var(--line)}
+.tbl-wrap tbody tr.sub td{font-weight:600;background:var(--accent-soft)}
 .tbl-wrap tbody tr.click{cursor:pointer}
 .tbl-wrap tbody tr.click:hover td{background:var(--surface-2)}
 .tbl-wrap tbody tr.sel td{background:var(--accent-soft)}
@@ -126,30 +138,35 @@ tr:last-child td{border-bottom:0}
 .tbl-wrap tbody tr.void td{color:var(--muted)}
 .tbl-wrap tbody tr.void td.strike{text-decoration:line-through}
 .tbl-wrap tbody tr.diff td{background:var(--warn-soft)}
-tr.click .go{color:var(--muted);font-size:12px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;font-weight:600;font-size:13px;min-height:34px;color:var(--fg)}
+/* Nút */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 12px;font-weight:600;font-size:13px;min-height:32px;color:var(--fg);white-space:nowrap}
 .btn:hover{background:var(--surface-2)}
 .btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .btn.primary:hover{filter:brightness(1.08)}
 .btn.danger{color:var(--stamp);border-color:var(--stamp)}
-.btn.sm{padding:4px 9px;min-height:28px;font-size:12.5px}
+.btn.sm{padding:3px 9px;min-height:28px;font-size:12.5px}
+.btn.xl svg{width:14px;height:14px;color:var(--ok)}
 .btn:disabled,.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
 .btn-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
-.seg button{border:0;background:var(--surface);padding:6px 11px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap;background:var(--surface)}
+.seg button{border:0;background:transparent;padding:4px 11px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted);min-height:28px}
 .seg button+button{border-left:1px solid var(--line)}
+.seg button:hover{background:var(--surface-2)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
 .explain{background:var(--surface-2);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;font-size:13px}
 .explain .formula{font-family:var(--font-mono);font-size:12.5px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px;overflow-x:auto;white-space:pre}
-.cmp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.cmp div{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:2px}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.cmp div{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
 .cmp div.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
-.cmp b{font-size:16px}
+.cmp b{font-size:15px}
 .cmp span{font-size:12px;color:var(--muted)}
-.todo{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.todo li{display:flex;gap:10px;align-items:flex-start;font-size:13px}
-.todo li .pill{margin-top:1px}
-.bar{display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--surface-2)}
+.todo{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.todo li{display:flex;gap:10px;align-items:center;font-size:13px;padding:7px 0;border-bottom:1px solid var(--line);min-height:40px}
+.todo li:last-child{border-bottom:0}
+.todo li>.pill{flex:none;min-width:0}
+.todo li>.t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.todo li>.btn{flex:none}
+.bar{display:flex;height:20px;border-radius:6px;overflow:hidden;background:var(--surface-2)}
 .bar span{display:block;height:100%}
 .bar-lbl{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
@@ -166,7 +183,7 @@ tr.click .go{color:var(--muted);font-size:12px}
 .leaf .src{color:var(--muted)}
 .dot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:6px;vertical-align:-1px}
 .steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.steps li{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:12px;padding-block:10px;border-bottom:1px solid var(--line);align-items:start}
+.steps li{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:12px;padding-block:8px;border-bottom:1px solid var(--line);align-items:start}
 .steps li:last-child{border-bottom:0}
 .steps .num{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--surface-2);color:var(--muted)}
 .steps li.done .num{background:var(--ok);color:var(--on-accent)}
@@ -175,18 +192,16 @@ tr.click .go{color:var(--muted);font-size:12px}
 .steps li.fail .num{background:var(--stamp);color:var(--on-accent)}
 .steps .t{font-weight:600}
 .steps .r{font-size:12.5px;color:var(--muted)}
-.stamp{align-self:flex-start;border:3px solid var(--stamp);color:var(--stamp);border-radius:50%;width:132px;height:132px;display:grid;place-items:center;text-align:center;font-weight:700;font-size:13px;line-height:1.25;transform:rotate(-12deg);letter-spacing:.04em;text-transform:uppercase;box-shadow:inset 0 0 0 4px var(--surface),inset 0 0 0 5px var(--stamp)}
+.stamp{align-self:flex-start;border:3px solid var(--stamp);color:var(--stamp);border-radius:50%;width:120px;height:120px;display:grid;place-items:center;text-align:center;font-weight:700;font-size:12.5px;line-height:1.25;transform:rotate(-12deg);letter-spacing:.04em;text-transform:uppercase;box-shadow:inset 0 0 0 4px var(--surface),inset 0 0 0 5px var(--stamp)}
 .toast{position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:8px;font-size:13px;max-width:min(440px,calc(100vw - 32px));box-shadow:var(--shadow);z-index:60}
 .toast:empty{display:none}
 svg text{fill:var(--muted);font-family:var(--font-ui);font-size:11px}
 .note{font-size:12.5px;color:var(--muted);margin:0}
-.hl{outline:3px solid var(--accent)!important;outline-offset:3px;border-radius:8px;animation:hlpulse 1s ease-in-out 2}
-@keyframes hlpulse{50%{outline-color:transparent}}
+.hl{outline:3px solid var(--accent)!important;outline-offset:3px;border-radius:8px}
 .menu-wrap{position:relative}
-.menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;min-width:260px;z-index:20}
+.menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;min-width:250px;z-index:20}
 .menu[hidden]{display:none}
-.menu button{all:unset;box-sizing:border-box;cursor:pointer;padding:8px 10px;border-radius:7px;font-size:13px;display:flex;flex-direction:column}
-.menu button small{color:var(--muted);font-size:11.5px}
+.menu button{all:unset;box-sizing:border-box;cursor:pointer;padding:7px 10px;border-radius:7px;font-size:13px}
 .menu button:hover,.menu button:focus-visible{background:var(--accent-soft);outline:none}
 .menu hr{border:0;border-top:1px solid var(--line);margin:4px 0;width:100%}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -199,33 +214,42 @@ svg text{fill:var(--muted);font-family:var(--font-ui);font-size:11px}
 /* Dialog: drawer bên phải hoặc hộp giữa */
 dialog{border:0;padding:0;background:var(--surface);color:var(--fg);box-shadow:var(--shadow)}
 dialog::backdrop{background:var(--scrim)}
-dialog.drawer{position:fixed;inset:0 0 0 auto;margin:0;height:100%;max-height:100%;width:min(780px,100vw);max-width:100vw;border-left:1px solid var(--line)}
+dialog.drawer{position:fixed;inset:0 0 0 auto;margin:0;height:100%;max-height:100%;width:min(1080px,100vw);max-width:100vw;border-left:1px solid var(--line)}
 dialog.modal{width:min(560px,calc(100vw - 32px));border-radius:12px;max-height:calc(100vh - 48px)}
 dialog[open]{display:flex;flex-direction:column}
-.dlg-head{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.dlg-head{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--line)}
 .dlg-head h2{margin:0;font-size:16px;flex:1}
 .dlg-body{padding:16px 18px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:14px}
-.dlg-foot{display:flex;align-items:center;gap:8px;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.dlg-foot{display:flex;align-items:center;gap:8px;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:nowrap;background:var(--surface)}
 .dlg-foot .spacer{flex:1}
-.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:18px;line-height:1;display:grid;place-items:center}
-.frm{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 14px}
+.frm{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:12px 16px}
 .frm label,.fl{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);font-weight:500}
 .frm .inp,.lines .inp{width:100%;min-width:0}
 .frm .wide{grid-column:1/-1}
 .inp[aria-invalid="true"]{border-color:var(--stamp);box-shadow:0 0 0 1px var(--stamp) inset}
 .lines td{padding:5px 6px;vertical-align:middle}
 .lines .inp{min-width:70px}
+.lines select[id$="_item"]{min-width:180px}
+.lines select[id$="_lot"]{min-width:210px}
+.dlg-foot #fNo{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto}
 .check{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--fg)}
 .check input{margin-top:3px;width:16px;height:16px;flex:none}
-.msg{border-radius:8px;padding:8px 12px;font-size:13px;display:flex;flex-direction:column;gap:4px}
+.msg{border-radius:8px;padding:8px 12px;font-size:13px;display:flex;flex-direction:column;gap:4px;margin:0}
 .msg.err{background:var(--stamp-soft);color:var(--stamp)}
 .msg.warn{background:var(--warn-soft);color:var(--warn)}
 .msg.info{background:var(--accent-soft);color:var(--accent)}
 .prev h3{font-size:13.5px;margin:0 0 6px}
+details.fold{border:1px solid var(--line);border-radius:8px}
+details.fold>summary{cursor:pointer;padding:8px 12px;font-weight:600;font-size:13px;display:flex;align-items:center;gap:8px;list-style:none}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary::before{content:"▸";color:var(--muted);transition:transform .15s}
+details.fold[open]>summary::before{transform:rotate(90deg)}
+details.fold>.in{padding:4px 12px 12px;display:flex;flex-direction:column;gap:10px}
 textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:12px}
-dl.gloss{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px}
-dl.gloss dt{font-weight:700}
-dl.gloss dd{margin:0;color:var(--muted)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12.5px;margin:0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+.kv dd.n{text-align:right}
 .mobile-only{display:none!important}
 /* Tour hướng dẫn */
 .tour-ring{position:fixed;z-index:70;border:2px solid var(--accent);border-radius:10px;box-shadow:0 0 0 4px var(--accent-soft),0 0 0 9999px var(--scrim);pointer-events:none;transition:top .2s,left .2s,width .2s,height .2s}
@@ -239,65 +263,63 @@ dl.gloss dd{margin:0;color:var(--muted)}
 .tour-arrow{position:absolute;width:14px;height:14px;background:var(--surface);border:1px solid var(--line);transform:rotate(45deg)}
 .tour-arrow.up{top:-8px;border-right:0;border-bottom:0}
 .tour-arrow.down{bottom:-8px;border-left:0;border-top:0}
-.btn .lbl{display:inline}
 .flow{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:stretch;font-size:12.5px}
 .flow .st{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--surface-2);display:flex;flex-direction:column;gap:2px;min-width:0}
 .flow .st b{font-size:13px}
 .flow .ar{color:var(--muted);align-self:center}
 .rep-ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
-.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12.5px}
-.kv dt{color:var(--muted)}
-.kv dd{margin:0}
 td .pill{vertical-align:1px}
 .sub-tree{margin-top:6px;border-left:2px dashed var(--c-btp);padding-left:10px;display:flex;flex-direction:column;gap:4px}
-@media (max-width:1080px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g32,.g2{grid-template-columns:minmax(0,1fr)}}
-@media (max-width:760px){
-  .app{grid-template-columns:minmax(0,1fr)}
-  .side{position:static;height:auto;gap:8px;border-right:0;border-bottom:1px solid var(--line);padding:10px 16px 6px;overflow:visible}
-  .side{flex-direction:row;align-items:center;gap:10px}
+@media (max-width:1280px){.split,.split.wide-side{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1700px){.split.ledger-split{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1180px){.top .field>span{display:none}}
+/* ≤1080px: sidebar thành menu ngang trên cùng */
+@media (max-width:1080px){
+  .app,.app.collapsed{grid-template-columns:minmax(0,1fr);--side:auto}
+  .side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:8px 16px;overflow:visible;flex-direction:row;align-items:center;gap:10px}
   .brand{padding:0;flex:none}
-  .brand>div:last-child{display:none}
-  .nav-wrap{flex:1;min-width:0}
-  .top{gap:8px}
-  .top .spacer{display:none}
-  .top h1{flex:1;min-width:0;font-size:15px}
-  #btnSettings,#btnNew{padding:6px 10px;font-size:12.5px}
-  .node>summary>span:nth-child(2) .muted{display:none}
-  .leaf{grid-template-columns:minmax(0,1fr)}
-  .leaf>.n{text-align:left;font-weight:600}
-  .brand-mark{width:28px;height:28px;font-size:13px}
-  .nav-wrap{position:relative}
+  .brand b,#btnSide,.side-foot{display:none}
+  .app.collapsed .nl,.app.collapsed .nav-label{position:static!important;width:auto;height:auto;clip:auto}
+  .nav-wrap{flex:1;min-width:0;position:relative}
   .nav-wrap::after{content:"";position:absolute;right:0;top:0;bottom:2px;width:32px;background:linear-gradient(to right,transparent,var(--surface));pointer-events:none}
   .nav{flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:2px;padding-right:28px;scrollbar-width:thin}
-  .nav button{white-space:nowrap;padding:7px 10px}
-  .nav-label,.side-foot{display:none}
-  .scen{padding:6px 16px}
-  .scen ol,.scen>.small{display:none}
-  .scen .mob{display:flex}
-  .top{position:static;padding:10px 16px}
-  .top h1{font-size:16px}
+  .nav-label{display:none!important}
+  .app.collapsed .nav button,.nav button{padding:7px 10px;justify-content:flex-start}
+  .tbl-wrap th:first-child,.tbl-wrap td:first-child{position:sticky;left:0;z-index:1}
+}
+@media (max-width:900px){
+  .top{flex-wrap:wrap;padding:8px 16px;position:static}
+  .top h1{flex:1;font-size:15px}
+  .top .spacer{display:none}
   .mobile-only{display:inline-flex!important}
-  #btnTour{padding:6px 12px}
-  #btnTour .lbl{display:none}
-  .tour-pop{left:0!important;right:0;bottom:0;top:auto!important;width:100%;border-radius:14px 14px 0 0;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));max-height:45vh;overflow-y:auto}
-  .tour-arrow{display:none}
-  .field{flex-wrap:wrap;max-width:100%;min-width:0}
-  .field select{max-width:calc(100vw - 48px);min-width:0}
-  .settings{display:none;width:100%;flex-direction:column;align-items:stretch}
+  .settings{display:none;order:9;width:100%;flex-direction:column;align-items:stretch;gap:8px}
   .settings.open{display:flex}
   .settings .field{justify-content:space-between}
+  .top .field>span{display:inline}
+  .field select{max-width:calc(100vw - 120px);min-width:0}
   .lockbar{padding-inline:16px}
   .impact{margin-inline:16px}
   .view{padding-inline:16px}
-  .g4{grid-template-columns:minmax(0,1fr)}
-  .cmp{grid-template-columns:minmax(0,1fr)}
+  .node>summary>span:nth-child(2) .muted{display:none}
+  .leaf{grid-template-columns:minmax(0,1fr)}
+  .leaf>.n{text-align:left;font-weight:600}
   .node>summary{grid-template-columns:14px minmax(0,1fr)}
   .node>summary>.n{grid-column:2;text-align:left}
   .node .kids{padding-left:14px}
   .menu{position:fixed;left:16px;right:16px;top:auto;bottom:16px;min-width:0;max-height:70vh;overflow-y:auto}
+  .tour-pop{left:0!important;right:0;bottom:0;top:auto!important;width:100%;border-radius:14px 14px 0 0;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));max-height:45vh;overflow-y:auto}
+  .tour-arrow{display:none}
+  .todo li{flex-wrap:wrap}
+  .todo li>.t{white-space:normal;flex-basis:60%}
+  .kpi .sub{white-space:normal}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .kpi{padding:10px 12px}
+  .kpi .val{font-size:16px}
+  .kpi .val small{font-size:11px}
+  .kpi .sub{font-size:11.5px}
 }
 @media (pointer:coarse){
-  .btn,.nav button,.scen li button,.chips button,.seg button,.menu button{min-height:44px}
+  .btn,.nav button,.chips button,.seg button,.menu button{min-height:44px}
   .tbl-wrap tbody tr.click td{padding-block:12px}
   .field select,.field input,.inp{min-height:44px}
 }
@@ -307,73 +329,69 @@ td .pill{vertical-align:1px}
 </style>
 
 <a class="skip" href="#content">Bỏ qua tới nội dung</a>
-<div class="app">
+<div class="app" id="app">
   <aside class="side">
-    <div class="brand"><div class="brand-mark" aria-hidden="true">GG</div><div><b>Giá Gốc</b><span>Mua · Kho · Giá thành · P&amp;L</span></div></div>
+    <div class="brand"><div class="brand-mark" aria-hidden="true">GG</div><b>Giá Gốc</b><button class="icon-btn ghost" id="btnSide" type="button" aria-label="Thu gọn thanh bên" aria-expanded="true" title="Thu gọn thanh bên"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5l-5 5 5 5"/></svg></button></div>
     <div class="nav-wrap">
     <nav class="nav" aria-label="Phân hệ" id="nav">
       <div class="nav-label">Tổng hợp</div>
-      <button data-view="dash"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="11" y="3" width="6" height="4" rx="1.5"/><rect x="11" y="9" width="6" height="8" rx="1.5"/><rect x="3" y="11" width="6" height="6" rx="1.5"/></svg>Tổng quan</button>
-      <button data-view="docs"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 2.5h7l3 3v12H5z"/><path d="M8 9h5M8 12h5M8 15h3"/></svg>Chứng từ &amp; bút toán</button>
-      <button data-view="reports"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17h14"/><path d="M5 14V9M9 14V5M13 14v-7M17 14v-3"/></svg>Báo cáo</button>
+      <button data-view="dash" title="Tổng quan"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="11" y="3" width="6" height="4" rx="1.5"/><rect x="11" y="9" width="6" height="8" rx="1.5"/><rect x="3" y="11" width="6" height="6" rx="1.5"/></svg><span class="nl">Tổng quan</span></button>
+      <button data-view="docs" title="Chứng từ &amp; bút toán"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 2.5h7l3 3v12H5z"/><path d="M8 9h5M8 12h5M8 15h3"/></svg><span class="nl">Chứng từ &amp; bút toán</span></button>
+      <button data-view="reports" title="Báo cáo"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17h14"/><path d="M5 14V9M9 14V5M13 14v-7M17 14v-3"/></svg><span class="nl">Báo cáo</span></button>
       <div class="nav-label">Kho &amp; giá</div>
-      <button data-view="stock"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2.5 7.5 10 3l7.5 4.5V17h-15z"/><path d="M6 17v-6h8v6"/></svg>Kho &amp; lô</button>
-      <button data-view="cogs"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7"/><path d="M10 6v8M12.5 7.5c-.5-.8-1.4-1.2-2.5-1.2-1.4 0-2.5.8-2.5 1.9s1 1.5 2.5 1.8 2.5.8 2.5 1.9-1.1 1.9-2.5 1.9c-1.1 0-2-.4-2.5-1.2"/></svg>Giá xuất kho</button>
-      <button data-view="items"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3.5" width="14" height="13" rx="1.5"/><path d="M6.5 7.5h7M6.5 10.5h7M6.5 13.5h4"/></svg>Danh mục &amp; lệnh SX</button>
+      <button data-view="stock" title="Kho &amp; lô"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2.5 7.5 10 3l7.5 4.5V17h-15z"/><path d="M6 17v-6h8v6"/></svg><span class="nl">Kho &amp; lô</span></button>
+      <button data-view="cogs" title="Giá xuất kho"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7"/><path d="M10 6v8M12.5 7.5c-.5-.8-1.4-1.2-2.5-1.2-1.4 0-2.5.8-2.5 1.9s1 1.5 2.5 1.8 2.5.8 2.5 1.9-1.1 1.9-2.5 1.9c-1.1 0-2-.4-2.5-1.2"/></svg><span class="nl">Giá xuất kho</span></button>
+      <button data-view="items" title="Danh mục &amp; lệnh SX"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3.5" width="14" height="13" rx="1.5"/><path d="M6.5 7.5h7M6.5 10.5h7M6.5 13.5h4"/></svg><span class="nl">Danh mục &amp; lệnh SX</span></button>
       <div class="nav-label">Sản xuất</div>
-      <button data-view="cost"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17V9l4 3V9l4 3V5l6 4v8z"/></svg>Giá thành phân bước</button>
-      <button data-view="trace"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="15" cy="10" r="2.2"/><circle cx="5" cy="4.5" r="2"/><circle cx="5" cy="10" r="2"/><circle cx="5" cy="15.5" r="2"/><path d="M7 4.5c3 0 3 5.5 5.8 5.5M7 10h5.8M7 15.5c3 0 3-5.5 5.8-5.5"/></svg>Truy xuất theo lô</button>
+      <button data-view="cost" title="Giá thành phân bước"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17V9l4 3V9l4 3V5l6 4v8z"/></svg><span class="nl">Giá thành phân bước</span></button>
+      <button data-view="trace" title="Truy xuất theo lô"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="15" cy="10" r="2.2"/><circle cx="5" cy="4.5" r="2"/><circle cx="5" cy="10" r="2"/><circle cx="5" cy="15.5" r="2"/><path d="M7 4.5c3 0 3 5.5 5.8 5.5M7 10h5.8M7 15.5c3 0 3-5.5 5.8-5.5"/></svg><span class="nl">Truy xuất theo lô</span></button>
       <div class="nav-label">Cuối kỳ</div>
-      <button data-view="close"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="9" width="12" height="8.5" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg>Khóa sổ</button>
-      <button data-view="audit"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg>Nhật ký sửa đổi</button>
+      <button data-view="close" title="Khóa sổ"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="9" width="12" height="8.5" rx="1.5"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg><span class="nl">Khóa sổ</span></button>
+      <button data-view="audit" title="Nhật ký sửa đổi"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg><span class="nl">Nhật ký sửa đổi</span></button>
     </nav>
     </div>
     <div class="side-foot">
-      <span><b style="color:var(--fg)">Nhà máy chế biến mắm</b><br>(dữ liệu mẫu · bản demo)</span>
-      <button class="btn sm" id="btnGloss" type="button">Chú giải thuật ngữ</button>
-      <button class="btn sm" id="btnTheme" type="button">Giao diện sáng / tối</button>
-      <button class="btn sm danger" id="btnResetData" type="button">Đặt lại dữ liệu mẫu</button>
+      <span class="site" title="Nhà máy chế biến mắm">Nhà máy chế biến mắm</span>
+      <button class="icon-btn" id="btnTheme" type="button" aria-label="Đổi giao diện sáng / tối" title="Sáng / tối"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M16.5 12.2A6.8 6.8 0 0 1 7.8 3.5a6.8 6.8 0 1 0 8.7 8.7z"/></svg></button>
+      <button class="linkbtn" id="btnResetData" type="button">Đặt lại dữ liệu mẫu</button>
     </div>
   </aside>
 
   <div class="main">
-    <div class="scen" id="scen" role="navigation" aria-label="Kịch bản demo"></div>
     <header class="top">
       <h1><span id="viewTitle">Tổng quan</span><span id="miniStamp"></span></h1>
       <div class="spacer"></div>
-      <button class="btn mobile-only" id="btnSettings" type="button" aria-expanded="false" aria-controls="settings">Thiết lập</button>
+      <span class="period">Kỳ <b>01/2026</b> <span id="periodPill"></span></span>
+      <button class="btn sm mobile-only" id="btnSettings" type="button" aria-expanded="false" aria-controls="settings">Thiết lập</button>
       <div class="settings" id="settings">
         <label class="field" for="regime"><span>Chế độ</span>
-          <select id="regime"><option value="TT99">TT 99/2025</option><option value="TT133">TT 133/2016</option></select>
+          <select id="regime" aria-label="Chế độ kế toán"><option value="TT99">TT 99/2025</option><option value="TT133">TT 133/2016</option></select>
         </label>
-        <label class="field" for="method"><span>Giá xuất kho</span>
-          <select id="method"><option value="specific">Thực tế đích danh (theo lô)</option><option value="periodic">Bình quân cuối kỳ</option><option value="moving">Bình quân tức thời</option><option value="fifo">Nhập trước – xuất trước</option></select>
+        <label class="field" for="method"><span>Giá xuất</span>
+          <select id="method" aria-label="Phương pháp giá xuất kho"><option value="specific">Thực tế đích danh</option><option value="periodic">Bình quân cuối kỳ</option><option value="moving">Bình quân tức thời</option><option value="fifo">Nhập trước – xuất trước</option></select>
         </label>
-        <span class="field">Kỳ <b style="color:var(--fg)">01/2026</b> <span id="periodPill"></span></span>
-        <button class="btn sm mobile-only" id="btnGloss2" type="button">Chú giải thuật ngữ</button>
-        <button class="btn sm mobile-only" id="btnTheme2" type="button">Sáng / tối</button>
-        <button class="btn sm danger mobile-only" id="btnResetData2" type="button">Đặt lại dữ liệu mẫu</button>
+        <div class="btn-row mobile-only"><button class="btn sm" id="btnTheme2" type="button">Sáng / tối</button><button class="btn sm danger" id="btnResetData2" type="button">Đặt lại dữ liệu mẫu</button></div>
       </div>
-      <button class="btn" id="btnTour" type="button" aria-label="Hướng dẫn từng bước"><span aria-hidden="true">?</span><span class="lbl">Hướng dẫn</span></button>
+      <button class="icon-btn" id="btnTour" type="button" aria-label="Hướng dẫn từng bước" title="Hướng dẫn">?</button>
       <div class="menu-wrap">
         <button class="btn primary" id="btnNew" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="newMenu">+ Lập chứng từ</button>
         <div class="menu" id="newMenu" role="menu" hidden>
-          <button role="menuitem" data-new="PN">Phiếu nhập mua NVL, bao bì, hàng hóa<small>Sinh mã lô, QC, có ngoại tệ USD</small></button>
-          <button role="menuitem" data-new="PX">Phiếu xuất cho lệnh sản xuất<small>Chọn lô; xuất cả BTP cho giai đoạn sau</small></button>
-          <button role="menuitem" data-new="NK">Nhập kho BTP / thành phẩm<small>SL đạt, SL loại bỏ, mã lô, QC</small></button>
-          <button role="menuitem" data-new="CK">Chuyển kho nội bộ<small>Nhà máy → Bình Tây / 97 Nguyễn Thái Học</small></button>
-          <button role="menuitem" data-new="HD">Hóa đơn bán hàng<small>Chọn lô đạt QC; doanh thu, giá vốn</small></button>
-          <button role="menuitem" data-new="TL">Hàng bán bị trả lại<small>Về đúng lô gốc, giá vốn lúc bán</small></button>
+          <button role="menuitem" data-new="PN">Phiếu nhập mua</button>
+          <button role="menuitem" data-new="PX">Phiếu xuất cho lệnh sản xuất</button>
+          <button role="menuitem" data-new="NK">Nhập kho BTP / thành phẩm</button>
+          <button role="menuitem" data-new="CK">Chuyển kho nội bộ</button>
+          <button role="menuitem" data-new="HD">Hóa đơn bán hàng</button>
+          <button role="menuitem" data-new="TL">Hàng bán bị trả lại</button>
           <hr>
-          <button role="menuitem" data-new="CT">Chi tiền trả nhà cung cấp<small>Tiền mặt, ngân hàng VND hoặc USD</small></button>
-          <button role="menuitem" data-new="TN">Thu tiền khách hàng<small>Tiền mặt hoặc ngân hàng</small></button>
-          <button role="menuitem" data-new="KK">Phiếu kiểm kê kho<small>Theo kho và lô, xử lý thừa / thiếu</small></button>
-          <button role="menuitem" data-new="BL">Bảng lương &amp; trích theo lương<small>622, 627, 334, 338</small></button>
-          <button role="menuitem" data-new="KH">Khấu hao TSCĐ nhà máy<small>Chi phí cố định → kiểm tra dưới công suất</small></button>
-          <button role="menuitem" data-new="CP">Chi phí sản xuất chung khác<small>Điện nước, vật tư phụ, thuê bể ủ…</small></button>
+          <button role="menuitem" data-new="CT">Chi tiền trả nhà cung cấp</button>
+          <button role="menuitem" data-new="TN">Thu tiền khách hàng</button>
+          <button role="menuitem" data-new="KK">Phiếu kiểm kê kho</button>
+          <button role="menuitem" data-new="BL">Bảng lương</button>
+          <button role="menuitem" data-new="KH">Khấu hao TSCĐ</button>
+          <button role="menuitem" data-new="CP">Chi phí sản xuất chung</button>
           <hr>
-          <button role="menuitem" data-new="LSX">Lệnh sản xuất<small>Sản phẩm / giai đoạn, kế hoạch, kho</small></button>
-          <button role="menuitem" data-new="ITEM">Thêm vật tư, hàng hóa, sản phẩm<small>Danh mục, tồn đầu theo lô, định mức</small></button>
+          <button role="menuitem" data-new="LSX">Lệnh sản xuất</button>
+          <button role="menuitem" data-new="ITEM">Vật tư, hàng hóa, sản phẩm</button>
         </div>
       </div>
     </header>
@@ -383,45 +401,39 @@ td .pill{vertical-align:1px}
     <main id="content" tabindex="-1">
     <!-- TỔNG QUAN -->
     <section class="view" id="v-dash">
-      <p class="lead">Demo cho quy trình <b>mua → kho → giá thành → P&amp;L</b> theo tài liệu HỆ THỐNG: nhà máy chế biến mắm, kỳ 01/2026, 3 kho, giá xuất thực tế đích danh theo lô, giá thành phân bước 2 giai đoạn. Đối tác và số liệu là mẫu. Mọi con số được tính từ chứng từ. Làm theo <b>Kịch bản demo</b> phía trên, hoặc bấm <b>+ Lập chứng từ</b>.</p>
-      <div class="grid g4" id="kpis"></div>
-      <div class="grid g32">
+      <div class="kpis" id="kpis"></div>
+      <div class="duo">
+        <div class="panel">
+          <div class="panel-head"><h2>Việc cần làm</h2></div>
+          <ul class="todo" id="todo"></ul>
+        </div>
         <div class="panel">
           <div class="panel-head"><h2>Doanh thu và lãi gộp 6 tháng</h2><div class="spacer"></div><span class="note">triệu đồng</span></div>
           <div id="chart"></div>
           <div class="legend"><span><i style="background:var(--c-nvl)"></i>Doanh thu thuần</span><span><i style="background:var(--c-nc)"></i>Lãi gộp</span></div>
         </div>
-        <div class="panel">
-          <h2>Việc cần làm trong kỳ</h2>
-          <ul class="todo" id="todo"></ul>
+        <div class="panel" id="reconPanel">
+          <div class="panel-head"><h2>Đối chiếu kho với sổ cái</h2><div class="spacer"></div><span id="reconPill"></span></div>
+          <div class="tbl-wrap"><table id="recon"></table></div>
         </div>
-      </div>
-      <div class="grid g2">
         <div class="panel">
           <div class="panel-head"><h2>Cơ cấu giá thành đơn vị</h2></div>
           <div id="structure" style="display:flex;flex-direction:column;gap:16px"></div>
           <div class="legend"><span><i style="background:var(--c-dd)"></i>Dở dang đầu kỳ</span><span><i style="background:var(--c-btp)"></i><abbr title="Bán thành phẩm">BTP</abbr> giai đoạn trước</span><span><i style="background:var(--c-nvl)"></i><abbr title="Nguyên vật liệu">NVL</abbr> trực tiếp</span><span><i style="background:var(--c-nc)"></i>Nhân công trực tiếp</span><span><i style="background:var(--c-sxc)"></i>Sản xuất chung</span></div>
-        </div>
-        <div class="panel" id="reconPanel">
-          <div class="panel-head"><h2>Đối chiếu kho với sổ cái</h2><div class="spacer"></div><span id="reconPill"></span></div>
-          <div class="tbl-wrap"><table id="recon"></table></div>
-          <p class="note" id="reconNote"></p>
         </div>
       </div>
     </section>
 
     <!-- CHỨNG TỪ -->
     <section class="view" id="v-docs" hidden>
-      <p class="lead">Mỗi chứng từ khi ghi sổ tự sinh bút toán theo chế độ đang chọn. Dòng có nhãn màu vàng là chỗ <b>TT 99 và TT 133 hạch toán khác nhau</b> (ví dụ phiếu xuất <span class="acc">PX0001</span>: 621 ↔ 154).</p>
-      <div class="grid g32">
+      <div class="split wide-side">
         <div class="panel">
-          <div class="panel-head"><h2>Chứng từ tháng 01/2026</h2><div class="spacer"></div><span class="note" id="docCount"></span></div>
-          <div class="toolbar">
-            <label class="vh" for="docSearch">Tìm chứng từ</label>
-            <input type="search" id="docSearch" class="inp" placeholder="Tìm số CT, diễn giải, đối tượng, mã lô…">
+          <div class="panel-head"><h2>Chứng từ tháng 01/2026</h2><span class="note" id="docCount"></span><div class="spacer"></div>
             <div class="chips" id="docFilter" role="group" aria-label="Lọc chứng từ"></div>
-            <button class="btn sm" type="button" data-copy="docTable">Sao chép cho Excel</button>
+            <button class="btn sm xl" type="button" data-copy="docTable" aria-label="Sao chép bảng chứng từ cho Excel"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>Excel</button>
           </div>
+          <label class="vh" for="docSearch">Tìm chứng từ</label>
+          <input type="search" id="docSearch" class="inp" placeholder="Tìm số CT, diễn giải, đối tượng, mã lô…">
           <div class="tbl-wrap"><table id="docTable"><thead><tr><th>Số CT</th><th>Ngày</th><th>Diễn giải</th><th class="n">Số tiền</th><th>Trạng thái</th></tr></thead><tbody id="docList"></tbody></table></div>
         </div>
         <div class="panel" id="docDetail" tabindex="-1"></div>
@@ -430,7 +442,6 @@ td .pill{vertical-align:1px}
 
     <!-- BÁO CÁO -->
     <section class="view" id="v-reports" hidden>
-      <p class="lead">Sổ sách và báo cáo tính thẳng từ bút toán đang có, không gõ số. Chọn loại báo cáo; mỗi bảng đều sao chép được sang Excel.</p>
       <div class="panel">
         <div class="rep-ctl" id="repCtl"></div>
         <div id="repOut" style="display:flex;flex-direction:column;gap:12px"></div>
@@ -439,36 +450,30 @@ td .pill{vertical-align:1px}
 
     <!-- KHO & LÔ -->
     <section class="view" id="v-stock" hidden>
-      <p class="lead">Tồn kho theo kho và theo lô (mã lót hàng). Số lượng luôn theo dõi theo bộ (vật tư, kho, lô) và không được âm. Giá trị theo phương pháp đang chọn ở thanh trên.</p>
       <div class="panel">
-        <div class="panel-head"><h2>Kho</h2><div class="chips" id="whFilter" role="group" aria-label="Lọc theo kho"></div></div>
-        <p class="note" id="whNote"></p>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><h2>Bảng tổng hợp N-X-T · Mẫu S11-DN</h2><div class="spacer"></div><button class="btn sm" type="button" data-copy="nxt">Sao chép cho Excel</button></div>
+        <div class="panel-head"><h2>Tổng hợp N-X-T · S11-DN</h2><div class="seg" id="whFilter" role="group" aria-label="Lọc theo kho"></div><div class="spacer"></div>
+          <button class="btn sm xl" type="button" data-copy="nxt" aria-label="Sao chép bảng nhập xuất tồn cho Excel"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>Excel</button></div>
         <div class="tbl-wrap"><table id="nxt"></table></div>
-        <p class="note" id="nxtNote"></p>
       </div>
       <div class="panel" id="lotPanel">
-        <div class="panel-head"><h2>Tồn kho theo kho và lô</h2><div class="spacer"></div><button class="btn sm" type="button" data-copy="lotTbl">Sao chép cho Excel</button></div>
+        <div class="panel-head"><h2>Tồn kho theo kho và lô</h2><span class="note" id="lotWh"></span><div class="spacer"></div>
+          <button class="btn sm xl" type="button" data-copy="lotTbl" aria-label="Sao chép bảng tồn kho theo lô cho Excel"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>Excel</button></div>
         <div class="tbl-wrap"><table id="lotTbl"></table></div>
-        <p class="note" id="lotNote"></p>
       </div>
     </section>
 
     <!-- GIÁ XUẤT KHO -->
     <section class="view" id="v-cogs" hidden>
-      <p class="lead">Sổ chi tiết vật tư có kho và mã lô trên từng dòng. Bấm vào một dòng xuất để xem đơn giá được tính từ đâu: lô nào, phiếu nhập nào, nhà cung cấp hay thẻ giá thành nào.</p>
-      <div class="grid g32">
+      <div class="split ledger-split">
         <div class="panel">
           <div class="panel-head">
             <label class="field" for="itemSel">Vật tư <select id="itemSel"></select></label>
             <div class="spacer"></div>
-            <button class="btn" id="btnBack" type="button">Thử: nhập bổ sung thính gạo lùi ngày 06/01</button>
+            <button class="btn sm" id="btnBack" type="button">Nhập lùi ngày 06/01</button>
+            <button class="btn sm xl" type="button" data-copy="ledger" aria-label="Sao chép sổ chi tiết vật tư cho Excel"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>Excel</button>
           </div>
           <div class="meta" id="ledgerHead"></div>
           <div class="tbl-wrap"><table id="ledger"></table></div>
-          <div class="btn-row"><button class="btn sm" type="button" data-copy="ledger">Sao chép cho Excel</button></div>
           <div class="cmp" id="cmp"></div>
         </div>
         <div class="panel" id="explain" tabindex="-1"></div>
@@ -477,49 +482,43 @@ td .pill{vertical-align:1px}
 
     <!-- DANH MỤC -->
     <section class="view" id="v-items" hidden>
-      <p class="lead">Danh mục vật tư, bao bì, phụ gia, bán thành phẩm, thành phẩm và hàng hóa; kho; lệnh sản xuất. Vật tư mới xuất hiện ngay trong mọi phiếu và báo cáo. Tồn đầu kỳ khai theo lô nên kho vẫn khớp sổ cái.</p>
       <div class="panel">
-        <div class="panel-head"><h2>Danh mục vật tư</h2><div class="spacer"></div><button class="btn primary sm" type="button" data-new="ITEM">+ Thêm vật tư</button><button class="btn sm" type="button" data-copy="itemTbl">Sao chép cho Excel</button></div>
+        <div class="panel-head"><h2>Danh mục vật tư</h2><div class="spacer"></div><button class="btn primary sm" type="button" data-new="ITEM">+ Thêm vật tư</button>
+          <button class="btn sm xl" type="button" data-copy="itemTbl" aria-label="Sao chép danh mục vật tư cho Excel"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>Excel</button></div>
         <div class="tbl-wrap"><table id="itemTbl"></table></div>
-        <p class="note">Chỉ xóa được vật tư chưa có phát sinh và chưa nằm trong định mức, lệnh sản xuất. Kỳ đã khóa thì không khai được tồn đầu.</p>
       </div>
-      <div class="grid g2">
+      <div class="duo">
         <div class="panel">
-          <div class="panel-head"><h2>Lệnh sản xuất</h2><div class="spacer"></div><button class="btn primary sm" type="button" data-new="LSX">+ Lệnh sản xuất</button><button class="btn sm" type="button" data-copy="lsxTbl">Sao chép cho Excel</button></div>
+          <div class="panel-head"><h2>Lệnh sản xuất</h2><div class="spacer"></div><button class="btn primary sm" type="button" data-new="LSX">+ Lệnh sản xuất</button>
+            <button class="btn sm xl" type="button" data-copy="lsxTbl" aria-label="Sao chép bảng lệnh sản xuất cho Excel"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>Excel</button></div>
           <div class="tbl-wrap"><table id="lsxTbl"></table></div>
         </div>
         <div class="panel">
           <div class="panel-head"><h2>Kho và người phụ trách</h2></div>
           <div class="tbl-wrap"><table id="whTbl"></table></div>
-          <p class="note">Vai trò lấy từ tài liệu HỆ THỐNG; bản demo chỉ hiện tên vai trò, không có tên người.</p>
         </div>
       </div>
     </section>
 
     <!-- GIÁ THÀNH -->
     <section class="view" id="v-cost" hidden>
-      <p class="lead">Giá thành <b>phân bước có tính giá bán thành phẩm</b>: giai đoạn 1 ra BTP "cá linh ủ thính", nhập kho theo lô; giai đoạn 2 xuất BTP theo lô cùng đường, bao bì để ra mắm cá linh hũ 500g. Mắm tôm làm 1 giai đoạn. Dở dang đánh giá theo NVL (gồm BTP), SXC phân bổ theo chi phí nhân công trực tiếp.</p>
       <div class="panel">
         <div class="flow" id="flow" aria-label="Thứ tự tính giá thành"></div>
-      </div>
-      <div class="panel">
         <div class="panel-head" id="costInputs">
           <label class="field" for="hours">Giờ máy thực tế <input id="hours" type="number" inputmode="numeric" min="0" max="1500" step="50" style="width:96px"></label>
           <span class="note" id="normalNote"></span>
+          <span id="wipInputs" style="display:contents"></span>
         </div>
-        <div class="panel-head" id="wipInputs"></div>
-        <p class="note">Công suất bình thường dùng để tách phần định phí SXC không được tính vào giá thành (VAS 02). Công đoạn ủ có thể kéo dài nhiều kỳ nên dở dang cuối kỳ thường lớn; số dở dang đổi được ở đây.</p>
       </div>
       <div class="panel">
-        <div class="panel-head"><h2>Bảng phân bổ chi phí sản xuất chung</h2><div class="spacer"></div><span class="note" id="allocBasis"></span></div>
+        <div class="panel-head"><h2>Phân bổ chi phí sản xuất chung</h2><span class="note" id="allocBasis"></span></div>
         <div class="tbl-wrap"><table id="alloc"></table></div>
       </div>
-      <div class="grid" id="cards"></div>
+      <div class="cards" id="cards"></div>
     </section>
 
     <!-- TRUY XUẤT -->
     <section class="view" id="v-trace" hidden>
-      <p class="lead">Chọn một lô nhập kho (BTP hoặc thành phẩm) để xem mỗi kg / mỗi hũ gồm những gì: BTP giai đoạn trước từ lô nào, NVL từ phiếu xuất, lô và nhà cung cấp nào, cộng nhân công và SXC. Phiếu do bạn lập được đánh dấu viền vàng.</p>
       <div class="panel">
         <div class="panel-head"><div class="seg" role="group" aria-label="Chọn lô" id="lotSeg"></div></div>
         <div id="traceHead"></div>
@@ -529,18 +528,14 @@ td .pill{vertical-align:1px}
 
     <!-- KHÓA SỔ -->
     <section class="view" id="v-close" hidden>
-      <p class="lead">Các bước cuối kỳ chạy đúng thứ tự phụ thuộc và có kiểm tra thật: bước 4 dừng nếu tồn âm theo (vật tư, kho, lô), bước 11 dừng nếu lệch hoặc còn tồn âm. Thêm hay hủy chứng từ sẽ đánh dấu đúng các bước bị ảnh hưởng là "Cần chạy lại".</p>
-      <div class="grid g32">
+      <div class="split">
         <div class="panel">
           <div class="panel-head"><h2>Quy trình khóa sổ 01/2026</h2><div class="spacer"></div>
+            <button class="btn sm" id="btnReopen" type="button">Mở lại bước 5–12</button>
             <button class="btn" id="btnStep" type="button">Chạy bước tiếp theo</button>
             <button class="btn primary" id="btnAll" type="button">Chạy tất cả</button>
           </div>
           <ol class="steps" id="steps"></ol>
-          <div class="btn-row" style="border-top:1px solid var(--line);padding-top:12px">
-            <button class="btn sm" id="btnReopen" type="button">Mở lại quy trình (bỏ kết quả bước 5–12)</button>
-            <span class="note">Không xóa chứng từ. Muốn xóa dữ liệu bạn đã nhập, dùng "Đặt lại dữ liệu mẫu".</span>
-          </div>
         </div>
         <div class="panel" id="closeSide"></div>
       </div>
@@ -548,9 +543,9 @@ td .pill{vertical-align:1px}
 
     <!-- NHẬT KÝ -->
     <section class="view" id="v-audit" hidden>
-      <p class="lead">Mọi lần lập, sửa, hủy chứng từ, đổi trạng thái QC của lô, đổi cấu hình, khóa và mở khóa kỳ đều được ghi lại. Sửa chứng từ là hủy chứng từ cũ rồi lập chứng từ mới, nên không có số liệu nào bị ghi đè mất dấu.</p>
       <div class="panel">
-        <div class="panel-head"><h2>Nhật ký sửa đổi</h2><div class="spacer"></div><button class="btn sm" type="button" data-copy="auditTbl">Sao chép cho Excel</button></div>
+        <div class="panel-head"><h2>Nhật ký sửa đổi</h2><div class="spacer"></div>
+          <button class="btn sm xl" type="button" data-copy="auditTbl" aria-label="Sao chép nhật ký sửa đổi cho Excel"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>Excel</button></div>
         <div class="tbl-wrap"><table id="auditTbl"></table></div>
       </div>
     </section>
@@ -762,7 +757,6 @@ function accName(a, tt133){
 }
 // Loại vật tư → tài khoản kho. BTP nhập kho ghi 155 (chưa xác minh: ghi 155 hay giữ 154 — chờ kế toán trưởng).
 const KIND_ACC = {NVL:'152', HH:'156', SP:'155', BTP:'155'};
-const BTP_NOTE = 'Chưa xác minh: BTP nhập kho ghi 155 hay giữ 154 — chờ kế toán trưởng.';
 const accOfItem = (D, k) => KIND_ACC[D.items[k].kind];
 const revAcc = (D, k) => D.items[k].kind === 'HH' ? '5111' : '5112';
 const isProd = (D, k) => D.items[k] && (D.items[k].kind === 'SP' || D.items[k].kind === 'BTP');
@@ -1224,7 +1218,7 @@ function runStepOn(D){
   R = compute(D);
   if(i === 10){ const b = balanceCheck(R); if(!b.ok){ st.done[i] = prev; st.dirty[i] = prev; return {ok:false, i, msg:b.msg, link:b.link}; } }
   st.snap[i] = {text:stepText(i, R), at:nowISO(), kc: R.postByNo.KC0001 ? R.postByNo.KC0001.dr : 0, cogs:R.cogs, z:R.PRODK.map(o => R.card[o].z)};
-  if(i === 11) D.audit.push({at:nowISO(), actor:'Khách demo', action:'lock', no:'', reason:'', detail:'Khóa sổ kỳ 01/2026 sau khi chạy đủ 12 bước'});
+  if(i === 11) D.audit.push({at:nowISO(), actor:ACTOR, action:'lock', no:'', reason:'', detail:'Khóa sổ kỳ 01/2026 sau khi chạy đủ 12 bước'});
   return {ok:true, i};
 }
 function invalidate(D, from){ const st = D.closing; for(let i = from; i < st.done.length; i++) if(st.done[i]) st.dirty[i] = true; }
@@ -1247,7 +1241,8 @@ function nextNo(D, type){
 }
 
 // ================= Trạng thái giao diện & lưu trữ =================
-const KEY = 'giagoc-demo-v3', THEME_KEY = 'giagoc-theme';
+const KEY = 'giagoc-demo-v3', THEME_KEY = 'giagoc-theme', SIDE_KEY = 'giagoc-side';
+const ACTOR = 'Người dùng';
 function load(){
   try{ const s = localStorage.getItem(KEY); if(!s) return null; const o = JSON.parse(s);
     if(o && o.v === 3 && Array.isArray(o.docs) && o.closing && Array.isArray(o.closing.done) && o.settings && o.items && o.open && o.lsx && o.openGL) return o; }catch(_){}
@@ -1256,7 +1251,7 @@ function load(){
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S.data)); }catch(_){} }
 function clearSaved(){ try{ localStorage.removeItem(KEY); }catch(_){} }
 const UI0 = {view:'dash', item:'CL', sel:null, doc:'PX0001', lot:null, filter:'all', q:'', wh:'all', rep:'nkc', repAcc:'1111', repDebt:'331', repCash:'1111',
-  scen:-1, seen:{}, impact:null, fail:null, refocus:null};
+  impact:null, fail:null, refocus:null};
 const S = {data: load() || freshData(), ui:clone(UI0)};
 let R = null;
 const isTT133 = () => S.data.settings.regime === 'TT133';
@@ -1334,8 +1329,8 @@ function impactTable(imp, short){
   h += '<tr><td>Biên lãi gộp</td><td class="n">' + pct(imp.margin[0]) + '</td><td class="n">' + pct(imp.margin[1]) + '</td><td></td></tr>';
   h += '</tbody></table></div>';
   if(imp.docs.length){
-    h += '<div class="small"><b>Chứng từ được tính lại giá trị kho:</b></div><div class="btn-row">' +
-      imp.docs.slice(0, 10).map(x => '<button class="btn sm" type="button" data-open-doc="' + x.no + '"><span class="acc">' + x.no + '</span> ' + fmt(x.x) + ' → ' + fmt(x.y) + '</button>').join('') + '</div>';
+    h += '<details class="fold"><summary>Chứng từ được tính lại giá trị kho <span class="muted">' + imp.docs.length + '</span></summary><div class="in"><div class="btn-row">' +
+      imp.docs.slice(0, 10).map(x => '<button class="btn sm" type="button" data-open-doc="' + x.no + '"><span class="acc">' + x.no + '</span> ' + fmt(x.x) + ' → ' + fmt(x.y) + '</button>').join('') + '</div></div></details>';
   }
   return h;
 }
@@ -1349,37 +1344,24 @@ function renderAll(){
   RENDER[S.ui.view]();
   if(S.ui.refocus){ const el = document.querySelector(S.ui.refocus); S.ui.refocus = null; if(el) try{ el.focus({preventScroll:true}); }catch(_){ el.focus(); } }
 }
-const SCEN = [
-  {t:'Mọi số tính từ chứng từ'},
-  {t:'Sửa giá lô cá linh, giá thành 2 GĐ tính lại'},
-  {t:'Mỗi hũ mắm gồm những gì'},
-  {t:'Đổi TT 99 ↔ TT 133'},
-  {t:'Khóa sổ, mở khóa có lý do'}
-];
 function renderChrome(){
   const lk = locked(), set = S.data.settings;
   document.querySelectorAll('#nav button').forEach(b => { if(b.dataset.view === S.ui.view) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== 'v-' + S.ui.view);
   $('viewTitle').textContent = TITLES[S.ui.view];
-  $('periodPill').innerHTML = lk ? pill('bad', 'Đã khóa') : pill('info', 'Đang mở');
+  $('periodPill').innerHTML = lk ? pill('bad', 'Đã khóa') : pill('ok', 'Đang mở');
   $('miniStamp').innerHTML = lk ? '<span class="mini-stamp" aria-label="Đã khóa sổ">Đã khóa<br>sổ</span>' : '';
   $('regime').value = set.regime; $('method').value = set.method;
-  const tip = lk ? LOCK_MSG : 'Chế độ kế toán và phương pháp tính giá áp dụng nhất quán cả năm tài chính. Bản demo cho đổi để xem thử.';
-  ['regime', 'method', 'hours'].forEach(id => { $(id).disabled = lk; $(id).title = lk ? LOCK_MSG : (id === 'regime' || id === 'method' ? tip : ''); });
+  ['regime', 'method', 'hours'].forEach(id => { $(id).disabled = lk; $(id).title = lk ? LOCK_MSG : ''; });
   document.querySelectorAll('[data-wip]').forEach(e => { e.disabled = lk; e.title = lk ? LOCK_MSG : ''; });
   $('btnNew').setAttribute('aria-disabled', lk ? 'true' : 'false'); $('btnNew').title = lk ? LOCK_MSG : '';
   const lb = $('lockBar'); lb.hidden = !lk;
-  if(lk) lb.innerHTML = '<span>Kỳ 01/2026 đã khóa: chứng từ, thiết lập và các ô nhập đều bị khóa.</span><button class="btn sm" type="button" data-act="unlock">Mở khóa có lý do</button>';
-  const cur = S.ui.scen;
-  $('scen').innerHTML = '<span class="tag">Bản demo</span><span class="small muted">Demo cho quy trình mua → kho → giá thành → P&amp;L theo tài liệu HỆ THỐNG · kịch bản 5 phút</span><ol>' +
-    SCEN.map((s, i) => '<li><button type="button" data-scen="' + i + '"' + (i === cur ? ' aria-current="step"' : '') + (S.ui.seen[i] && i !== cur ? ' class="seen"' : '') + '><span class="n">' + (S.ui.seen[i] && i !== cur ? '✓' : i + 1) + '</span>' + s.t + '</button></li>').join('') + '</ol>' +
-    '<div class="mob"><button class="icon-btn" type="button" data-scen-nav="-1" aria-label="Bước trước">‹</button><b>Bước ' + (cur < 0 ? 1 : cur + 1) + '/5 · ' + SCEN[cur < 0 ? 0 : cur].t + '</b><button class="btn sm" type="button" data-scen="' + (cur < 0 ? 0 : cur) + '">Xem</button><button class="icon-btn" type="button" data-scen-nav="1" aria-label="Bước sau">›</button></div>';
+  if(lk) lb.innerHTML = '<span>Kỳ 01/2026 đã khóa sổ.</span><button class="btn sm" type="button" data-act="unlock">Mở khóa có lý do</button>';
   const box = $('impact'), imp = S.ui.impact;
   box.hidden = !imp;
   if(imp){ const t = impactRows(imp.before, snapshot(R));
-    box.innerHTML = '<div class="impact-head"><h2>Ảnh hưởng: ' + esc(imp.title) + '</h2>' + pill('info', 'tính lại trong ' + fmtD(imp.ms, 1) + ' ms') +
-      '<span class="spacer" style="flex:1"></span><button class="btn sm" type="button" data-act="dismissImpact">Ẩn</button></div>' + impactTable(t, false) +
-      '<p class="note">So với trạng thái ngay trước thao tác. Chip chênh lệch giữ nguyên cho đến khi bạn bấm Ẩn hoặc làm thao tác khác.</p>'; }
+    box.innerHTML = '<div class="impact-head"><h2>Ảnh hưởng: ' + esc(imp.title) + '</h2>' + pill('info', fmtD(imp.ms, 1) + ' ms') +
+      '<span class="spacer" style="flex:1"></span><button class="btn sm" type="button" data-act="dismissImpact">Ẩn</button></div>' + impactTable(t, false); }
 }
 function hl(sel){
   document.querySelectorAll('.hl').forEach(e => e.classList.remove('hl'));
@@ -1394,33 +1376,20 @@ function go(view, opt){
   const b = document.querySelector('#nav button[data-view="' + view + '"]');
   if(b && b.scrollIntoView) try{ b.scrollIntoView({inline:'center', block:'nearest'}); }catch(_){}
 }
-function runScen(i){
-  if(i < 0 || i >= SCEN.length) return;
-  S.ui.scen = i; S.ui.seen[i] = true;
-  if(i === 0){ go('dash'); hl('#reconPanel'); }
-  if(i === 1){ if(locked()){ go('close'); toast('Kỳ đang khóa. Bấm "Mở khóa có lý do" trước, rồi sửa phiếu nhập cá linh.'); hl('#closeSide'); return; }
-    const pn = S.data.docs.find(d => d.no === 'PN0001' && d.status !== 'void') || R.active.find(d => d.type === 'PN' && d.lines.some(l => l.item === 'CL'));
-    go('cost');
-    if(pn) openForm('PN', {edit:pn.no, noFocus:true, patch: dr => { const l = dr.lines.find(x => x.item === 'CL') || dr.lines[0]; const p = parseNum(l.price); l.price = fmtInput(isFinite(p) ? p + 2000 : 47000); dr.reason = 'NCC điều chỉnh giá cá linh theo biên bản đối chiếu'; }});
-    if(F) hl('#fSave'); }
-  if(i === 2){ const c = R.card.ML5 || R.card[R.order[R.order.length - 1]], lot = c && c.lots[0]; go('trace', {lot: lot ? lot.lot : null}); hl('#tree'); }
-  if(i === 3){ const px = R.active.find(d => d.no === 'PX0001') || R.active.find(d => d.type === 'PX'); go('docs', {doc: px ? px.no : S.ui.doc, filter:'all', q:''}); hl('#regime'); }
-  if(i === 4){ go('close'); hl(locked() ? '#closeSide' : '#btnAll'); }
-  renderChrome();
-}
+const XL_ICO = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>';
+const xlBtn = (id, what) => '<button class="btn sm xl" type="button" data-copy="' + id + '" aria-label="Sao chép ' + esc(what) + ' cho Excel">' + XL_ICO + 'Excel</button>';
 
 // ================= Tổng quan =================
 RENDER.dash = function(){
   const D = S.data, imp = S.ui.impact ? S.ui.impact.before : null;
   const prev = HIST[HIST.length - 1], chg = (R.rev / 1e6 - prev[1]) / prev[1] * 100;
-  const sold = Object.keys(D.items).filter(o => R.qtySold[o]).map(o => fmt(R.qtySold[o]) + ' ' + D.items[o].uom + ' ' + D.items[o].code).join(', ');
-  const k = (label, v, sub, key) => '<div class="panel kpi"><span class="label">' + label + '</span><span class="val">' + fmt(v) + '<small>đ</small>' + (imp ? dchip(v - imp[key]) : '') + '</span><span class="sub">' + sub + '</span></div>';
+  const k = (label, v, sub, key) => '<div class="panel kpi"><span class="label">' + label + '</span><span class="val">' + fmt(v) + '<small>đ</small>' + (imp ? dchip(v - imp[key]) : '') + '</span><span class="sub" title="' + esc(sub) + '">' + esc(sub) + '</span></div>';
   const abn = sum(R.PRODK, o => R.card[o].abn);
   $('kpis').innerHTML =
-    k('Doanh thu thuần', R.rev, (sold || 'chưa bán') + ' · ' + (chg >= 0 ? '▲ ' : '▼ ') + fmtD(Math.abs(chg), 1) + '% so với 12/2025', 'rev') +
-    k('Giá vốn hàng bán', R.cogs, (R.toCogs || abn ? 'gồm ' + [R.toCogs ? fmt(R.toCogs) + ' đ SXC dưới công suất' : '', abn ? fmt(abn) + ' đ hỏng ngoài định mức' : ''].filter(Boolean).join(', ') : 'theo ' + METHOD_NAME[D.settings.method].toLowerCase()), 'cogs') +
-    k('Lãi gộp', R.gross, 'biên ' + pct(R.margin) + ' · 12/2025: ' + pct(prev[2] / prev[1] * 100), 'gross') +
-    k('Hàng tồn kho cuối kỳ', R.stock, '152 + 155 + 156 + dở dang 154 (' + fmt(R.gl['154'] || 0) + ' đ)', 'stock');
+    k('Doanh thu thuần', R.rev, (chg >= 0 ? '▲ ' : '▼ ') + fmtD(Math.abs(chg), 1) + '% so với 12/2025', 'rev') +
+    k('Giá vốn hàng bán', R.cogs, (R.toCogs + abn ? 'Gồm ' + fmt(R.toCogs + abn) + ' đ ngoài giá thành' : METHOD_NAME[D.settings.method]), 'cogs') +
+    k('Lãi gộp', R.gross, 'Biên ' + pct(R.margin) + ' · 12/2025: ' + pct(prev[2] / prev[1] * 100), 'gross') +
+    k('Hàng tồn kho cuối kỳ', R.stock, 'Dở dang 154: ' + fmt(R.gl['154'] || 0) + ' đ', 'stock');
   const hist = HIST.concat([['01/26', R.rev / 1e6, R.gross / 1e6]]);
   const W = 560, H = 220, pl = 40, pb = 24, pt = 10, max = Math.max(50, Math.ceil(Math.max.apply(null, hist.map(h => h[1])) / 50) * 50);
   const bw = (W - pl) / hist.length, y = v => pt + (H - pt - pb) * (1 - Math.max(0, v) / max);
@@ -1429,45 +1398,44 @@ RENDER.dash = function(){
     g += '<rect x="' + x + '" y="' + y(h[1]) + '" width="' + w + '" height="' + (y(0) - y(h[1])) + '" rx="3" fill="var(--c-nvl)" opacity="' + (cur ? 1 : .55) + '"><title>Doanh thu ' + h[0] + ': ' + fmtD(h[1], 1) + ' tr</title></rect>';
     g += '<rect x="' + (x + w + 3) + '" y="' + y(h[2]) + '" width="' + w + '" height="' + (y(0) - y(h[2])) + '" rx="3" fill="var(--c-nc)" opacity="' + (cur ? 1 : .55) + '"><title>Lãi gộp ' + h[0] + ': ' + fmtD(h[2], 1) + ' tr</title></rect>';
     g += '<text x="' + (pl + i * bw + bw / 2) + '" y="' + (H - 6) + '" text-anchor="middle"' + (cur ? ' style="font-weight:700;fill:var(--fg)"' : '') + '>' + h[0] + '</text>'; });
-  $('chart').innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Biểu đồ doanh thu và lãi gộp 6 tháng, chi tiết ở bảng ngay sau">' + g + '</svg>' +
+  $('chart').innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-height:300px" role="img" aria-label="Biểu đồ doanh thu và lãi gộp 6 tháng, chi tiết ở bảng ngay sau">' + g + '</svg>' +
     '<table class="vh"><caption>Doanh thu và lãi gộp (triệu đồng)</caption><thead><tr><th>Tháng</th><th>Doanh thu</th><th>Lãi gộp</th><th>Biên</th></tr></thead><tbody>' +
-    hist.map(h => '<tr><td>' + h[0] + '</td><td>' + fmtD(h[1], 1) + '</td><td>' + fmtD(h[2], 1) + '</td><td>' + pct(h[1] ? h[2] / h[1] * 100 : 0) + '</td></tr>').join('') + '</tbody></table>' +
-    '<p class="note">Tháng 08–12/2025 là số liệu mẫu cố định (biên lãi gộp 30–31%); tháng 01/2026 tính trực tiếp từ chứng từ: biên ' + pct(R.margin) + '.</p>';
-  // việc cần làm
+    hist.map(h => '<tr><td>' + h[0] + '</td><td>' + fmtD(h[1], 1) + '</td><td>' + fmtD(h[2], 1) + '</td><td>' + pct(h[1] ? h[2] / h[1] * 100 : 0) + '</td></tr>').join('') + '</tbody></table>';
+  // việc cần làm: 1 dòng / mục, có nút hành động
   const st = D.closing, nx = nextStep(D), items = [], m = D.settings.method;
-  const pxN = R.active.filter(d => d.type === 'PX').length, nkN = R.active.filter(d => d.type === 'NK').length, hdN = R.active.filter(d => d.type === 'HD' || d.type === 'TL').length;
-  if(m === 'periodic' && !R.sd(4) && pxN) items.push('<li>' + pill('warn', pxN + ' phiếu xuất') + '<span>đang dùng giá tạm (bình quân tức thời) vì đang chọn bình quân cuối kỳ. Giá chốt khi chạy bước 5.</span></li>');
-  if(!R.sd(6) && nkN) items.push('<li>' + pill('warn', nkN + ' phiếu nhập kho') + '<span>BTP và ' + prodWord() + ' đang dùng giá thành tạm tính, nên phiếu xuất BTP cho GĐ2 và ' + hdN + ' hóa đơn có giá tạm. Chốt ở bước 7.</span></li>');
-  if(R.negatives.length){ const f = R.negatives[0]; items.push('<li>' + pill('bad', 'Tồn âm') + '<span>' + esc(negText(D, f)) + ' <button class="btn sm" type="button" data-open-doc="' + f.doc + '">Mở ' + f.doc + '</button>. Bước 4 khóa sổ sẽ dừng.</span></li>'); }
+  const li = (cls, tag, txt, btn) => '<li>' + pill(cls, tag) + '<span class="t" title="' + esc(txt) + '">' + esc(txt) + '</span>' + (btn || '') + '</li>';
+  const gotoBtn = (v, l) => '<button class="btn sm" type="button" data-goto-view="' + v + '">' + l + '</button>';
+  const pxN = R.active.filter(d => d.type === 'PX').length, nkN = R.active.filter(d => d.type === 'NK').length;
+  if(m === 'periodic' && !R.sd(4) && pxN) items.push(li('warn', pxN + ' phiếu xuất', 'Giá xuất tạm tính, chốt ở bước 5', gotoBtn('close', 'Khóa sổ')));
+  if(!R.sd(6) && nkN) items.push(li('warn', nkN + ' phiếu nhập kho', 'Giá thành tạm tính, chốt ở bước 7', gotoBtn('close', 'Khóa sổ')));
+  if(R.negatives.length){ const f = R.negatives[0]; items.push(li('bad', 'Tồn âm', negText(D, f), '<button class="btn sm" type="button" data-open-doc="' + f.doc + '">Mở ' + f.doc + '</button>')); }
   const lotsArr = Object.values(R.lots), hold = lotsArr.filter(l => l.qc !== 'pass');
   const cellsAll = []; Object.keys(R.items).forEach(k => Object.values(R.items[k].cells).forEach(c => { if(c.q > EPS) cellsAll.push(Object.assign({item:k}, c)); }));
   const holdStock = hold.filter(l => cellsAll.some(c => c.lot === l.code));
-  if(holdStock.length) items.push('<li>' + pill('warn', holdStock.length + ' lô chờ / không đạt QC') + '<span>' + holdStock.slice(0, 3).map(l => esc(l.code) + ' (' + QC_NAME[l.qc] + ')').join(', ') + ': không chọn được khi bán. <button class="btn sm" type="button" data-goto-view="stock">Xem tồn theo lô</button></span></li>');
+  if(holdStock.length) items.push(li('warn', holdStock.length + ' lô chờ / không đạt QC', holdStock.slice(0, 3).map(l => l.code + ' (' + QC_NAME[l.qc] + ')').join(', '), gotoBtn('stock', 'Xem lô')));
   const exp = cellsAll.filter(c => { const L = R.lots[c.lot]; return L && L.hsd && L.hsd < D.period.to; });
-  if(exp.length) items.push('<li>' + pill('warn', exp.length + ' lô quá HSD còn tồn') + '<span>' + exp.slice(0, 3).map(c => esc(c.lot) + ' ' + fmtQ(c.q) + ' ' + D.items[c.item].uom + ' tại ' + c.wh).join(', ') + '. Kiểm kê thiếu / hủy để xử lý.</span></li>');
+  if(exp.length) items.push(li('warn', exp.length + ' lô quá HSD', exp.slice(0, 3).map(c => c.lot + ' ' + fmtQ(c.q) + ' ' + D.items[c.item].uom + ' tại ' + c.wh).join(', '), gotoBtn('stock', 'Xem lô')));
   const di = st.dirty.findIndex(x => x);
-  if(di >= 0) items.push('<li>' + pill('bad', 'Cần chạy lại') + '<span>Có chứng từ thay đổi sau khi đã tính. Các bước khóa sổ từ bước ' + (di + 1) + ' cần chạy lại; chứng từ kết chuyển vẫn còn và được đánh dấu "Cần tính lại".</span></li>');
-  if(R.toCogs > 0) items.push('<li>' + pill('info', 'Dưới công suất') + '<span>Nhà máy chạy ' + fmt(D.settings.hours) + '/' + fmt(D.settings.normalHours) + ' giờ máy. ' + fmt(R.toCogs) + ' đ chi phí SXC cố định dưới công suất vào thẳng giá vốn (VAS 02).</span></li>');
-  if(abn) items.push('<li>' + pill('info', 'Hỏng ngoài định mức') + '<span>' + R.PRODK.filter(o => R.card[o].abn).map(o => esc(D.items[o].code) + ' vượt ' + fmtQ(R.card[o].excess) + ' ' + D.items[o].uom + ' = ' + fmt(R.card[o].abn) + ' đ').join('; ') + ' ghi Nợ 632 / Có 154.</span></li>');
-  items.push(locked() ? '<li>' + pill('bad', 'Đã khóa') + '<span>Kỳ 01/2026 đã khóa sổ. Muốn sửa phải mở khóa và ghi lý do.</span></li>'
-    : '<li>' + pill('info', 'Bước ' + (nx + 1) + '/12') + '<span>Khóa sổ: ' + STEPS[nx](isTT133()).toLowerCase() + '.</span></li>');
-  items.push(R.recon.ok ? '<li>' + pill('ok', 'Khớp') + '<span>Giá trị kho khớp sổ cái ' + R.recon.rows.filter(r => /^15/.test(r.acc)).map(r => r.acc).join(', ') + (isTT133() ? '' : '; 621, 622, 627 đã kết chuyển hết') + '.</span></li>'
-    : '<li>' + pill('bad', 'Lệch') + '<span>Giá trị kho chưa khớp sổ cái. Xem bảng đối chiếu.</span></li>');
+  if(di >= 0) items.push(li('bad', 'Cần chạy lại', 'Khóa sổ từ bước ' + (di + 1), gotoBtn('close', 'Khóa sổ')));
+  if(R.toCogs > 0) items.push(li('info', 'Dưới công suất', fmt(D.settings.hours) + '/' + fmt(D.settings.normalHours) + ' giờ máy · ' + fmt(R.toCogs) + ' đ SXC cố định vào 632', gotoBtn('cost', 'Giá thành')));
+  if(abn) items.push(li('info', 'Hỏng ngoài định mức', R.PRODK.filter(o => R.card[o].abn).map(o => D.items[o].code + ' vượt ' + fmtQ(R.card[o].excess) + ' ' + D.items[o].uom + ' = ' + fmt(R.card[o].abn) + ' đ').join('; ') + ' → 632', gotoBtn('cost', 'Giá thành')));
+  items.push(locked() ? li('bad', 'Đã khóa', 'Kỳ 01/2026 đã khóa sổ', '<button class="btn sm" type="button" data-act="unlock">Mở khóa</button>')
+    : li('info', 'Bước ' + (nx + 1) + '/12', STEPS[nx](isTT133()), gotoBtn('close', 'Khóa sổ')));
+  items.push(R.recon.ok ? li('ok', 'Khớp', 'Kho khớp sổ cái ' + R.recon.rows.filter(r => /^15/.test(r.acc)).map(r => r.acc).join(', '))
+    : li('bad', 'Lệch', 'Kho chưa khớp sổ cái'));
   $('todo').innerHTML = items.join('');
   // cơ cấu giá thành
   const col = {dd:'var(--c-dd)', btp:'var(--c-btp)', nvl:'var(--c-nvl)', nc:'var(--c-nc)', sxc:'var(--c-sxc)'}, nm = {dd:'Dở dang đầu kỳ', btp:'BTP GĐ trước', nvl:'NVL', nc:'Nhân công', sxc:'SXC'};
-  $('structure').innerHTML = R.order.map(o => { const c = R.card[o], u = D.items[o].uom; if(!c.qty) return '<div><b>' + esc(D.items[o].name) + '</b> <span class="muted">chưa có ' + prodWord() + ' đạt nhập kho trong kỳ</span></div>';
+  $('structure').innerHTML = R.order.map(o => { const c = R.card[o], u = D.items[o].uom; if(!c.qty) return '<div><b>' + esc(D.items[o].name) + '</b> <span class="muted">—</span></div>';
     const good = x => c.km[x] - c.abnBy[x], gN = good('nvl');
     const ddShare = c.ddk + c.nvl > 0 ? Math.round(gN * c.ddk / (c.ddk + c.nvl)) : 0;
     const parts = [['dd', ddShare], ['btp', good('btp')], ['nvl', gN - ddShare], ['nc', good('nc')], ['sxc', good('sxc')]].filter(p => p[1] > 0.5);
     return '<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>' + esc(D.items[o].name) + ' <span class="muted">· ' + esc((D.items[o].prod || {}).stage || '') + '</span></b><span><b>' + fmt(c.z) + '</b> <span class="muted">đ/' + u + '</span>' + (imp ? ' ' + dchip(c.z - (imp.z ? imp.z[o] || 0 : 0)) : '') + '</span></div>' +
       '<div class="bar" aria-hidden="true">' + parts.map(p => '<span style="width:' + (c.Z ? p[1] / c.Z * 100 : 0) + '%;background:' + col[p[0]] + '"></span>').join('') + '</div>' +
       '<div class="bar-lbl">' + parts.map(p => '<span><i style="background:' + col[p[0]] + '"></i>' + nm[p[0]] + ' ' + fmt(p[1] / c.qty) + ' đ · ' + fmtD(c.Z ? p[1] / c.Z * 100 : 0, 0) + '%</span>').join('') + '</div></div>'; }).join('');
-  $('recon').innerHTML = '<thead><tr><th>TK</th><th>Tên</th><th class="n">Sổ kho / thẻ giá thành</th><th class="n">Sổ cái</th><th class="n">Chênh lệch</th></tr></thead><tbody>' +
-    R.recon.rows.map(r => '<tr><td class="acc">' + r.acc + '</td><td>' + accName(r.acc, isTT133()) + (r.note ? '<br><span class="note">' + r.note + '</span>' : '') + '</td><td class="n">' + fmt(r.stock) + '</td><td class="n">' + fmt(r.gl) + '</td><td class="n">' + fmt(r.stock - r.gl) + '</td></tr>').join('') + '</tbody>';
+  $('recon').innerHTML = '<thead><tr><th>TK</th><th>Tên</th><th class="n">Sổ kho</th><th class="n">Sổ cái</th><th class="n">Chênh lệch</th></tr></thead><tbody>' +
+    R.recon.rows.map(r => '<tr><td class="acc">' + r.acc + '</td><td>' + accName(r.acc, isTT133()) + '</td><td class="n">' + fmt(r.stock) + '</td><td class="n">' + fmt(r.gl) + '</td><td class="n">' + fmt(r.stock - r.gl) + '</td></tr>').join('') + '</tbody>';
   $('reconPill').innerHTML = R.recon.ok ? pill('ok', 'Khớp') : pill('bad', 'Lệch');
-  const kcS = PILL[docStatus(R.postByNo.KC0001 || {d:{type:'KC', status:'posted'}})][1];
-  $('reconNote').textContent = 'Bút toán kho sinh từ chính sổ kho theo lô. Chi phí sản xuất luôn được kết chuyển vào 154 bằng KC0001 (đang "' + kcS + '"), nên 152, 154, 155, 156 bằng sổ chi tiết ở mọi thời điểm. 155 gồm cả BTP nhập kho — ' + BTP_NOTE;
 };
 
 // ================= Chứng từ =================
@@ -1513,8 +1481,8 @@ function renderDocDetail(){
   if(d.voidedBy) meta.push('Đã được thay bằng ' + d.voidedBy);
   if(d.status === 'void' && d.voidReason) meta.push('Lý do hủy: ' + esc(d.voidReason));
   if(meta.length) h += '<div class="meta">' + meta.map(x => '<span>' + x + '</span>').join('') + '</div>';
-  if(kcDirty) h += '<div class="msg warn">Số đã chốt khi chạy bước 6: ' + fmt(st.snap[5].kc) + ' đ → số tính theo chứng từ hiện tại: ' + fmt(p.dr) + ' đ. Chạy lại khóa sổ để chốt số mới. Chứng từ không bị xóa.</div>';
-  else if(docStatus(p) === 'provK') h += '<div class="msg info">Kết chuyển tạm tính: luôn có để sổ cái 154 phản ánh đúng chi phí đã phát sinh. Chạy bước 6 khóa sổ để chốt.</div>';
+  h += '<!--acts-->';
+  if(kcDirty) h += '<div class="msg warn">Đã chốt ở bước 6: ' + fmt(st.snap[5].kc) + ' đ → hiện tại: ' + fmt(p.dr) + ' đ. Cần chạy lại khóa sổ.</div>';
   // dòng hàng theo lô
   if(d.status !== 'void' && (d.lines || []).some(l => l.item)){
     h += '<div class="tbl-wrap"><table id="lineTbl"><thead><tr><th>Vật tư</th><th>Lô</th><th>Kho</th><th class="n">SL</th><th class="n">Giá trị kho</th><th>QC</th></tr></thead><tbody>' +
@@ -1522,32 +1490,25 @@ function renderDocDetail(){
         const wh = d.type === 'TL' ? (D.docs.find(x => x.no === d.ref) || {}).wh : d.wh;
         return '<tr><td>' + esc(it ? it.code + ' · ' + it.name : l.item) + '</td><td class="acc">' + esc(L ? L.code : (l.lot || '')) + '</td><td>' + esc(wh || '') + (d.whTo ? ' → ' + d.whTo : '') + '</td><td class="n">' + fmtQ(l.qty) + (l.rej ? '<br><span class="note">loại ' + fmtQ(l.rej) + '</span>' : '') + '</td><td class="n">' + fmt(valOf(R, d, i)) + '</td><td>' + (L ? qcPill(L.qc) : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
   }
-  if(d.status === 'void') h += '<p class="note">Chứng từ đã hủy vẫn được giữ trong sổ (gạch ngang) để kiểm tra, nhưng không sinh bút toán.</p>';
-  else if(d.type === 'CK') h += '<p class="msg info">Chuyển kho nội bộ không sinh bút toán: hàng đi giữa các kho trong cùng TK ' + [...new Set(d.lines.map(l => accOfItem(D, l.item)))].join(', ') + ', số lượng và giá trị lô giữ nguyên, chỉ đổi kho. Muốn sổ cái thấy theo kho thì cần mở TK chi tiết theo kho (chưa làm trong demo).</p>';
+  if(d.status === 'void' || d.type === 'CK'){}
   else {
     const hasAlt = p.lines.some(l => l.alt);
     h += '<div class="tbl-wrap"><table id="postTbl"><thead><tr><th>TK</th><th>Tên tài khoản</th><th>Đối tượng</th><th class="n">Nợ</th><th class="n">Có</th></tr></thead><tbody>' +
       p.lines.map(l => '<tr' + (l.alt ? ' class="diff"' : '') + '><td class="acc">' + l.acc + '</td><td>' + accName(l.acc, t) + (l.alt ? '<br><span class="alt">' + (l.alt === '—' ? 'Chỉ có ở TT 99 (TT 133 ghi thẳng 154)' : (t ? 'TT 99: ' : 'TT 133: ') + l.alt) + '</span>' : '') + '</td><td class="muted" style="white-space:normal;min-width:140px">' + esc(l.obj) + '</td><td class="n">' + (l.dr ? fmt(l.dr) : '') + '</td><td class="n">' + (l.cr ? fmt(l.cr) : '') + '</td></tr>').join('') +
       '</tbody><tfoot><tr><td colspan="3">Cộng ' + (p.dr === p.cr ? pill('ok', 'Nợ = Có') : pill('bad', 'Lệch')) + '</td><td class="n">' + fmt(p.dr) + '</td><td class="n">' + fmt(p.cr) + '</td></tr></tfoot></table></div>';
-    h += '<p class="note">Bút toán tự sinh theo ' + (t ? 'TT 133/2016' : 'TT 99/2025') + '. ' + (hasAlt ? 'Dòng tô vàng là chỗ ' + (t ? 'TT 99' : 'TT 133') + ' hạch toán khác; đổi "Chế độ" ở thanh trên để xem.' : 'Chứng từ này hạch toán giống nhau ở hai chế độ.') + '</p>';
-    if(d.type === 'NK' && d.lines.some(l => D.items[l.item] && D.items[l.item].kind === 'BTP')) h += '<p class="msg warn">' + BTP_NOTE + '</p>';
-    if(d.type === 'PX' && d.lines.some(l => D.items[l.item] && D.items[l.item].kind === 'BTP')) h += '<p class="note">Xuất BTP cho giai đoạn sau ghi thẳng Nợ 154 (khoản mục "BTP GĐ trước chuyển sang"), không qua 621. Chưa xác minh với kế toán trưởng: có đơn vị ghi qua 621.</p>';
     if(d.type === 'CT' && d.acc === '1122' && R.fx.byDoc[d.no]){ const f = R.fx.byDoc[d.no];
-      h += '<div class="explain"><b>Chênh lệch tỷ giá</b><div class="formula">Nợ 331 theo tỷ giá ghi sổ đích danh của ' + esc(d.lines[0].ref) + ': ' + fmtFC(f.fc) + ' × ' + fmt(f.ratePay) + ' = ' + fmt(f.dr) + '\nCó 1122 theo tỷ giá ghi sổ bình quân TK 1122: ' + fmtFC(f.fc) + ' × ' + fmt4(f.rateBook) + ' = ' + fmt(f.cr) + '\n' + (f.dr >= f.cr ? 'Lãi tỷ giá → Có 515: ' + fmt(f.dr - f.cr) : 'Lỗ tỷ giá → Nợ 635: ' + fmt(f.cr - f.dr)) + '</div><span class="note">Đánh giá lại số dư ngoại tệ cuối kỳ (413): chưa làm.</span></div>'; }
-    if(!hasAlt) h += '<div class="btn-row"><button class="btn sm" type="button" data-open-doc="PX0001">Xem phiếu xuất PX0001 (621 ↔ 154)</button><button class="btn sm" type="button" data-open-doc="BL0001">Xem bảng lương BL0001</button></div>';
+      h += '<div class="explain"><b>Chênh lệch tỷ giá</b><div class="formula">Nợ 331 theo tỷ giá ghi sổ đích danh của ' + esc(d.lines[0].ref) + ': ' + fmtFC(f.fc) + ' × ' + fmt(f.ratePay) + ' = ' + fmt(f.dr) + '\nCó 1122 theo tỷ giá ghi sổ bình quân TK 1122: ' + fmtFC(f.fc) + ' × ' + fmt4(f.rateBook) + ' = ' + fmt(f.cr) + '\n' + (f.dr >= f.cr ? 'Lãi tỷ giá → Có 515: ' + fmt(f.dr - f.cr) : 'Lỗ tỷ giá → Nợ 635: ' + fmt(f.cr - f.dr)) + '</div></div>'; }
   }
   const btns = [];
   const srcIdx = (d.lines || []).findIndex(l => l.item);
-  if(d.status !== 'void' && srcIdx >= 0 && ['PX','HD','TL','KK','NK','CK','PN'].indexOf(d.type) >= 0) btns.push('<button class="btn" type="button" data-goto="' + d.lines[srcIdx].item + '|' + moveId(d, srcIdx) + '">Xem đơn giá được tính từ đâu</button>');
+  if(d.status !== 'void' && srcIdx >= 0 && ['PX','HD','TL','KK','NK','CK','PN'].indexOf(d.type) >= 0) btns.push('<button class="btn sm" type="button" data-goto="' + d.lines[srcIdx].item + '|' + moveId(d, srcIdx) + '">Nguồn đơn giá</button>');
   if(d.origin !== 'system' && d.status !== 'void'){
     const why = lk ? LOCK_MSG : '';
-    btns.push('<button class="btn" type="button" data-edit="' + d.no + '"' + (lk ? ' aria-disabled="true" title="' + esc(why) + '"' : '') + '>Sửa</button>');
-    btns.push('<button class="btn danger" type="button" data-void="' + d.no + '"' + (lk ? ' aria-disabled="true" title="' + esc(why) + '"' : '') + '>Hủy chứng từ</button>');
+    btns.push('<button class="btn sm" type="button" data-edit="' + d.no + '"' + (lk ? ' aria-disabled="true" title="' + esc(why) + '"' : '') + '>Sửa</button>');
+    btns.push('<button class="btn sm danger" type="button" data-void="' + d.no + '"' + (lk ? ' aria-disabled="true" title="' + esc(why) + '"' : '') + '>Hủy chứng từ</button>');
   }
-  if(d.status !== 'void' && d.type !== 'CK') btns.push('<button class="btn sm" type="button" data-copy="postTbl">Sao chép bút toán cho Excel</button>');
-  h += '<div class="btn-row">' + btns.join('') + '</div>';
-  if(d.origin !== 'system' && d.status !== 'void') h += '<p class="note">' + (lk ? 'Kỳ đã khóa nên không sửa, hủy được. ' : '') + 'Sửa = hủy chứng từ này và lập chứng từ mới thay thế; cả hai đều ghi vào Nhật ký sửa đổi.</p>';
-  if(d.origin === 'system') h += '<p class="note">Chứng từ do quy trình khóa sổ sinh ra, không sửa tay. Muốn đổi số liệu thì sửa chứng từ gốc rồi chạy lại khóa sổ.</p>';
+  if(d.status !== 'void' && d.type !== 'CK') btns.push(xlBtn('postTbl', 'bút toán ' + d.no));
+  h = h.replace('<!--acts-->', btns.length ? '<div class="btn-row">' + btns.join('') + '</div>' : '');
   $('docDetail').innerHTML = h;
 }
 
@@ -1569,31 +1530,31 @@ RENDER.reports = function(){
   if(u.rep === 'ledger') ctl += '<label class="field" for="repAcc">Tài khoản <select id="repAcc">' + accs.map(a => opt(a, a + ' – ' + accName(a, t), u.repAcc)).join('') + '</select></label>';
   if(u.rep === 'debt') ctl += '<label class="field" for="repDebt">Loại <select id="repDebt">' + opt('131', '131 · Phải thu khách hàng', u.repDebt) + opt('331', '331 · Phải trả nhà cung cấp', u.repDebt) + '</select></label>';
   if(u.rep === 'cash') ctl += '<label class="field" for="repCash">Sổ <select id="repCash">' + CASH_ACC.map(a => opt(a, a + ' – ' + accName(a, t), u.repCash)).join('') + '</select></label>';
-  ctl += '<span class="spacer" style="flex:1"></span><button class="btn sm" type="button" data-copy="repTbl">Sao chép cho Excel</button>';
+  ctl += '<span class="spacer" style="flex:1"></span>' + xlBtn('repTbl', 'báo cáo');
   const a = document.activeElement, aid = a && $('repCtl').contains(a) ? a.id : null;
   $('repCtl').innerHTML = ctl; if(aid && $(aid)) $(aid).focus();
   let h = '';
   if(u.rep === 'nkc'){ const L = postedLines();
     h = '<h2>Sổ nhật ký chung · kỳ 01/2026</h2>' + tblH('repTbl', '<tr><th>Ngày</th><th>Số CT</th><th>Diễn giải</th><th>TK</th><th>Đối tượng</th><th class="n">Nợ</th><th class="n">Có</th></tr>',
       L.map(x => '<tr>' + td(ddmm(x.p.d.date)) + td(x.p.d.no, 'acc') + td(x.i ? '' : esc(x.p.d.desc), 'wrap') + td(x.l.acc, 'acc') + td(esc(x.l.obj), 'wrap') + td(nz(x.l.dr), 'n') + td(nz(x.l.cr), 'n') + '</tr>').join(''),
-      '<tr><td colspan="5">Cộng phát sinh</td>' + td(fmt(sum(L, x => x.l.dr)), 'n') + td(fmt(sum(L, x => x.l.cr)), 'n') + '</tr>') +
-      '<p class="note">' + L.length + ' dòng bút toán từ ' + R.posts.filter(p => p.d.status !== 'void' && p.lines.length).length + ' chứng từ (gồm chứng từ hệ thống KC/TH/KQ đang có). Phiếu chuyển kho không sinh bút toán nên không có ở đây.</p>';
+      '<tr><td colspan="5">Cộng phát sinh</td>' + td(fmt(sum(L, x => x.l.dr)), 'n') + td(fmt(sum(L, x => x.l.cr)), 'n') + '</tr>');
   }
   if(u.rep === 'ledger'){ const acc = u.repAcc, op = R.gOpen[acc] || 0; let bal = op; const L = postedLines().filter(x => x.l.acc === acc);
-    h = '<h2>Sổ cái TK ' + acc + ' – ' + esc(accName(acc, t)) + '</h2>' + tblH('repTbl', '<tr><th>Ngày</th><th>Số CT</th><th>Diễn giải</th><th>TK đối ứng</th><th class="n">Nợ</th><th class="n">Có</th><th class="n">Số dư</th></tr>',
+    const okL = () => Math.round(bal) === Math.round(R.gl[acc] || 0);
+    h = '<h2>Sổ cái TK ' + acc + ' – ' + esc(accName(acc, t)) + ' <!--okL--></h2>' + tblH('repTbl', '<tr><th>Ngày</th><th>Số CT</th><th>Diễn giải</th><th>TK đối ứng</th><th class="n">Nợ</th><th class="n">Có</th><th class="n">Số dư</th></tr>',
       '<tr>' + td('01/01') + td('') + td('Số dư đầu kỳ') + td('') + td('') + td('') + td(fmt(op), 'n') + '</tr>' +
       L.map(x => { bal += x.l.dr - x.l.cr; return '<tr>' + td(ddmm(x.p.d.date)) + td(x.p.d.no, 'acc') + td(esc(x.p.d.desc + (x.l.obj ? ' · ' + x.l.obj : '')), 'wrap') + td(contraOf(x.p, x.l), 'acc') + td(nz(x.l.dr), 'n') + td(nz(x.l.cr), 'n') + td(fmt(bal), 'n') + '</tr>'; }).join(''),
-      '<tr><td colspan="4">Cộng phát sinh · số dư cuối kỳ</td>' + td(fmt(sum(L, x => x.l.dr)), 'n') + td(fmt(sum(L, x => x.l.cr)), 'n') + td(fmt(R.gl[acc] || 0), 'n') + '</tr>') +
-      '<p class="note">Số dư dương là dư Nợ, trong ngoặc là dư Có. Số dư cuối kỳ khớp sổ cái tổng hợp: ' + (Math.round(bal) === Math.round(R.gl[acc] || 0) ? 'có' : 'không') + '.</p>';
+      '<tr><td colspan="4">Cộng phát sinh · số dư cuối kỳ</td>' + td(fmt(sum(L, x => x.l.dr)), 'n') + td(fmt(sum(L, x => x.l.cr)), 'n') + td(fmt(R.gl[acc] || 0), 'n') + '</tr>');
+    h = h.replace('<!--okL-->', okL() ? pill('ok', 'Khớp sổ cái') : pill('bad', 'Lệch sổ cái'));
   }
   if(u.rep === 'tb'){ const rows = accs.map(a => { const op = R.gOpen[a] || 0; let dr = 0, cr = 0; R.posts.forEach(p => p.lines.forEach(l => { if(l.acc === a){ dr += l.dr; cr += l.cr; } }));
       const cl = op + dr - cr; return {a, op, dr, cr, cl}; }).filter(r => Math.round(r.op) || Math.round(r.dr) || Math.round(r.cr));
     const T = k => sum(rows, r => k(r));
-    h = '<h2>Bảng cân đối số phát sinh · kỳ 01/2026</h2>' + tblH('repTbl', '<tr><th rowspan="2">TK</th><th rowspan="2">Tên tài khoản</th><th colspan="2" class="n">Số dư đầu kỳ</th><th colspan="2" class="n">Phát sinh trong kỳ</th><th colspan="2" class="n">Số dư cuối kỳ</th></tr><tr><th class="n">Nợ</th><th class="n">Có</th><th class="n">Nợ</th><th class="n">Có</th><th class="n">Nợ</th><th class="n">Có</th></tr>',
+    h = '<h2>Bảng cân đối số phát sinh · kỳ 01/2026 <!--okTB--></h2>' + tblH('repTbl', '<tr><th rowspan="2">TK</th><th rowspan="2">Tên tài khoản</th><th colspan="2" class="n">Số dư đầu kỳ</th><th colspan="2" class="n">Phát sinh trong kỳ</th><th colspan="2" class="n">Số dư cuối kỳ</th></tr><tr><th class="n">Nợ</th><th class="n">Có</th><th class="n">Nợ</th><th class="n">Có</th><th class="n">Nợ</th><th class="n">Có</th></tr>',
       rows.map(r => '<tr>' + td(r.a, 'acc') + td(esc(accName(r.a, t))) + td(r.op > 0 ? fmt(r.op) : '', 'n') + td(r.op < 0 ? fmt(-r.op) : '', 'n') + td(nz(r.dr), 'n') + td(nz(r.cr), 'n') + td(r.cl > 0.5 ? fmt(r.cl) : '', 'n') + td(r.cl < -0.5 ? fmt(-r.cl) : '', 'n') + '</tr>').join(''),
       '<tr><td colspan="2">Cộng</td>' + td(fmt(T(r => Math.max(r.op, 0))), 'n') + td(fmt(T(r => Math.max(-r.op, 0))), 'n') + td(fmt(T(r => r.dr)), 'n') + td(fmt(T(r => r.cr)), 'n') + td(fmt(T(r => r.cl > 0 ? r.cl : 0)), 'n') + td(fmt(T(r => r.cl < 0 ? -r.cl : 0)), 'n') + '</tr>');
     const okO = Math.round(T(r => r.op)) === 0, okC = Math.round(T(r => r.cl)) === 0;
-    h += '<p class="note">' + (okO && okC ? pill('ok', 'Cân') : pill('bad', 'Lệch')) + ' Tổng dư Nợ = tổng dư Có ở đầu kỳ và cuối kỳ; tổng phát sinh Nợ = Có. Số dư đầu 4211 là số cân đối của bộ số dư đầu mẫu. Bảng cân đối kế toán, lưu chuyển tiền tệ: chưa làm.</p>';
+    h = h.replace('<!--okTB-->', okO && okC ? pill('ok', 'Cân') : pill('bad', 'Lệch'));
   }
   if(u.rep === 'pl'){ const kq = R.postByNo.KQ0001 && R.D.closing.done[9];
     const fromKQ = acc => { if(!kq) return null; let v = 0; R.postByNo.KQ0001.lines.forEach(l => { if(l.acc === '911' && l.from && acc.indexOf(l.from) >= 0) v += l.cr - l.dr; }); return v; };
@@ -1602,9 +1563,8 @@ RENDER.reports = function(){
     const rows = [['01', 'Doanh thu bán hàng và cung cấp dịch vụ', gross], ['02', 'Các khoản giảm trừ doanh thu (hàng bán bị trả lại)', ret], ['10', 'Doanh thu thuần', P.rev], ['11', 'Giá vốn hàng bán', P.cogs],
       ['20', 'Lợi nhuận gộp', gp], ['21', 'Doanh thu hoạt động tài chính', P.fin], ['22', 'Chi phí tài chính', P.finExp], ['25', 'Chi phí bán hàng', P.sell], ['26', 'Chi phí quản lý doanh nghiệp', P.admin],
       ['30', 'Lợi nhuận thuần từ hoạt động kinh doanh', op], ['50', 'Tổng lợi nhuận kế toán trước thuế', op], ['51', 'Chi phí thuế TNDN', 0]];
-    h = '<h2>Báo cáo kết quả hoạt động kinh doanh · kỳ 01/2026</h2><p class="note">' + (kq ? pill('ok', 'Từ 911') + ' Lấy từ bút toán kết chuyển KQ0001 (Nợ/Có 911).' : pill('warn', 'Từ số dư TK 5–8') + ' Chưa chạy bước 10 nên lấy từ số dư TK loại 5–8 hiện tại.') + '</p>' +
+    h = '<h2>Báo cáo kết quả hoạt động kinh doanh · kỳ 01/2026 ' + (kq ? pill('ok', 'Từ 911') : pill('warn', 'Từ số dư TK 5–8')) + '</h2>' +
       tblH('repTbl', '<tr><th>Mã số</th><th>Chỉ tiêu</th><th class="n">Kỳ này</th></tr>', rows.map(r => '<tr' + (['10','20','30','50'].indexOf(r[0]) >= 0 ? ' class="sub"' : '') + '>' + td(r[0]) + td(r[1]) + td(fmt(r[2]), 'n') + '</tr>').join(''));
-    h += '<p class="note">Chưa tính thuế TNDN, chi phí bán hàng và quản lý (demo chưa có chứng từ 641, 642). ' + (kq ? 'Lợi nhuận đã chuyển sang 4212: ' + fmt(R.profit || 0) + ' đ.' : '') + '</p>';
   }
   if(u.rep === 'debt'){ const acc = u.repDebt, kind = acc === '131' ? 'CUS' : 'SUP', sg = acc === '131' ? 1 : -1;
     const ids = Object.keys(D.parties).filter(id => D.parties[id].type === kind);
@@ -1612,11 +1572,11 @@ RENDER.reports = function(){
       R.posts.forEach(p => p.lines.forEach(l => { if(l.acc === acc && l.pid === id){ dr += l.dr; cr += l.cr; if(l.fc){ if(l.dr) fdr += l.fc; else fcr += l.fc; } } }));
       return {id, cur: D.parties[id].cur || '', op, dr, cr, cl: op + dr - cr, fop:0, fdr: r2(fdr), fcr: r2(fcr), fcl: r2(fdr - fcr)}; }).filter(r => Math.round(r.op) || Math.round(r.dr) || Math.round(r.cr));
     const hasFC = rows.some(r => r.cur);
-    h = '<h2>' + (acc === '131' ? 'Tổng hợp công nợ phải thu khách hàng' : 'Tổng hợp công nợ phải trả nhà cung cấp') + ' · TK ' + acc + '</h2>' +
+    const okD = Math.round(sum(rows, r => r.cl)) === Math.round(R.gl[acc] || 0);
+    h = '<h2>' + (acc === '131' ? 'Tổng hợp công nợ phải thu khách hàng' : 'Tổng hợp công nợ phải trả nhà cung cấp') + ' · TK ' + acc + ' ' + (okD ? pill('ok', 'Khớp sổ cái') : pill('bad', 'Lệch sổ cái')) + '</h2>' +
       tblH('repTbl', '<tr><th>Đối tượng</th><th class="n">Dư đầu kỳ</th><th class="n">PS Nợ</th><th class="n">PS Có</th><th class="n">Dư cuối kỳ</th>' + (hasFC ? '<th>Nguyên tệ</th><th class="n">PS Nợ (NT)</th><th class="n">PS Có (NT)</th><th class="n">Dư cuối (NT)</th>' : '') + '</tr>',
       rows.map(r => '<tr>' + td(esc(partyName(D, r.id))) + td(fmt(sg * r.op), 'n') + td(nz(r.dr), 'n') + td(nz(r.cr), 'n') + td(fmt(sg * r.cl), 'n') + (hasFC ? td(r.cur) + td(r.cur ? fmtFC(r.fdr) : '', 'n') + td(r.cur ? fmtFC(r.fcr) : '', 'n') + td(r.cur ? fmtFC(sg * r.fcl) : '', 'n') : '') + '</tr>').join(''),
-      '<tr><td>Cộng</td>' + td(fmt(sg * sum(rows, r => r.op)), 'n') + td(fmt(sum(rows, r => r.dr)), 'n') + td(fmt(sum(rows, r => r.cr)), 'n') + td(fmt(sg * sum(rows, r => r.cl)), 'n') + (hasFC ? '<td></td><td></td><td></td><td></td>' : '') + '</tr>') +
-      '<p class="note">' + (acc === '131' ? 'Số dương: khách còn nợ.' : 'Số dương: còn phải trả.') + ' Tổng dư cuối khớp sổ cái TK ' + acc + ': ' + (Math.round(sum(rows, r => r.cl)) === Math.round(R.gl[acc] || 0) ? 'có' : 'không') + '. Khoản USD theo dõi nguyên tệ theo từng hóa đơn; đánh giá lại cuối kỳ (413) chưa làm.</p>';
+      '<tr><td>Cộng</td>' + td(fmt(sg * sum(rows, r => r.op)), 'n') + td(fmt(sum(rows, r => r.dr)), 'n') + td(fmt(sum(rows, r => r.cr)), 'n') + td(fmt(sg * sum(rows, r => r.cl)), 'n') + (hasFC ? '<td></td><td></td><td></td><td></td>' : '') + '</tr>');
   }
   if(u.rep === 'cash'){ const acc = u.repCash, op = R.gOpen[acc] || 0, fop = acc === '1122' ? ((D.openFC || {})['1122'] || 0) : 0; let bal = op, fbal = fop; const L = postedLines().filter(x => x.l.acc === acc);
     const fx = acc === '1122';
@@ -1625,15 +1585,14 @@ RENDER.reports = function(){
       L.map(x => { bal += x.l.dr - x.l.cr; if(fx) fbal = r2(fbal + (x.l.dr ? 1 : -1) * (x.l.fc || 0));
         return '<tr>' + td(ddmm(x.p.d.date)) + td(x.p.d.no, 'acc') + td(esc(x.p.d.desc), 'wrap') + td(contraOf(x.p, x.l), 'acc') + td(nz(x.l.dr), 'n') + td(nz(x.l.cr), 'n') + td(fmt(bal), 'n') + (fx ? td(x.l.dr && x.l.fc ? fmtFC(x.l.fc) : '', 'n') + td(x.l.cr && x.l.fc ? fmtFC(x.l.fc) : '', 'n') + td(fmtFC(fbal), 'n') : '') + '</tr>'; }).join(''),
       '<tr><td colspan="4">Cộng · tồn cuối kỳ</td>' + td(fmt(sum(L, x => x.l.dr)), 'n') + td(fmt(sum(L, x => x.l.cr)), 'n') + td(fmt(bal), 'n') + (fx ? '<td></td><td></td>' + td(fmtFC(fbal), 'n') : '') + '</tr>') +
-      (fx ? '<p class="note">Xuất ngoại tệ theo tỷ giá ghi sổ bình quân gia quyền di động của TK 1122; tồn cuối ' + fmtFC(fbal) + ' USD, tỷ giá ghi sổ ' + (fbal > 0 ? fmt4(bal / fbal) : '—') + '. Đánh giá lại cuối kỳ (413): chưa làm.</p>' : '') +
+      (fx ? '<p class="note">Tồn cuối ' + fmtFC(fbal) + ' USD · tỷ giá ghi sổ ' + (fbal > 0 ? fmt4(bal / fbal) : '—') + '</p>' : '') +
       (bal < -0.5 ? '<p class="msg err">Tồn quỹ âm — kiểm tra lại phiếu chi.</p>' : '');
   }
   if(u.rep === 'prog'){ const L = Object.keys(D.lsx).map(k => { const x = D.lsx[k]; let g = 0, rj = 0; R.active.forEach(d => { if(d.type === 'NK' && d.lsx === k) d.lines.forEach(l => { g += l.qty; rj += l.rej || 0; }); });
       return {k, x, g:rq(g), rj:rq(rj)}; });
     h = '<h2>Báo cáo tiến độ sản xuất · kế hoạch so với hoàn thành</h2>' + tblH('repTbl', '<tr><th>Lệnh sản xuất</th><th>Sản phẩm · giai đoạn</th><th>Kho</th><th class="n">Kế hoạch</th><th class="n">Nhập kho đạt</th><th class="n">Không đạt (loại bỏ)</th><th class="n">Hoàn thành</th><th class="n">Còn lại</th></tr>',
       L.map(r => { const it = D.items[r.x.item] || {uom:'', name:r.x.item}, done = rq(r.g + r.rj), p = r.x.plan ? done / r.x.plan * 100 : 0;
-        return '<tr>' + td(esc(r.x.no), 'acc') + td(esc(it.name) + ' · ' + esc((it.prod || {}).stage || '')) + td(r.x.wh) + td(fmtQ(r.x.plan) + ' ' + it.uom, 'n') + td(fmtQ(r.g), 'n') + td(fmtQ(r.rj), 'n') + td(pct(p) + ' ' + (p >= 99.95 ? pill('ok', 'Xong') : p > 0 ? pill('warn', 'Đang làm') : pill('mute', 'Chưa')), 'n') + td(fmtQ(Math.max(0, rq(r.x.plan - done))), 'n') + '</tr>'; }).join('')) +
-      '<p class="note">Hoàn thành = (nhập kho đạt + không đạt) / kế hoạch. Dở dang cuối kỳ (đang ủ) không tính vào hoàn thành.</p>';
+        return '<tr>' + td(esc(r.x.no), 'acc') + td(esc(it.name) + ' · ' + esc((it.prod || {}).stage || '')) + td(r.x.wh) + td(fmtQ(r.x.plan) + ' ' + it.uom, 'n') + td(fmtQ(r.g), 'n') + td(fmtQ(r.rj), 'n') + td(pct(p) + ' ' + (p >= 99.95 ? pill('ok', 'Xong') : p > 0 ? pill('warn', 'Đang làm') : pill('mute', 'Chưa')), 'n') + td(fmtQ(Math.max(0, rq(r.x.plan - done))), 'n') + '</tr>'; }).join(''));
   }
   if(u.rep === 'lsxout'){ let body = '', tq = 0, tv = 0;
     Object.keys(D.lsx).forEach(k => { const x = D.lsx[k], by = {};
@@ -1642,7 +1601,7 @@ RENDER.reports = function(){
       ks.forEach(it => { const b = by[it]; sv += b.v; body += '<tr>' + td(esc(x.no), 'acc') + td(esc(itCode(it) + ' · ' + itName(it))) + td(S.data.items[it].uom) + td(fmtQ(b.q), 'n') + td(fmt(b.v), 'n') + td(Object.keys(b.docs).join(', '), 'wrap') + '</tr>'; });
       body += '<tr class="sub"><td>' + esc(x.no) + '</td><td colspan="3">Cộng ' + esc(itName(x.item)) + '</td>' + td(fmt(sv), 'n') + '<td></td></tr>'; tv += sv; });
     h = '<h2>Tổng hợp xuất kho theo lệnh sản xuất</h2>' + tblH('repTbl', '<tr><th>Lệnh</th><th>Vật tư</th><th>ĐVT</th><th class="n">SL xuất</th><th class="n">Giá trị</th><th>Phiếu xuất</th></tr>', body || '<tr><td colspan="6" class="muted">Chưa có phiếu xuất theo lệnh.</td></tr>',
-      '<tr><td colspan="4">Tổng cộng</td>' + td(fmt(tv), 'n') + '<td></td></tr>') + '<p class="note">Giá trị theo phương pháp đang chọn (' + METHOD_NAME[D.settings.method].toLowerCase() + ').</p>';
+      '<tr><td colspan="4">Tổng cộng</td>' + td(fmt(tv), 'n') + '<td></td></tr>');
   }
   $('repOut').innerHTML = h;
 };
@@ -1659,8 +1618,8 @@ function whMoves(r, w){ // tổng hợp nhập / xuất theo kho (w = 'all' thì
 }
 RENDER.stock = function(){
   const D = S.data, w = S.ui.wh, spec = D.settings.method === 'specific';
-  $('whFilter').innerHTML = [['all', 'Tất cả kho']].concat(WHK.map(k => [k, k + ' · ' + WH[k].name])).map(([k, l]) => '<button type="button" data-wh="' + k + '" aria-pressed="' + (w === k) + '">' + esc(l) + '</button>').join('');
-  $('whNote').textContent = w === 'all' ? 'Gộp 3 kho: chuyển kho nội bộ không tính vào nhập / xuất.' : WH[w].role + ' · ' + WH[w].note + '. Nhập gồm hàng chuyển đến, xuất gồm hàng chuyển đi.';
+  $('whFilter').innerHTML = [['all', 'Tất cả', 'Tất cả kho']].concat(WHK.map(k => [k, k, WH[k].name])).map(([k, l, t]) => '<button type="button" data-wh="' + k + '" aria-pressed="' + (w === k) + '" title="' + esc(t) + '">' + esc(l) + '</button>').join('');
+  $('lotWh').textContent = w === 'all' ? '3 kho' : WH[w].name;
   let body = '', tot = {o:0, i:0, x:0, c:0};
   [['NVL', '152'], ['BTP', '155'], ['SP', '155'], ['HH', '156']].filter(([kind]) => itemsOf(D, kind).length).forEach(([kind, acc]) => { const sub = {o:0, i:0, x:0, c:0}; let any = false;
     itemsOf(D, kind).forEach(k => { const it = D.items[k], r = R.items[k];
@@ -1674,8 +1633,7 @@ RENDER.stock = function(){
     Object.keys(tot).forEach(x => tot[x] += sub[x]); });
   $('nxt').innerHTML = '<thead><tr><th rowspan="2">Mã</th><th rowspan="2">Tên vật tư, ' + prodWord() + '</th><th rowspan="2">ĐVT</th><th rowspan="2">TK</th><th colspan="2" class="n">Tồn đầu kỳ</th><th colspan="2" class="n">Nhập trong kỳ</th><th colspan="2" class="n">Xuất trong kỳ</th><th colspan="2" class="n">Tồn cuối kỳ</th></tr>' +
     '<tr><th class="n">SL</th><th class="n">Giá trị</th><th class="n">SL</th><th class="n">Giá trị</th><th class="n">SL</th><th class="n">Giá trị</th><th class="n">SL</th><th class="n">Giá trị</th></tr></thead><tbody>' + body +
-    '</tbody><tfoot><tr><td>Tổng</td><td colspan="3">Tổng cộng ' + (w === 'all' ? '3 kho' : w) + ' (chỉ cộng giá trị)</td><td></td><td class="n">' + fmt(tot.o) + '</td><td></td><td class="n">' + fmt(tot.i) + '</td><td></td><td class="n">' + fmt(tot.x) + '</td><td></td><td class="n">' + fmt(tot.c) + '</td></tr></tfoot>';
-  $('nxtNote').textContent = spec ? 'Thực tế đích danh: giá trị theo kho cộng từ giá trị từng lô.' : 'Phương pháp ' + METHOD_NAME[D.settings.method].toLowerCase() + ' tính giá theo cả mặt hàng; giá trị theo kho là phân bổ theo số lượng chuyển và xuất, tổng 3 kho bằng sổ chi tiết.';
+    '</tbody><tfoot><tr><td>Tổng</td><td colspan="3">Tổng cộng ' + (w === 'all' ? '3 kho' : w) + '</td><td></td><td class="n">' + fmt(tot.o) + '</td><td></td><td class="n">' + fmt(tot.i) + '</td><td></td><td class="n">' + fmt(tot.x) + '</td><td></td><td class="n">' + fmt(tot.c) + '</td></tr></tfoot>';
   // tồn theo kho và lô
   const rows = []; Object.keys(R.items).forEach(k => Object.values(R.items[k].cells).forEach(c => { if((w === 'all' || c.wh === w) && Math.abs(c.q) > EPS) rows.push(Object.assign({item:k}, c)); }));
   rows.sort((a, b) => a.wh < b.wh ? -1 : a.wh > b.wh ? 1 : (itCode(a.item) < itCode(b.item) ? -1 : itCode(a.item) > itCode(b.item) ? 1 : (a.lot < b.lot ? -1 : 1)));
@@ -1684,8 +1642,6 @@ RENDER.stock = function(){
     (rows.length ? rows.map(c => { const L = R.lots[c.lot], it = D.items[c.item];
       return '<tr><td>' + c.wh + '</td><td class="acc">' + esc(c.lot) + '</td><td>' + esc(it.code + ' · ' + it.name) + '</td><td>' + it.uom + '</td><td class="wrap small">' + esc(src(L)) + '</td><td>' + (L ? dmy(L.date) : '') + '</td><td>' + (L && L.hsd ? hsdPill(L) : '<span class="muted">—</span>') + '</td><td>' + (L ? qcPill(L.qc) : '') + '</td><td class="small">' + esc(L ? ((D.qc[c.lot] && D.qc[c.lot].role) || L.qcRole) : '') + '</td><td class="n">' + fmtQ(c.q) + (c.q < -EPS ? ' ' + pill('bad', 'Tồn âm') : '') + '</td><td class="n">' + (spec ? fmt(c.v) : '<span class="muted">—</span>') + '</td><td><button class="btn sm" type="button" data-qc="' + esc(c.lot) + '">QC lô</button></td></tr>'; }).join('')
       : '<tr><td colspan="12" class="muted">Kho này không có tồn.</td></tr>') + '</tbody>';
-  $('lotNote').textContent = (spec ? 'Giá trị từng lô là giá thực tế đích danh (nhập mua hoặc giá thành lô). ' : 'Giá trị theo lô chỉ có ở phương pháp thực tế đích danh; phương pháp đang chọn tính giá theo cả mặt hàng (xem N-X-T). ') +
-    'Lô "Chờ" / "Không đạt" không chọn được khi lập hóa đơn bán. Đổi trạng thái QC được ghi vào Nhật ký sửa đổi.';
 };
 
 // ================= Giá xuất kho =================
@@ -1709,12 +1665,12 @@ RENDER.cogs = function(){
   const D = S.data; if(!D.items[S.ui.item]) S.ui.item = Object.keys(D.items)[0];
   const k = S.ui.item, it = D.items[k], r = R.items[k], t = isTT133();
   $('itemSel').innerHTML = Object.keys(D.items).map(x => '<option value="' + x + '"' + (x === k ? ' selected' : '') + '>' + D.items[x].code + ' · ' + esc(D.items[x].name) + '</option>').join('');
-  const lk = locked(); $('btnBack').setAttribute('aria-disabled', lk ? 'true' : 'false'); $('btnBack').title = lk ? LOCK_MSG : 'Mở phiếu nhập điền sẵn: thính gạo 80 kg, 31.500 đ/kg, ngày 06/01';
+  const lk = locked(); $('btnBack').setAttribute('aria-disabled', lk ? 'true' : 'false'); $('btnBack').title = lk ? LOCK_MSG : 'Thính gạo 80 kg × 31.500 đ, ngày 06/01';
   const clickable = r.rows.filter(x => x.kind !== 'in');
   if(!S.ui.sel || !clickable.find(x => x.id === S.ui.sel)) S.ui.sel = clickable[0] ? clickable[0].id : null;
   const prov = D.settings.method === 'periodic' && r.method === 'moving';
   const acc = KIND_ACC[it.kind];
-  $('ledgerHead').innerHTML = '<span><b style="color:var(--fg)">Sổ chi tiết vật tư · Mẫu S10-DN</b></span><span>Tài khoản ' + acc + ' – ' + accName(acc, t) + '</span><span>Kho mặc định ' + it.wh + '</span><span>ĐVT ' + it.uom + '</span><span>Phương pháp: ' + METHOD_NAME[r.method] + (prov ? ' ' + pill('warn', 'giá tạm, chốt ở bước ' + (FINAL_STEP[it.kind] + 1)) : '') + '</span>';
+  $('ledgerHead').innerHTML = '<span><b style="color:var(--fg)">Sổ chi tiết vật tư · S10-DN</b></span><span>Tài khoản ' + acc + ' – ' + accName(acc, t) + '</span><span>Kho mặc định ' + it.wh + '</span><span>ĐVT ' + it.uom + '</span><span>Phương pháp: ' + METHOD_NAME[r.method] + (prov ? ' ' + pill('warn', 'giá tạm, chốt ở bước ' + (FINAL_STEP[it.kind] + 1)) : '') + '</span>';
   const row = x => { const isIn = x.kind === 'in' || x.kind === 'ret', cls = (x.kind === 'in' ? '' : 'click') + (x.id === S.ui.sel ? ' sel' : '');
     const d = D.docs.find(z => z.no === x.doc), bd = d && d.backdated ? ' ' + pill('warn', 'Lùi ngày') : '';
     const qv = (q, v) => '<td class="n">' + fmtQ(q) + '</td><td class="n">' + fmt(v) + '</td>';
@@ -1729,36 +1685,32 @@ RENDER.cogs = function(){
   $('cmp').innerHTML = METHODS.map(m => { const v = valuate(D.open[k] || [], r.moves, m, R.lots), o = sum(v.rows.filter(x => x.kind === 'out'), x => x.value);
     const shown = sum(r.rows.filter(x => x.kind === 'out'), x => x.value);
     return '<div class="' + (m === curM ? 'on' : '') + '"><span>' + METHOD_NAME[m] + (m === curM ? ' · đang chọn' : '') + '</span><b>' + fmt(o) + '</b><span>tổng xuất · tồn ' + fmt(v.closeV) + '</span>' +
-      (m === curM && prov ? '<span>Dự kiến khi chốt. Sổ đang hiển thị giá tạm ' + fmt(shown) + '</span>' : '') + '</div>'; }).join('');
+      (m === curM && prov ? '<span>Giá tạm: ' + fmt(shown) + '</span>' : '') + '</div>'; }).join('');
   const x = r.rows.find(z => z.id === S.ui.sel), ex = $('explain');
-  if(!x){ ex.innerHTML = '<h2>Nguồn gốc đơn giá</h2><p class="muted" style="margin:0">Vật tư này chưa có phiếu xuất, chuyển kho hay trả lại trong kỳ.</p>'; return; }
+  if(!x){ ex.innerHTML = '<h2>Nguồn gốc đơn giá</h2><p class="muted" style="margin:0">Chưa có phiếu xuất trong kỳ.</p>'; return; }
   const e = x.ex; let h = '<div class="panel-head"><h2>Nguồn gốc đơn giá · <span class="acc">' + x.id + '</span></h2></div>';
-  h += '<p style="margin:0">' + esc(x.desc) + ': ' + (x.kind === 'ret' ? 'nhập lại ' : x.kind === 'trf' ? 'chuyển ' : 'xuất ') + '<b>' + fmtQ(x.qty) + ' ' + it.uom + '</b>, giá trị <b>' + fmt(x.value) + '</b> đ, đơn giá <b>' + fmt4(x.unit) + '</b> đ/' + it.uom + '.</p>';
+  h += '<dl class="kv"><dt>Diễn giải</dt><dd>' + esc(x.desc) + '</dd><dt>' + (x.kind === 'ret' ? 'Nhập lại' : x.kind === 'trf' ? 'Chuyển' : 'Xuất') + '</dt><dd><b>' + fmtQ(x.qty) + ' ' + it.uom + '</b></dd><dt>Giá trị</dt><dd><b>' + fmt(x.value) + '</b> đ</dd><dt>Đơn giá</dt><dd><b>' + fmt4(x.unit) + '</b> đ/' + it.uom + '</dd></dl>';
   h += '<div class="meta"><span>Lô: ' + lotLine(x.lot) + '</span><span>Kho: ' + esc(whName(x.wh)) + (x.whTo ? ' → ' + esc(whName(x.whTo)) : '') + '</span></div>';
-  if(prov && x.kind === 'out') h += '<p style="margin:0">' + pill('warn', 'Giá tạm') + ' Đang chọn bình quân cuối kỳ. Trong kỳ phiếu xuất tạm lấy giá bình quân tức thời; giá chốt khi chạy bước ' + (FINAL_STEP[it.kind] + 1) + ' khóa sổ.</p>';
+  if(prov && x.kind === 'out') h += '<p style="margin:0">' + pill('warn', 'Giá tạm · chốt ở bước ' + (FINAL_STEP[it.kind] + 1)) + '</p>';
   const srcTbl = list => '<div class="tbl-wrap"><table><thead><tr><th>Nguồn</th><th>Lô</th><th>Nhà cung cấp / nguồn gốc</th><th class="n">SL</th><th class="n">Giá trị</th></tr></thead><tbody>' + list.map(s => '<tr><td class="acc">' + s.src + '</td><td class="acc">' + esc(s.lot || '') + '</td><td class="muted">' + esc(srcParty(s)) + '</td><td class="n">' + fmtQ(s.qty) + '</td><td class="n">' + (s.value != null ? fmt(s.value) : '') + '</td></tr>').join('') + '</tbody></table></div>';
   if(e.type === 'specific' || (e.type === 'trf' && e.specific)){
-    h += '<div class="explain"><b>Thực tế đích danh theo lô</b><div class="formula">Lô ' + x.lot + ' tại ' + x.wh + ' trước khi ' + (e.type === 'trf' ? 'chuyển' : 'xuất') + ': ' + fmtQ(e.bq) + ' ' + it.uom + ', giá trị ' + fmt(e.bv) + '\nĐơn giá lô = ' + (e.bq > EPS ? fmt(e.bv) + ' / ' + fmtQ(e.bq) + ' = ' : '') + fmt4(e.unit) + '\nGT = ' + (e.all ? 'toàn bộ giá trị còn lại của lô (phiếu làm lô về 0)' : 'round(' + fmtQ(x.qty) + ' × ' + fmt(e.bv) + ' / ' + fmtQ(e.bq) + ')') + ' = ' + fmt(x.value) + '</div>' +
-      (e.short ? '<div class="msg err">Xuất vượt tồn của lô: phần thiếu tạm định giá theo đơn giá nhập của lô và báo tồn âm. Bước 4 khóa sổ sẽ dừng.</div>' : '') +
-      '<span class="note">Luật R1(c): giá trị xuất = round(SL × giá trị tồn của lô / SL tồn của lô); phần dư làm tròn nằm lại ở lô; phiếu làm lô về 0 nhận toàn bộ phần còn lại.</span></div>';
+    h += '<div class="explain"><b>Thực tế đích danh theo lô</b><div class="formula">Lô ' + x.lot + ' tại ' + x.wh + ' trước khi ' + (e.type === 'trf' ? 'chuyển' : 'xuất') + ': ' + fmtQ(e.bq) + ' ' + it.uom + ', giá trị ' + fmt(e.bv) + '\nĐơn giá lô = ' + (e.bq > EPS ? fmt(e.bv) + ' / ' + fmtQ(e.bq) + ' = ' : '') + fmt4(e.unit) + '\nGT = ' + (e.all ? 'giá trị còn lại của lô' : 'round(' + fmtQ(x.qty) + ' × ' + fmt(e.bv) + ' / ' + fmtQ(e.bq) + ')') + ' = ' + fmt(x.value) + '</div>' +
+      (e.short ? '<div class="msg err">Xuất vượt tồn của lô: phần thiếu tạm định giá theo đơn giá nhập của lô và báo tồn âm. Bước 4 khóa sổ sẽ dừng.</div>' : '') + '</div>';
   } else if(e.type === 'trf'){
-    h += '<div class="explain"><b>Chuyển kho nội bộ</b><div class="formula">Giá trị chuyển = ' + fmtQ(x.qty) + ' × ' + fmt4(e.unit) + ' ≈ ' + fmt(x.value) + '</div><span class="note">Chuyển kho không sinh bút toán và không đổi tổng giá trị mặt hàng; giá trị chuyển chỉ để lập N-X-T theo kho.</span></div>';
+    h += '<div class="explain"><b>Chuyển kho nội bộ</b><div class="formula">Giá trị chuyển = ' + fmtQ(x.qty) + ' × ' + fmt4(e.unit) + ' ≈ ' + fmt(x.value) + '</div></div>';
   } else if(e.type === 'periodic'){
-    h += '<div class="explain"><b>Bình quân gia quyền cuối kỳ</b><div class="formula">Đơn giá = (GT tồn đầu + GT nhập) / (SL tồn đầu + SL nhập)\n       = ' + fmt(e.V) + ' / ' + fmtQ(e.Q) + ' = ' + fmt4(e.unit) + '\nGT xuất = ' + fmtQ(x.qty) + ' × ' + fmt4(e.unit) + (e.last ? ' (phiếu làm tồn về 0, nhận phần còn lại)' : ' ≈ ' + fmt(x.value)) + '</div>' + srcTbl(e.srcs.filter(s => s.qty > 0)) +
-      '<span class="note">R1(c): mỗi phiếu xuất làm tròn đến đồng, phần dư nằm ở tồn cuối kỳ; nếu tồn cuối bằng 0 thì phiếu xuất cuối nhận phần còn lại. Lô chỉ dùng để đếm số lượng.</span></div>';
+    h += '<div class="explain"><b>Bình quân gia quyền cuối kỳ</b><div class="formula">Đơn giá = (GT tồn đầu + GT nhập) / (SL tồn đầu + SL nhập)\n       = ' + fmt(e.V) + ' / ' + fmtQ(e.Q) + ' = ' + fmt4(e.unit) + '\nGT xuất = ' + fmtQ(x.qty) + ' × ' + fmt4(e.unit) + (e.last ? ' (phần còn lại) = ' + fmt(x.value) : ' ≈ ' + fmt(x.value)) + '</div>' + srcTbl(e.srcs.filter(s => s.qty > 0)) + '</div>';
   } else if(e.type === 'moving'){
     h += '<div class="explain"><b>Bình quân gia quyền tức thời</b><div class="formula">Trước khi xuất: tồn ' + fmtQ(e.bq) + ' ' + it.uom + ', giá trị ' + fmt(e.bv) + '\nĐơn giá = ' + (e.bq > EPS ? fmt(e.bv) + ' / ' + fmtQ(e.bq) + ' = ' : 'tồn bằng 0, lấy đơn giá nhập gần nhất ') + fmt4(e.unit) + '\nGT xuất = ' + fmtQ(x.qty) + ' × ' + fmt4(e.unit) + ' ≈ ' + fmt(x.value) + '</div>' +
       (e.short ? '<div class="msg err">Xuất vượt tồn: phần thiếu tạm định giá theo đơn giá gần nhất và được báo tồn âm. Bước 4 khóa sổ sẽ dừng.</div>' : '') +
-      srcTbl(e.srcs.filter(s => s.qty > 0)) + '<span class="note">Đơn giá cập nhật lại sau mỗi lần nhập, tính chung các lô và các kho.</span></div>';
+      srcTbl(e.srcs.filter(s => s.qty > 0)) + '</div>';
   } else if(e.type === 'fifo'){
     h += '<div class="explain"><b>Nhập trước – xuất trước</b><div class="tbl-wrap"><table><thead><tr><th>Lấy từ lớp</th><th>Lô</th><th>Nguồn</th><th class="n">SL</th><th class="n">Đơn giá</th><th class="n">Giá trị</th></tr></thead><tbody>' +
       e.parts.map(p => '<tr><td class="acc">' + p.src + (p.short ? '' : ' · ' + ddmm(p.date)) + '</td><td class="acc">' + esc(p.lot || '') + '</td><td class="muted">' + esc(p.short ? 'Không có hàng: báo tồn âm' : srcParty(p)) + '</td><td class="n">' + fmtQ(p.qty) + '</td><td class="n">' + fmt4(p.unit) + '</td><td class="n">' + fmt(p.amt) + '</td></tr>').join('') + '</tbody></table></div>' +
-      (e.parts.some(p => p.short) ? '<div class="msg err">Phần thiếu không được tính 0 đ: tạm định giá theo lớp gần nhất và báo tồn âm.</div>' : '') + '<span class="note">FIFO theo ngày nhập của cả mặt hàng; lô ghi trên phiếu chỉ dùng để đếm số lượng.</span></div>';
+      (e.parts.some(p => p.short) ? '<div class="msg err">Phần thiếu không được tính 0 đ: tạm định giá theo lớp gần nhất và báo tồn âm.</div>' : '') + '</div>';
   } else if(e.type === 'ret'){
     h += '<div class="explain"><b>Hàng bán bị trả lại</b><div class="formula">Về lô ' + esc(e.lot) + ' tại ' + esc(e.wh) + ' theo giá vốn ' + (e.periodic ? 'bình quân kỳ' : 'lúc bán ở ' + e.ref) + ': ' + fmtQ(x.qty) + ' × ' + fmt4(e.unit) + ' = ' + fmt(x.value) + '</div></div>';
   }
-  if(isProd(D, k)) h += '<p class="note">Giá nhập kho lô ' + (it.kind === 'BTP' ? 'BTP' : prodWord()) + ' lấy từ thẻ giá thành. Xem trang Truy xuất theo lô để biết từng đồng đến từ đâu.</p>';
-  if(x.to && D.items[x.to]) h += '<p class="note">Giá trị này đi tiếp vào khoản mục ' + (it.kind === 'BTP' ? 'BTP GĐ trước' : 'NVL trực tiếp') + ' của ' + esc(D.items[x.to].name) + ' và vào giá thành.</p>';
   ex.innerHTML = h;
 };
 
@@ -1790,10 +1742,10 @@ RENDER.items = function(){
 RENDER.cost = function(){
   const D = S.data, set = D.settings, P = R.pool, codes = R.PRODK;
   if(document.activeElement !== $('hours')) $('hours').value = set.hours;
-  $('normalNote').textContent = '/ công suất bình thường ' + fmt(set.normalHours) + ' giờ' + (R.under > 0 ? ' → dưới công suất ' + fmtD(R.under * 100, 1) + '%' : ' → đạt công suất');
+  $('normalNote').textContent = '/ ' + fmt(set.normalHours) + ' giờ công suất' + (R.under > 0 ? ' · dưới ' + fmtD(R.under * 100, 1) + '%' : ' · đạt');
   const wi = $('wipInputs'), act = document.activeElement && wi.contains(document.activeElement) ? document.activeElement.id : null;
   if(!act || wi.querySelectorAll('[data-wip]').length !== codes.length)
-    wi.innerHTML = codes.map(o => '<label class="field" for="wip_' + o + '">' + esc(D.items[o].code) + ' dở dang cuối kỳ <input id="wip_' + o + '" data-wip="' + o + '" type="number" inputmode="decimal" min="0" max="100000" step="10" style="width:96px" value="' + (set.wipQty[o] || 0) + '"> ' + esc(D.items[o].uom) + '</label>').join('');
+    wi.innerHTML = codes.map(o => '<label class="field" for="wip_' + o + '">' + esc(D.items[o].code) + ' DDCK <input id="wip_' + o + '" data-wip="' + o + '" type="number" inputmode="decimal" min="0" max="100000" step="10" style="width:96px" value="' + (set.wipQty[o] || 0) + '"> ' + esc(D.items[o].uom) + '</label>').join('');
   wi.querySelectorAll('[data-wip]').forEach(e => { e.disabled = locked(); });
   // sơ đồ thứ tự tính
   const box = (o) => { const c = R.card[o], it = D.items[o]; return '<div class="st"><span class="muted">' + esc((it.prod || {}).stage || '') + ' · ' + esc(it.code) + '</span><b>' + esc(it.name) + '</b><span>z = ' + fmt2(c.z) + ' đ/' + esc(it.uom) + '</span></div>'; };
@@ -1803,7 +1755,7 @@ RENDER.cost = function(){
       fl += '<div class="st"><span class="muted">Kho BTP</span><b>Nhập ' + R.card[pv].lots.length + ' lô, xuất ' + fmtQ(outQ) + ' ' + esc(D.items[pv].uom) + '</b><span>theo lô cho ' + esc(it.code) + '</span></div><span class="ar" aria-hidden="true">→</span>'; }
     fl += box(o); });
   $('flow').innerHTML = '<span class="muted" style="align-self:center">Thứ tự tính:</span>' + fl;
-  $('allocBasis').innerHTML = 'Tiêu thức: chi phí <abbr title="Nhân công trực tiếp">NCTT</abbr> gồm trích theo lương (' + codes.map(o => D.items[o].code + ': ' + fmt(R.nc[o]) + ' · ' + fmtD(R.share[o] * 100, 1) + '%').join(', ') + '). Chia theo R1(b).';
+  $('allocBasis').innerHTML = 'Tiêu thức: <abbr title="Nhân công trực tiếp">NCTT</abbr> · ' + codes.map(o => esc(D.items[o].code) + ' ' + fmtD(R.share[o] * 100, 1) + '%').join(' · ');
   $('alloc').innerHTML = '<thead><tr><th>Khoản chi phí</th><th>Chứng từ</th><th>Loại</th><th class="n">Phát sinh</th><th class="n">Dưới công suất → 632</th><th class="n">Được phân bổ</th>' + codes.map(o => '<th class="n">' + D.items[o].code + '</th>').join('') + '</tr></thead><tbody>' +
     P.map(p => '<tr><td>' + esc(p.name) + (p.user ? ' ' + pill('info', 'Do bạn lập') : '') + '</td><td class="acc">' + p.doc + '</td><td>' + (p.fixed ? 'Cố định' : 'Biến đổi') + '</td><td class="n">' + fmt(p.amt) + '</td><td class="n">' + (p.toCogs ? fmt(p.toCogs) : '–') + '</td><td class="n">' + fmt(p.alloc) + '</td>' + codes.map(o => '<td class="n">' + fmt(p[o] || 0) + '</td>').join('') + '</tr>').join('') +
     '</tbody><tfoot><tr><td colspan="3">Cộng</td><td class="n">' + fmt(sum(P, p => p.amt)) + '</td><td class="n">' + fmt(R.toCogs) + '</td><td class="n">' + fmt(sum(P, p => p.alloc)) + '</td>' + codes.map(o => '<td class="n">' + fmt(R.sxc[o]) + '</td>').join('') + '</tr></tfoot>';
@@ -1813,21 +1765,18 @@ RENDER.cost = function(){
     const rw = (lbl, tot, v, cls) => '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td>' + lbl + '</td><td class="n">' + fmt(tot) + '</td>' + cols.map(x => '<td class="n">' + fmt(v[x] || 0) + '</td>').join('') + '</tr>';
     const good = {}; cols.forEach(x => good[x] = c.km[x] - c.abnBy[x]);
     return '<div class="panel"><div class="panel-head"><h2>Thẻ tính giá thành · ' + esc(it.name) + '</h2><div class="spacer"></div>' + pill('info', esc((it.prod || {}).stage || '')) + cs + '</div>' +
-      '<div class="meta"><span>Kỳ 01/2026 · mẫu thẻ S37-DN (số hiệu theo TT 99 chưa xác minh)</span><span>' + esc((it.prod || {}).steps || '') + '</span></div>' +
+      '<div class="meta"><span>S37-DN · 01/2026</span><span>' + esc((it.prod || {}).steps || '') + '</span></div>' +
       '<div class="meta"><span>Hoàn thành: đạt <b>' + fmtQ(c.good) + '</b> ' + u + ', không đạt (loại bỏ) <b>' + fmtQ(c.rej) + '</b></span><span>Hao hụt định mức ' + fmtD(c.lossPct, 2) + '% × ' + fmtQ(c.done) + ' = ' + fmtQ(c.allowed) + ' ' + u + (c.excess ? ' → vượt <b>' + fmtQ(c.excess) + '</b>' : ' → trong định mức') + '</span><span>Dở dang ' + fmtQ(c.wipQ) + ' ' + u + ' (đánh giá theo NVL' + (hasB ? ' và BTP' : '') + ')</span></div>' +
-      '<div class="tbl-wrap"><table id="card-' + o + '"><thead><tr><th>Chỉ tiêu</th><th class="n">Tổng</th>' + (hasB ? '<th class="n">BTP GĐ trước chuyển sang</th>' : '') + '<th class="n"><abbr title="Nguyên vật liệu trực tiếp">NVL TT</abbr></th><th class="n"><abbr title="Nhân công trực tiếp">NC TT</abbr></th><th class="n"><abbr title="Sản xuất chung">SXC</abbr></th></tr></thead><tbody>' +
-      rw('1. Dở dang đầu kỳ (DDĐK)', c.ddk, {nvl:c.ddk}) +
-      rw('2. Chi phí phát sinh trong kỳ (C)', c.C, {btp:c.btp, nvl:c.nvl, nc:c.nc, sxc:c.sxc}) +
-      rw('3. Các khoản giảm giá thành', 0, {}) +
-      rw('4. Dở dang cuối kỳ (DDCK)', c.ddck, c.dd) +
-      rw('5. Giá thành hoàn thành gồm SP hỏng (1 + 2 − 3 − 4)', c.Zt, c.km) +
-      rw('6. Hỏng ngoài định mức → Nợ 632 / Có 154', c.abn, c.abnBy) +
-      rw('7. Tổng giá thành SP đạt (Z = 5 − 6)', c.Z, good, 'sub') +
-      '</tbody><tfoot><tr><td>8. Giá thành đơn vị (z = Z / ' + fmtQ(c.qty) + ')</td><td class="n">' + (c.qty ? fmt2(c.z) : '—') + '</td>' + cols.map(x => '<td class="n">' + (c.qty ? fmt2(good[x] / c.qty) : '—') + '</td>').join('') + '</tr></tfoot></table></div>' +
-      '<p class="note">Kiểm tra: ' + fmt(c.ddk) + ' + ' + fmt(c.C) + ' − ' + fmt(c.ddck) + ' − ' + fmt(c.abn) + ' = ' + fmt(c.Z) + ' đ. ' + (c.abn ? 'Phần hỏng vượt định mức tính theo giá thành đơn vị gồm hỏng ' + fmt2(c.zt) + ' đ × ' + fmtQ(c.excess) + ' ' + u + '. ' : 'Hao hụt trong định mức tính vào giá thành SP đạt. ') +
-      'Nhập kho: Nợ 155 / Có 154, chia Z theo lô (R1 b): ' + (c.lots.map(l => l.lot + ' (' + fmtQ(l.qty) + ' ' + u + ': ' + fmt(l.value) + ')').join(', ') || 'chưa có') + '.' + (hasB ? ' Cột "BTP GĐ trước chuyển sang" là giá trị các lô BTP xuất cho giai đoạn này (dòng riêng, không gộp vào NVL).' : '') + '</p>' +
-      (it.kind === 'BTP' ? '<p class="msg warn">' + BTP_NOTE + '</p>' : '') +
-      '<div class="btn-row"><button class="btn sm" type="button" data-copy="card-' + o + '">Sao chép cho Excel</button></div></div>'; }).join('');
+      '<div class="tbl-wrap"><table id="card-' + o + '"><thead><tr><th>Chỉ tiêu</th><th class="n">Tổng</th>' + (hasB ? '<th class="n"><abbr title="BTP giai đoạn trước chuyển sang">BTP GĐ trước</abbr></th>' : '') + '<th class="n"><abbr title="Nguyên vật liệu trực tiếp">NVL TT</abbr></th><th class="n"><abbr title="Nhân công trực tiếp">NC TT</abbr></th><th class="n"><abbr title="Sản xuất chung">SXC</abbr></th></tr></thead><tbody>' +
+      rw('1. Dở dang đầu kỳ', c.ddk, {nvl:c.ddk}) +
+      rw('2. Phát sinh trong kỳ (C)', c.C, {btp:c.btp, nvl:c.nvl, nc:c.nc, sxc:c.sxc}) +
+      rw('3. Giảm giá thành', 0, {}) +
+      rw('4. Dở dang cuối kỳ', c.ddck, c.dd) +
+      rw('5. Hoàn thành gồm hỏng (1+2−3−4)', c.Zt, c.km) +
+      rw('6. Hỏng ngoài định mức → 632', c.abn, c.abnBy) +
+      rw('7. Z sản phẩm đạt (5 − 6)', c.Z, good, 'sub') +
+      '</tbody><tfoot><tr><td>8. z = Z / ' + fmtQ(c.qty) + '</td><td class="n">' + (c.qty ? fmt2(c.z) : '—') + '</td>' + cols.map(x => '<td class="n">' + (c.qty ? fmt2(good[x] / c.qty) : '—') + '</td>').join('') + '</tr></tfoot></table></div>' +
+      '<div class="btn-row"><span class="note mono">DDĐK + C − DDCK − hỏng = Z: ' + fmt(c.ddk) + ' + ' + fmt(c.C) + ' − ' + fmt(c.ddck) + ' − ' + fmt(c.abn) + ' = ' + fmt(c.Z) + '</span><span class="spacer" style="flex:1"></span>' + xlBtn('card-' + o, 'thẻ giá thành ' + it.code) + '</div></div>'; }).join('');
 };
 
 // ================= Truy xuất =================
@@ -1838,8 +1787,7 @@ RENDER.trace = function(){
   if(!S.ui.lot || !lots.find(l => l.lot === S.ui.lot)) S.ui.lot = lots[0].lot;
   $('lotSeg').innerHTML = lots.map(l => '<button type="button" data-lot="' + esc(l.lot) + '" aria-pressed="' + (l.lot === S.ui.lot) + '">' + esc(l.lot) + '</button>').join('');
   const lot = lots.find(l => l.lot === S.ui.lot), o = lot.o, c = R.card[o], k = c.qty, it = D.items[o], u = it.uom, L = R.lots[lot.lot];
-  $('traceHead').innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px 28px;align-items:baseline"><div><span class="muted">Lô</span> <b class="acc">' + esc(lot.lot) + '</b> · ' + dmy(lot.date) + ' · ' + esc(lot.no) + '</div><div><span class="muted">' + esc(it.name) + '</span> <b>' + fmtQ(lot.qty) + ' ' + u + '</b></div><div><span class="muted">Giá trị lô</span> <b>' + fmt(lot.value) + '</b></div><div><span class="muted">Mỗi ' + u + '</span> <b style="font-size:18px">' + fmt2(c.z) + ' đ</b></div><div>' + (L ? qcPill(L.qc) + ' <span class="muted">' + esc(L.qcRole) + '</span>' : '') + '</div></div>' +
-    '<p class="note">Giá thành kỳ của ' + esc(it.name) + ' (' + esc((it.prod || {}).stage || '') + '): ' + fmt(c.Z) + ' đ cho ' + fmtQ(k) + ' ' + u + ' đạt; các lô dùng chung đơn giá. Số bên phải mỗi dòng là tổng của cả kỳ, đã trừ phần dở dang cuối kỳ và phần hỏng ngoài định mức.</p>';
+  $('traceHead').innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px 28px;align-items:baseline"><div><span class="muted">Lô</span> <b class="acc">' + esc(lot.lot) + '</b> · ' + dmy(lot.date) + ' · ' + esc(lot.no) + '</div><div><span class="muted">' + esc(it.name) + '</span> <b>' + fmtQ(lot.qty) + ' ' + u + '</b></div><div><span class="muted">Giá trị lô</span> <b>' + fmt(lot.value) + '</b></div><div><span class="muted">Mỗi ' + u + '</span> <b style="font-size:18px">' + fmt2(c.z) + ' đ</b></div><div>' + (L ? qcPill(L.qc) + ' <span class="muted">' + esc(L.qcRole) + '</span>' : '') + '</div><div><span class="muted">Z kỳ</span> <b>' + fmt(c.Z) + '</b> / ' + fmtQ(k) + ' ' + u + '</div></div>';
   const node = (color, title, sub, amt, kids, open) => '<details class="node"' + (open ? ' open' : '') + '><summary><span class="caret" aria-hidden="true">▸</span><span><span class="dot" style="background:' + color + '"></span><b>' + title + '</b> <span class="muted">' + sub + '</span></span><span class="n muted">' + fmt2(k ? amt / k : 0) + ' đ/' + u + '</span><b class="n">' + fmt(amt) + '</b></summary><div class="kids">' + kids + '</div></details>';
   const leaf = (t, src, a, mine) => '<div class="leaf' + (mine ? ' mine' : '') + '"><span>' + t + '<br><span class="src">' + src + '</span></span><span class="n">' + fmt(a) + '</span></div>';
   const g = x => c.km[x] - c.abnBy[x];
@@ -1857,7 +1805,7 @@ RENDER.trace = function(){
     if(!x.m) return leaf('Dở dang đầu kỳ chuyển sang', 'Số dư 154 · ' + it.code + ' từ kỳ 12/2025 (cá, tôm đang ủ)' + (scale < 1 ? ' (× ' + fmtD(scale * 100, 2) + '%)' : ''), a);
     const itx = D.items[x.m]; let mine = false;
     const src = c.rowsIn.filter(r => r.item === x.m).map(r => { const s = srcOfRow(r, itx); if(s.mine) mine = true; return s.t; }).join('<br>');
-    return leaf(esc(itx.name), src + (scale < 1 ? '<br>Sau khi trừ phần nằm trong dở dang cuối kỳ và hỏng ngoài định mức (× ' + fmtD(scale * 100, 2) + '%)' : ''), a, mine); }).join('');
+    return leaf(esc(itx.name), src + (scale < 1 ? '<br>× ' + fmtD(scale * 100, 2) + '% (sau DDCK, hỏng)' : ''), a, mine); }).join('');
   // BTP giai đoạn trước
   let btpNode = '';
   const bRows = c.rowsIn.filter(r => r.btp);
@@ -1875,7 +1823,7 @@ RENDER.trace = function(){
   const ncA = allocate(g('nc'), ncList.map(x => x.v));
   const ncKids = ncList.map((x, i) => leaf('Lương công nhân trực tiếp' + (x.d.contrib ? ' và trích theo lương' : ''), x.d.no + ' · ' + fmt(x.l.amt) + (x.d.contrib ? ' + trích ' + fmtD(x.d.contrib * 100, 1) + '% (BHXH, BHYT, BHTN, KPCĐ)' : '') + ' · tập hợp trực tiếp cho ' + it.code, ncA[i], x.d.origin === 'user')).join('');
   const sxA = allocate(g('sxc'), R.pool.map(p => p[o] || 0));
-  const sxcKids = R.pool.map((p, i) => leaf(esc(p.name), p.doc + ' · ' + (p.fixed ? 'cố định' : 'biến đổi') + ' · phân bổ ' + fmtD(R.share[o] * 100, 1) + '% theo chi phí NCTT' + (p.toCogs ? ' · ' + fmt(p.toCogs) + ' đ dưới công suất đã vào 632' : ''), sxA[i], p.user)).join('');
+  const sxcKids = R.pool.map((p, i) => leaf(esc(p.name), p.doc + ' · ' + (p.fixed ? 'cố định' : 'biến đổi') + ' · phân bổ ' + fmtD(R.share[o] * 100, 1) + '%' + (p.toCogs ? ' · ' + fmt(p.toCogs) + ' đ dưới công suất đã vào 632' : ''), sxA[i], p.user)).join('');
   $('tree').innerHTML = btpNode + node('var(--c-nvl)', 'Nguyên vật liệu, bao bì, phụ gia trực tiếp', 'phiếu xuất → lô → phiếu nhập → nhà cung cấp', g('nvl'), nvlKids || '<span class="muted">Không có</span>', !btpNode) +
     node('var(--c-nc)', 'Nhân công trực tiếp', 'bảng lương', g('nc'), ncKids || '<span class="muted">Không có</span>', false) +
     node('var(--c-sxc)', 'Sản xuất chung', 'bảng phân bổ', g('sxc'), sxcKids || '<span class="muted">Không có</span>', false) +
@@ -1898,18 +1846,18 @@ RENDER.close = function(){
     return '<li class="' + cls + '"><span class="num">' + (i + 1) + '</span><div><div class="t">' + STEPS[i](t) + '</div><div class="r">' + r + '</div></div>' + tag + '</li>'; }).join('');
   $('btnStep').disabled = nx < 0 || lk; $('btnAll').disabled = nx < 0 || lk;
   $('btnReopen').disabled = lk || !st.done.slice(4).some(x => x); $('btnReopen').title = lk ? LOCK_MSG : '';
+  const pr = st.done[9] && !st.dirty[9], doneN = st.done.filter((x, j) => x && !st.dirty[j]).length;
+  const nEq = R.posts.every(p => p.dr === p.cr);
+  const kv = '<dl class="kv"><dt>Tiến độ</dt><dd class="n"><b>' + doneN + '/12</b> bước</dd><dt>Nợ = Có</dt><dd class="n">' + (nEq ? pill('ok', 'Cân') : pill('bad', 'Lệch')) + '</dd>' +
+    '<dt>Kho – sổ cái</dt><dd class="n">' + (R.recon.ok ? pill('ok', 'Khớp') : pill('bad', 'Lệch')) + '</dd><dt>Tồn âm</dt><dd class="n">' + (R.negatives.length ? pill('bad', R.negatives.length + ' chỗ') : pill('ok', 'Không')) + '</dd>' +
+    '<dt>Doanh thu thuần</dt><dd class="n">' + fmt(R.rev) + '</dd><dt>Giá vốn</dt><dd class="n">' + fmt(R.cogs) + '</dd><dt>Lãi gộp</dt><dd class="n">' + fmt(R.gross) + '</dd>' +
+    (pr ? '<dt>Lợi nhuận trước thuế</dt><dd class="n"><b>' + fmt(R.profit || 0) + '</b></dd>' : '') + '</dl>';
   if(lk){
-    $('closeSide').innerHTML = '<div class="stamp">Đã khóa sổ<br>01/2026</div><h2>Kỳ 01/2026 đã khóa</h2><p style="margin:0">Mọi chứng từ trong kỳ không sửa, hủy hay thêm được nữa. Thử bấm "+ Lập chứng từ" hoặc "Sửa" một chứng từ: hệ thống sẽ từ chối và nói rõ lý do.</p>' +
-      '<div class="btn-row"><button class="btn primary" type="button" data-act="unlock">Mở khóa có lý do</button><button class="btn" type="button" data-goto-view="audit">Xem nhật ký</button><button class="btn" type="button" data-goto-view="reports">Xem báo cáo</button></div>' +
-      '<p class="note">Mở khóa cần vai trò kế toán trưởng và lý do; lần mở khóa được lưu vào nhật ký sửa đổi.</p>';
+    $('closeSide').innerHTML = '<div class="stamp">Đã khóa sổ<br>01/2026</div>' + kv +
+      '<div class="btn-row"><button class="btn primary" type="button" data-act="unlock">Mở khóa có lý do</button><button class="btn" type="button" data-goto-view="audit">Nhật ký</button><button class="btn" type="button" data-goto-view="reports">Báo cáo</button></div>';
   } else {
     const di = st.dirty.findIndex(x => x);
-    let h = '<h2>' + (di >= 0 ? 'Có thay đổi sau khi đã tính' : 'Vì sao phải đúng thứ tự') + '</h2>';
-    h += di >= 0 ? '<p style="margin:0">Hệ thống đánh dấu các bước từ bước ' + (di + 1) + ' cần chạy lại; các bước trước vẫn giữ nguyên. Chứng từ kết chuyển đã sinh không bị xóa mà chuyển sang trạng thái "Cần tính lại" và hiện số cũ → số mới.</p>'
-      : '<p style="margin:0">Giá thành GĐ1 cần giá xuất NVL và chi phí lương, khấu hao. Giá xuất BTP cho GĐ2 cần giá thành GĐ1. Giá vốn lại cần giá thành GĐ2. Chạy sai thứ tự sẽ ra số sai mà không ai biết.</p>';
-    h += '<ul class="todo"><li>' + pill('info', 'Thử') + '<span>Lập hóa đơn bán vượt tồn của một lô (tích "Vẫn lưu"), rồi bấm "Chạy tất cả": bước 4 sẽ dừng và chỉ đúng phiếu, kho, lô.</span></li>' +
-      '<li>' + pill('info', 'Thử') + '<span>Hóa đơn bán chỉ làm các bước từ 8 cần chạy lại; phiếu nhập, xuất, chuyển kho từ bước 4. Chứng từ nào gây tồn âm cũng đưa về bước 4.</span></li></ul>';
-    $('closeSide').innerHTML = h;
+    $('closeSide').innerHTML = '<h2>Kết quả kỳ</h2>' + (di >= 0 ? '<div class="msg warn">Cần chạy lại từ bước ' + (di + 1) + '.</div>' : '') + kv;
   }
 };
 function runSteps(all){
@@ -1931,14 +1879,14 @@ RENDER.audit = function(){
   const A = S.data.audit.slice().reverse();
   $('auditTbl').innerHTML = '<thead><tr><th>Thời gian</th><th>Người thực hiện</th><th>Hành động</th><th>Chứng từ / lô</th><th>Lý do</th><th>Chi tiết (trước → sau)</th></tr></thead><tbody>' +
     (A.length ? A.map(a => '<tr><td>' + new Date(a.at).toLocaleString('vi-VN') + '</td><td>' + esc(a.actor) + '</td><td>' + (ACTION[a.action] || a.action) + '</td><td class="acc">' + esc(a.no || '') + (a.newNo ? ' → ' + esc(a.newNo) : '') + '</td><td class="wrap">' + esc(a.reason || '') + '</td><td class="wrap">' + esc(a.detail || '') + '</td></tr>').join('')
-      : '<tr><td colspan="6" class="muted">Chưa có thao tác nào. Lập, sửa hoặc hủy một chứng từ, hoặc đổi QC một lô để thấy nhật ký.</td></tr>') + '</tbody>';
+      : '<tr><td colspan="6" class="muted">Chưa có thao tác.</td></tr>') + '</tbody>';
 };
 
 // ================= Ghi nhận thay đổi =================
 function commit(mutate, from, title){
   const before = snapshot(R), t0 = performance.now();
   const entry = mutate(S.data);
-  if(entry) S.data.audit.push(Object.assign({at:nowISO(), actor:'Khách demo'}, entry));
+  if(entry) S.data.audit.push(Object.assign({at:nowISO(), actor:ACTOR}, entry));
   S.ui.fail = null;
   R = settle(S.data, from);
   S.ui.impact = {before, title, ms:performance.now() - t0};
@@ -1974,7 +1922,6 @@ const selx = (id, k, opts, a) => '<select class="inp" id="' + id + '" data-k="' 
 const lab = (txt, ctl, cls) => '<label' + (cls ? ' class="' + cls + '"' : '') + '>' + txt + ctl + '</label>';
 const VATS = [0, 5, 8, 10];
 const vatSel = (id, k, v, a) => selx(id, k, VATS.map(r => opt(r, r + '%', v)).join(''), 'aria-label="Thuế suất GTGT" ' + (a || ''));
-const VAT_NOTE = '<p class="note">Thuế suất theo cấu hình — kiểm tra chính sách giảm thuế GTGT hiện hành và mức thuế của thủy sản tươi, mắm (chưa xác minh). Mặc định lấy theo danh mục; sửa được trên từng dòng.</p>';
 function fDate(dr, rr){ return lab('Ngày chứng từ', '<input class="inp" type="date" id="f_date" data-k="date"' + (rr ? ' data-rerender="1"' : '') + ' min="2026-01-01" max="2026-01-31" value="' + esc(dr.date) + '">'); }
 function fParty(dr, kind, noNew){
   const P = S.data.parties;
@@ -2066,8 +2013,7 @@ const FORMS = {
         lab('Diễn giải', inp('f_desc', 'desc', dr.desc, 'placeholder="Tự gợi ý nếu để trống"'), 'wide') + '</div>' +
         linesHead([['Vật tư'], ['SL', 1], ['Đơn giá (' + (usd ? 'USD' : 'đ') + ')', 1], ['Thành tiền (đ)', 1], ['Thuế suất'], ['QC'], ['Mã lô sẽ cấp'], ['Tồn tại ngày', 1], ['']]) +
         dr.lines.map((l, i) => '<tr><td>' + selx('f_l' + i + '_item', 'lines.' + i + '.item', itemOpts(['NVL', 'HH'], l.item), 'aria-label="Vật tư dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="decimal" aria-label="Số lượng dòng ' + (i + 1) + '" style="width:90px"') + '</td><td>' + inp('f_l' + i + '_price', 'lines.' + i + '.price', l.price, 'inputmode="decimal" aria-label="Đơn giá dòng ' + (i + 1) + '" style="width:110px"') + '</td><td class="n" id="f_l' + i + '_amt"></td><td>' + vatSel('f_l' + i + '_vat', 'lines.' + i + '.vat', usd ? 0 : l.vat, usd ? 'disabled' : '') + '</td><td>' + selx('f_l' + i + '_qc', 'lines.' + i + '.qc', QC_OPTS(l.qc), 'aria-label="QC dòng ' + (i + 1) + '"') + '</td><td class="acc small" id="f_l' + i + '_lot"></td><td class="n muted" id="f_l' + i + '_stk"></td><td>' + delBtn(i, n) + '</td></tr>').join('') +
-        '</tbody></table></div>' + addBtn + (usd ? '<p class="note">Nhập khẩu bằng USD: giá trị kho = round(SL × đơn giá USD × tỷ giá). Thuế GTGT hàng nhập khẩu nộp ở khâu hải quan, demo chưa làm nên thuế suất để 0%. Trả tiền bằng phiếu chi TK 1122.</p>' : VAT_NOTE) +
-        '<p class="note">Mỗi dòng sinh một lô (mã lót hàng) theo mã vật tư + ngày; người QC theo khu lấy từ danh mục.</p>'; },
+        '</tbody></table></div>' + addBtn; },
     onField(k, dr){ const D = S.data, m = /^lines\.(\d+)\.item$/.exec(k);
       if(m){ const l = dr.lines[+m[1]]; l.vat = String(D.items[l.item].vat); l.lot = ''; }
       if(k === 'partyId' && D.parties[dr.partyId]){ dr.cur = D.parties[dr.partyId].cur || 'VND'; if(dr.cur === 'USD') dr.pay = '331'; }
@@ -2110,9 +2056,9 @@ const FORMS = {
         (to ? '<p class="note">Đối tượng tập hợp chi phí: <b>' + esc(D.items[to].code + ' · ' + D.items[to].name) + '</b> (' + esc((D.items[to].prod || {}).stage || '') + ': ' + esc((D.items[to].prod || {}).steps || '') + ')</p>' : '') +
         (bom.length ? '<div class="frm"><label>Điền theo định mức: số ' + esc(D.items[to].uom) + ' định sản xuất' + inp('f_bomN', 'bomN', dr.bomN, 'inputmode="numeric" placeholder="Ví dụ 500"') + '</label><div style="align-self:end"><button class="btn sm" type="button" data-act="bomFill">Điền vật tư và lô theo định mức</button></div>' +
           '<p class="note wide">Định mức ' + esc(D.items[to].code) + ' / 1 ' + esc(D.items[to].uom) + ': ' + bom.map(b => D.items[b.item] ? esc(D.items[b.item].name) + ' ' + fmtQ(b.qty) + ' ' + D.items[b.item].uom : '').join(', ') + '</p></div>' : '') +
-        linesHead([['Vật tư'], ['Lô (gợi ý lô HSD gần nhất)'], ['SL xuất', 1], ['Tồn lô tại kho', 1], ['Giá trị (engine tính)', 1], ['']]) +
+        linesHead([['Vật tư'], ['Lô'], ['SL xuất', 1], ['Tồn lô tại kho', 1], ['Giá trị', 1], ['']]) +
         dr.lines.map((l, i) => '<tr><td>' + selx('f_l' + i + '_item', 'lines.' + i + '.item', itemOpts(['NVL', 'BTP'], l.item, to), 'aria-label="Vật tư dòng ' + (i + 1) + '"') + '</td><td>' + lotSel('f_l' + i + '_lot', 'lines.' + i + '.lot', F ? F.Rb : R, l.item, dr.wh, dr.date, 'use', l.lot, 'aria-label="Lô dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="decimal" aria-label="Số lượng dòng ' + (i + 1) + '" style="width:100px"') + '</td><td class="n" id="f_l' + i + '_stk"></td><td class="n" id="f_l' + i + '_val"></td><td>' + delBtn(i, n) + '</td></tr>').join('') +
-        '</tbody></table></div>' + addBtn + '<p class="note">Không có ô đơn giá. ' + (D.settings.method === 'specific' ? 'Thực tế đích danh: giá xuất = giá của lô đã chọn (R1 c).' : 'Đơn giá theo ' + METHOD_NAME[D.settings.method].toLowerCase() + '; lô chỉ dùng để đếm số lượng và truy xuất.') + ' Lô "Không đạt" QC không xuất sản xuất được.</p>'; },
+        '</tbody></table></div>' + addBtn; },
     onField(k, dr){ fixLots(dr, 'use', k); },
     build(dr, Rb){ const E = [], D = S.data; chkDate(dr, E); const lines = [], idx = [];
       const x = D.lsx[dr.lsx]; if(!x || !D.items[x.item]){ E.push({id:'f_lsx', msg:'Chọn lệnh sản xuất.'}); return {doc:null, E, W:[], I:[]}; }
@@ -2133,9 +2079,9 @@ const FORMS = {
     fromDoc: d => ({date:d.date, partyId:d.partyId, pay:d.pay, wh:d.wh, lines:d.lines.map(l => ({item:l.item, lot:l.lot, qty:fmtInput(l.qty), price:fmtInput(l.price), vat:String(l.vat), keep:true}))}),
     body(dr){ const n = dr.lines.length;
       return '<div class="frm">' + fDate(dr, true) + fParty(dr, 'CUS') + lab('Thanh toán', selx('f_pay', 'pay', opt('131', '131 · Bán chịu', dr.pay) + opt('1111', '1111 · Thu tiền mặt', dr.pay))) + lab('Kho xuất', whSel('f_wh', 'wh', dr.wh, 'data-rerender="1"')) + '</div>' +
-        linesHead([['Hàng bán'], ['Lô (chỉ lô QC Đạt)'], ['SL', 1], ['Giá bán chưa thuế', 1], ['Thuế suất'], ['Tồn lô', 1], ['Giá vốn dự kiến', 1], ['Lãi gộp dòng', 1], ['']]) +
+        linesHead([['Hàng bán'], ['Lô'], ['SL', 1], ['Giá bán chưa thuế', 1], ['Thuế suất'], ['Tồn lô', 1], ['Giá vốn dự kiến', 1], ['Lãi gộp dòng', 1], ['']]) +
         dr.lines.map((l, i) => '<tr><td>' + selx('f_l' + i + '_item', 'lines.' + i + '.item', itemOpts(['SP', 'HH'], l.item), 'aria-label="Hàng bán dòng ' + (i + 1) + '"') + '</td><td>' + lotSel('f_l' + i + '_lot', 'lines.' + i + '.lot', F ? F.Rb : R, l.item, dr.wh, dr.date, 'sale', l.lot, 'aria-label="Lô dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="numeric" aria-label="Số lượng dòng ' + (i + 1) + '" style="width:80px"') + '</td><td>' + inp('f_l' + i + '_price', 'lines.' + i + '.price', l.price, 'inputmode="decimal" aria-label="Giá bán dòng ' + (i + 1) + '" style="width:110px"') + '</td><td>' + vatSel('f_l' + i + '_vat', 'lines.' + i + '.vat', l.vat) + '</td><td class="n" id="f_l' + i + '_stk"></td><td class="n" id="f_l' + i + '_cost"></td><td class="n" id="f_l' + i + '_gp"></td><td>' + delBtn(i, n) + '</td></tr>').join('') +
-        '</tbody></table></div>' + addBtn + '<p class="note">Lô "Chờ" / "Không đạt" QC hiện mờ và không chọn được. Bán tại kho NTH gợi ý giá bán lẻ. Doanh thu thành phẩm ghi 5112, hàng hóa mua về ghi 5111.</p>' + VAT_NOTE; },
+        '</tbody></table></div>' + addBtn; },
     onField(k, dr){ const m = /^lines\.(\d+)\.item$/.exec(k); if(m){ const l = dr.lines[+m[1]]; l.vat = String(S.data.items[l.item].vat); l.price = fmtInput(priceOf(l.item, dr.wh)); }
       if(k === 'wh') dr.lines.forEach(l => l.price = fmtInput(priceOf(l.item, dr.wh)));
       fixLots(dr, 'sale', k); },
@@ -2167,7 +2113,7 @@ const FORMS = {
         lab('Lý do trả lại', inp('f_desc', 'desc', dr.desc, 'placeholder="Ví dụ: hũ nứt, móp nắp"'), 'wide') + '</div>' +
         (hd ? linesHead([['Hàng'], ['Về lô gốc'], ['Đã bán', 1], ['Đã trả trước đó', 1], ['SL trả lại', 1], ['Giá bán', 1], ['Giá vốn nhập lại', 1]]) +
           dr.lines.map((l, i) => { const hl = hd.lines[l.refLine]; return '<tr><td>' + esc(D.items[l.item].name) + '</td><td class="acc">' + esc(hl.lot) + '</td><td class="n">' + fmtQ(hl.qty) + '</td><td class="n">' + fmtQ(returned(dr.ref, l.refLine)) + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="numeric" aria-label="SL trả dòng ' + (i + 1) + '" style="width:80px"') + '</td><td class="n">' + fmt(hl.price) + '</td><td class="n" id="f_l' + i + '_cost"></td></tr>'; }).join('') + '</tbody></table></div>' : '') +
-        '<p class="note">Hàng trả lại về đúng lô và kho gốc của hóa đơn, nhập lại theo giá vốn lúc bán (bình quân cuối kỳ: theo giá bình quân kỳ). Bản demo ghi giảm thẳng TK 511 (5112 hoặc 5111 theo loại hàng); doanh nghiệp dùng TK giảm trừ riêng thì cấu hình lại.</p>'; },
+        ''; },
     onField(k, dr){ if(k === 'ref') FORMS.TL.withRef(dr); },
     build(dr, Rb){ const E = [], D = S.data; chkDate(dr, E); const hd = D.docs.find(d => d.no === dr.ref && d.status !== 'void');
       if(!hd){ E.push({id:'f_ref', msg:'Chọn hóa đơn gốc còn hiệu lực.'}); return {doc:null, E, W:[], I:[]}; }
@@ -2189,9 +2135,9 @@ const FORMS = {
     body(dr){ const n = dr.lines.length;
       return '<div class="frm">' + fDate(dr, true) + lab('Từ kho', whSel('f_wh', 'wh', dr.wh, 'data-rerender="1"')) + lab('Đến kho', whSel('f_whTo', 'whTo', dr.whTo)) +
         lab('Diễn giải', inp('f_desc', 'desc', dr.desc, 'placeholder="Tự gợi ý nếu để trống"'), 'wide') + '</div>' +
-        linesHead([['Mặt hàng'], ['Lô'], ['SL chuyển', 1], ['Tồn lô tại kho đi', 1], ['Giá trị (không bút toán)', 1], ['']]) +
+        linesHead([['Mặt hàng'], ['Lô'], ['SL chuyển', 1], ['Tồn lô tại kho đi', 1], ['Giá trị', 1], ['']]) +
         dr.lines.map((l, i) => '<tr><td>' + selx('f_l' + i + '_item', 'lines.' + i + '.item', itemOpts(['SP', 'BTP', 'HH', 'NVL'], l.item), 'aria-label="Mặt hàng dòng ' + (i + 1) + '"') + '</td><td>' + lotSel('f_l' + i + '_lot', 'lines.' + i + '.lot', F ? F.Rb : R, l.item, dr.wh, dr.date, 'move', l.lot, 'aria-label="Lô dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="decimal" aria-label="SL chuyển dòng ' + (i + 1) + '" style="width:90px"') + '</td><td class="n" id="f_l' + i + '_stk"></td><td class="n" id="f_l' + i + '_val"></td><td>' + delBtn(i, n) + '</td></tr>').join('') +
-        '</tbody></table></div>' + addBtn + '<p class="note">Chuyển kho nội bộ giữ nguyên mã lô và giá trị lô, không sinh bút toán (cùng TK kho). Lô "Không đạt" QC không chuyển được.</p>'; },
+        '</tbody></table></div>' + addBtn; },
     onField(k, dr){ fixLots(dr, 'move', k); },
     build(dr, Rb){ const E = [], D = S.data; chkDate(dr, E); const lines = [], idx = [];
       if(dr.wh === dr.whTo) E.push({id:'f_whTo', msg:'Kho đến phải khác kho đi.'});
@@ -2217,16 +2163,14 @@ const FORMS = {
     body(dr){ const D = S.data, Rx = (F && F.Rb) || R, ne = dr.extra.length;
       return '<div class="frm">' + fDate(dr, true) + lab('Kho', whSel('f_wh', 'wh', dr.wh, 'data-rerender="1"')) +
         lab('Xử lý hàng thiếu', selx('f_treat', 'treat', opt('1381', '1381 · Chờ xử lý', dr.treat) + opt('632', '632 · Hao hụt trong định mức', dr.treat))) + '</div>' +
-        '<p class="note">' + esc(WH[dr.wh].role) + ' kiểm kê cuối tháng theo từng lô.</p>' +
         linesHead([['Mặt hàng'], ['Lô'], ['SL sổ sách', 1], ['SL thực tế', 1], ['Chênh lệch', 1], ['Giá trị', 1]]) +
         (dr.lines.length ? dr.lines.map((l, i) => '<tr><td>' + esc(D.items[l.item].code + ' · ' + D.items[l.item].name) + ' <span class="muted">(' + D.items[l.item].uom + ')</span></td><td class="acc">' + esc(l.lot) + '</td><td class="n" id="f_l' + i + '_book"></td><td>' + inp('f_l' + i + '_counted', 'lines.' + i + '.counted', l.counted, 'inputmode="decimal" placeholder="= sổ sách" aria-label="SL thực tế ' + esc(D.items[l.item].name + ' lô ' + l.lot) + '" style="width:100px"') + '</td><td class="n" id="f_l' + i + '_diff"></td><td class="n" id="f_l' + i + '_val"></td></tr>').join('') : '<tr><td colspan="6" class="muted">Kho này không có tồn tại ngày kiểm kê.</td></tr>') +
         '</tbody></table></div>' +
         '<h3 style="margin:4px 0 0;font-size:13.5px">Hàng thừa chưa có lô trên sổ</h3>' +
-        linesHead([['Mặt hàng'], ['SL thừa', 1], ['Đơn giá (bắt buộc nếu chưa có lô nào có giá)', 1], ['Lô sẽ cấp'], ['']]) +
+        linesHead([['Mặt hàng'], ['SL thừa', 1], ['Đơn giá', 1], ['Lô sẽ cấp'], ['']]) +
         (ne ? dr.extra.map((x, i) => { const g = latestLotUnit(Rx, x.item);
           return '<tr><td>' + selx('f_x' + i + '_item', 'extra.' + i + '.item', itemOpts(['NVL', 'BTP', 'SP', 'HH'], x.item), 'aria-label="Hàng thừa dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_x' + i + '_qty', 'extra.' + i + '.qty', x.qty, 'inputmode="decimal" aria-label="SL thừa dòng ' + (i + 1) + '" style="width:90px"') + '</td><td>' + inp('f_x' + i + '_price', 'extra.' + i + '.price', x.price, 'inputmode="decimal" aria-label="Đơn giá hàng thừa dòng ' + (i + 1) + '" style="width:110px" placeholder="' + (g ? 'giá lô ' + esc(g.lot) + ': ' + fmt2(g.unit) : 'nhập đơn giá') + '"') + '</td><td class="acc small" id="f_x' + i + '_lot"></td><td><button class="icon-btn" type="button" data-act="delExtra" data-i="' + i + '" aria-label="Xóa dòng hàng thừa ' + (i + 1) + '">×</button></td></tr>'; }).join('') : '<tr><td colspan="5" class="muted">Không có.</td></tr>') +
-        '</tbody></table></div><div><button class="btn sm" type="button" data-act="addExtra">+ Hàng thừa ngoài sổ</button></div>' +
-        '<p class="note">Để trống ô SL thực tế nghĩa là khớp sổ sách. Hàng thừa trên lô có sẵn ghi Nợ kho / Có 3381 theo đơn giá của lô (đích danh) hoặc đơn giá bình quân tại ngày; nếu không xác định được thì lấy giá lô gần nhất. Hàng thừa ngoài sổ phải có đơn giá (để trống = giá lô gần nhất); không ghi 0 đ.</p>'; },
+        '</tbody></table></div><div><button class="btn sm" type="button" data-act="addExtra">+ Hàng thừa ngoài sổ</button></div>'; },
     onField(k, dr){ if(k === 'wh' || k === 'date') FORMS.KK.withWh(dr); },
     build(dr, Rb){ const E = [], D = S.data, spec = D.settings.method === 'specific'; chkDate(dr, E); const lines = [], taken = {};
       dr.lines.forEach((l, i) => { if(l.counted === '' || l.counted == null) return; const c = parseNum(l.counted), it = D.items[l.item];
@@ -2265,8 +2209,7 @@ const FORMS = {
       return '<div class="frm">' + fDate(dr) + fParty(dr, 'SUP', true) + lab('Chi từ tài khoản', selx('f_acc', 'acc', CASH_ACC.map(a => opt(a, a + ' · ' + accName(a, false), dr.acc)).join(''), 'data-rerender="1"')) +
         (usd ? lab('Hóa đơn USD được trả', selx('f_ref', 'ref', refs.length ? refs.map(p => opt(p.no, p.no + ' · còn ' + fmtFC(p.fc) + ' USD · tỷ giá ' + fmt(p.rate), dr.ref)).join('') : opt('', '— Không còn hóa đơn USD chưa trả —', ''))) + lab('Số tiền (USD)', inp('f_fc', 'fc', dr.fc, 'inputmode="decimal"'))
           : lab('Số tiền (đ)', inp('f_amt', 'amt', dr.amt, 'inputmode="decimal"'))) +
-        lab('Diễn giải', inp('f_desc', 'desc', dr.desc, 'placeholder="Tự gợi ý nếu để trống"'), 'wide') + '</div><div id="f_ctInfo" class="explain"></div>' +
-        '<p class="note">Chi USD: Nợ 331 theo tỷ giá ghi sổ đích danh của hóa đơn được trả; Có 1122 theo tỷ giá ghi sổ bình quân gia quyền di động của TK 1122; chênh lệch Có 515 (lãi) hoặc Nợ 635 (lỗ). Đánh giá lại số dư ngoại tệ cuối kỳ (413): chưa làm.</p>'; },
+        lab('Diễn giải', inp('f_desc', 'desc', dr.desc, 'placeholder="Tự gợi ý nếu để trống"'), 'wide') + '</div><div id="f_ctInfo" class="explain"></div>'; },
     onField(k, dr){ const D = S.data, p = D.parties[dr.partyId];
       if(k === 'partyId'){ if(p && p.cur === 'USD') dr.acc = '1122'; else if(dr.acc === '1122') dr.acc = '1121'; dr.ref = ''; }
       if(dr.acc === '1122' && !dr.ref){ const r = FORMS.CT.usdRefs(dr)[0]; if(r){ dr.ref = r.no; if(!dr.fc) dr.fc = fmtInput2(r.fc); } } },
@@ -2311,8 +2254,7 @@ const FORMS = {
     body(dr){ return '<div class="frm">' + fDate(dr) +
       R.PRODK.map(o => lab('Lương CN trực tiếp ' + esc(S.data.items[o].code) + ' (' + esc((S.data.items[o].prod || {}).stage || '') + ')', inp('f_nc_' + o, 'nc_' + o, dr['nc_' + o], 'inputmode="decimal"'))).join('') +
       lab('Lương trưởng QC, QC các khu (SXC cố định)', inp('f_qd', 'qd', dr.qd, 'inputmode="decimal"')) + '</div>' +
-      '<label class="check" for="f_contrib"><input type="checkbox" id="f_contrib" data-k="contrib"' + (dr.contrib ? ' checked' : '') + '> Trích BHXH 17,5%, BHYT 3%, BHTN 1%, KPCĐ 2% phần doanh nghiệp chịu (23,5%), ghi Có 3383, 3384, ' + bhtnAcc(isTT133()) + ', 3382; chia theo R1(b)</label>' +
-      '<p class="note">Lương CN trực tiếp tăng thì tiêu thức phân bổ SXC (theo chi phí NCTT) cũng đổi, nên SXC phân bổ cho từng giai đoạn thay đổi theo.</p>'; },
+      '<label class="check" for="f_contrib"><input type="checkbox" id="f_contrib" data-k="contrib"' + (dr.contrib ? ' checked' : '') + '> Trích theo lương 23,5% (BHXH 17,5%, BHYT 3%, BHTN 1%, KPCĐ 2%)</label>'; },
     build(dr){ const E = []; chkDate(dr, E); const lines = [];
       R.PRODK.forEach(o => { const v = dr['nc_' + o] === '' || dr['nc_' + o] == null ? 0 : parseNum(dr['nc_' + o]); if(!(v >= 0)) E.push({id:'f_nc_' + o, msg:'Số tiền không hợp lệ.'}); else if(v) lines.push({role:'NC', obj:o, amt:Math.round(v)}); });
       const q = dr.qd === '' ? 0 : parseNum(dr.qd); if(!(q >= 0)) E.push({id:'f_qd', msg:'Số tiền không hợp lệ.'}); else if(q) lines.push({role:'SXC', name:'Lương trưởng QC, QC các khu (bổ sung)', amt:Math.round(q), fixed:true});
@@ -2323,8 +2265,7 @@ const FORMS = {
     title:'Khấu hao tài sản cố định ở nhà máy',
     blank: () => ({date:'2026-01-31', name:'Khấu hao máy đóng hũ', amt:''}),
     fromDoc: d => ({date:d.date, name:d.lines[0].name, amt:fmtInput(d.lines[0].amt)}),
-    body(dr){ return '<div class="frm">' + fDate(dr) + lab('Tên tài sản / khoản khấu hao', inp('f_name', 'name', dr.name)) + lab('Số tiền khấu hao (đ)', inp('f_amt', 'amt', dr.amt, 'inputmode="decimal"')) + '</div>' +
-      '<p class="note">Khấu hao là chi phí SXC cố định. Khi nhà máy chạy dưới công suất bình thường, phần tương ứng vào thẳng 632 thay vì vào giá thành (VAS 02).</p>'; },
+    body(dr){ return '<div class="frm">' + fDate(dr) + lab('Tên tài sản / khoản khấu hao', inp('f_name', 'name', dr.name)) + lab('Số tiền khấu hao (đ)', inp('f_amt', 'amt', dr.amt, 'inputmode="decimal"')) + '</div>'; },
     build(dr){ const E = [], W = []; chkDate(dr, E); const a = parseNum(dr.amt), n = (dr.name || '').trim();
       if(n.length < 3) E.push({id:'f_name', msg:'Nhập tên tài sản.'}); if(!(a > 0)) E.push({id:'f_amt', msg:'Số tiền phải lớn hơn 0.'});
       const dup = R.active.filter(d => d.type === 'KH' && d.lines.some(l => l.name.toLowerCase() === n.toLowerCase()) && d.no !== (F && F.edit)); if(dup.length) W.push('Đã có khấu hao "' + n + '" trong kỳ (' + dup.map(d => d.no).join(', ') + '). Mỗi tài sản chỉ trích 1 lần/kỳ.');
@@ -2338,7 +2279,7 @@ const FORMS = {
       return '<div class="frm">' + fDate(dr) + lab('Loại dịch vụ', selx('f_svc', 'svc', opt('', '— Tự nhập —', dr.svc) + Object.keys(SV).map(k => opt(k, SV[k].name, dr.svc)).join(''), 'data-rerender="1"')) +
         lab('Tên khoản chi phí', inp('f_name', 'name', dr.name)) + lab('Số tiền chưa thuế (đ)', inp('f_amt', 'amt', dr.amt, 'inputmode="decimal"')) +
         lab('Tính chất', selx('f_fixed', 'fixed', opt('0', 'Biến đổi', dr.fixed) + opt('1', 'Cố định (kiểm tra dưới công suất)', dr.fixed))) +
-        lab('Thuế suất GTGT', vatSel('f_vat', 'vat', dr.vat)) + lab('Thanh toán', selx('f_pay', 'pay', opt('331', '331 · Chưa trả', dr.pay) + opt('1111', '1111 · Tiền mặt', dr.pay))) + fParty(dr, 'SUP') + '</div>' + VAT_NOTE; },
+        lab('Thuế suất GTGT', vatSel('f_vat', 'vat', dr.vat)) + lab('Thanh toán', selx('f_pay', 'pay', opt('331', '331 · Chưa trả', dr.pay) + opt('1111', '1111 · Tiền mặt', dr.pay))) + fParty(dr, 'SUP') + '</div>'; },
     onField(k, dr){ if(k === 'svc' && dr.svc){ const s = S.data.services[dr.svc]; dr.name = s.name; dr.vat = String(s.vat); dr.fixed = s.fixed ? '1' : '0'; } },
     build(dr){ const E = [], W = []; chkDate(dr, E); chkParty(dr, E); const a = parseNum(dr.amt), n = (dr.name || '').trim();
       if(n.length < 3) E.push({id:'f_name', msg:'Nhập tên khoản chi phí.'}); if(!(a > 0)) E.push({id:'f_amt', msg:'Số tiền phải lớn hơn 0.'});
@@ -2353,8 +2294,8 @@ const FORMS = {
       return '<div class="frm">' + fDate(dr) + lab('Lệnh sản xuất', selx('f_lsx', 'lsx', lsxOpts(dr.lsx), 'data-rerender="1"')) + lab('Kho nhập', whSel('f_wh', 'wh', dr.wh)) +
         lab('SL đạt nhập kho' + (it ? ' (' + esc(it.uom) + ')' : ''), inp('f_qty', 'qty', dr.qty, 'inputmode="decimal"')) + lab('SL không đạt (loại bỏ)', inp('f_rej', 'rej', dr.rej, 'inputmode="decimal"')) +
         lab('QC lô', selx('f_qc', 'qc', QC_OPTS(dr.qc))) + lab('Diễn giải', inp('f_desc', 'desc', dr.desc, 'placeholder="Tự gợi ý nếu để trống"'), 'wide') + '</div>' +
-        (it ? '<dl class="kv"><dt>Sản phẩm</dt><dd>' + esc(it.code + ' · ' + it.name) + ' · ' + esc(pr.stage || '') + '</dd><dt>Định mức hao hụt</dt><dd>' + fmtD(pr.loss || 0, 2) + '% sản lượng hoàn thành (đạt + không đạt)</dd><dt>Người QC</dt><dd>' + esc(it.qcRole || '') + '</dd><dt>Mã lô sẽ cấp</dt><dd class="acc" id="f_nkLot"></dd><dt>Giá thành đơn vị dự kiến</dt><dd id="f_nkZ"></dd><dt>Giá trị nhập kho lô</dt><dd id="f_nkV"></dd><dt>Hỏng ngoài định mức (cả kỳ)</dt><dd id="f_nkA"></dd></dl>' : '') +
-        '<p class="note">Không nhập đơn giá: giá trị nhập kho = giá thành SP đạt (Z) chia cho các phiếu nhập kho trong kỳ theo R1(b); tạm tính tới bước 7 khóa sổ. Phần không đạt trong định mức tính vào giá thành SP đạt; phần vượt định mức tính theo giá thành đơn vị và ghi Nợ 632 / Có 154.' + (it && it.kind === 'BTP' ? ' ' + BTP_NOTE : '') + '</p>'; },
+        (it ? '<dl class="kv"><dt>Sản phẩm</dt><dd>' + esc(it.code + ' · ' + it.name) + ' · ' + esc(pr.stage || '') + '</dd><dt>Định mức hao hụt</dt><dd>' + fmtD(pr.loss || 0, 2) + '% (đạt + không đạt)</dd><dt>Người QC</dt><dd>' + esc(it.qcRole || '') + '</dd><dt>Mã lô sẽ cấp</dt><dd class="acc" id="f_nkLot"></dd><dt>Giá thành đơn vị dự kiến</dt><dd id="f_nkZ"></dd><dt>Giá trị nhập kho lô</dt><dd id="f_nkV"></dd><dt>Hỏng ngoài định mức (cả kỳ)</dt><dd id="f_nkA"></dd></dl>' : '') +
+        ''; },
     build(dr){ const E = [], W = [], D = S.data; chkDate(dr, E); const x = D.lsx[dr.lsx];
       if(!x || !D.items[x.item]){ E.push({id:'f_lsx', msg:'Chọn lệnh sản xuất.'}); return {doc:null, E, W, I:[]}; }
       const it = D.items[x.item], q = parseNum(dr.qty), rj = dr.rej === '' ? 0 : parseNum(dr.rej);
@@ -2403,15 +2344,12 @@ FORMS.ITEM = {
       (dr.kind !== 'NVL' && dr.kind !== 'BTP' ? lab('Giá bán sỉ (đ)', inp('f_price', 'price', dr.price, 'inputmode="decimal"')) + lab('Giá bán lẻ tại NTH (đ)', inp('f_retail', 'retail', dr.retail, 'inputmode="decimal"')) : '') +
       (dr.kind === 'SP' || dr.kind === 'BTP' ? lab('Định mức hao hụt (%)', inp('f_loss', 'loss', dr.loss, 'inputmode="decimal"')) : '') +
       lab('Tồn đầu kỳ: số lượng', inp('f_oq', 'oq', dr.oq, 'inputmode="decimal"' + (lk || multi ? ' disabled title="' + esc(lk ? LOCK_MSG : 'Tồn đầu gồm nhiều lô, không sửa ở đây') + '"' : ''))) +
-      lab('Tồn đầu kỳ: giá trị (đ)', inp('f_ov', 'ov', dr.ov, 'inputmode="decimal"' + (lk || multi ? ' disabled title="' + esc(lk ? LOCK_MSG : 'Tồn đầu gồm nhiều lô, không sửa ở đây') + '"' : ''))) + '</div>' + VAT_NOTE;
+      lab('Tồn đầu kỳ: giá trị (đ)', inp('f_ov', 'ov', dr.ov, 'inputmode="decimal"' + (lk || multi ? ' disabled title="' + esc(lk ? LOCK_MSG : 'Tồn đầu gồm nhiều lô, không sửa ở đây') + '"' : ''))) + '</div>';
     if(lk) h += '<p class="msg warn">Kỳ 01/2026 đã khóa: vẫn thêm hoặc sửa tên được, nhưng không khai hay sửa tồn đầu kỳ.</p>';
-    if(multi) h += '<p class="note">Tồn đầu của vật tư này gồm ' + D.open[k].length + ' lô; bản demo không sửa tồn đầu nhiều lô qua form.</p>';
-    else h += '<p class="note">Tồn đầu (nếu có) tạo một lô mã "' + esc((dr.code || 'MÃ') + '-251231-01') + '" tại kho mặc định, QC Đạt.</p>';
     if(dr.kind === 'SP' || dr.kind === 'BTP'){ const n = dr.bom.length;
       h += '<h3 style="margin:4px 0 0;font-size:13.5px">Định mức cho 1 ' + esc(dr.uom || 'đơn vị') + ' (1 cấp, tùy chọn)</h3>' + linesHead([['NVL / BTP'], ['SL / 1 đơn vị', 1], ['']]) +
         dr.bom.map((b, i) => '<tr><td>' + selx('f_l' + i + '_item', 'bom.' + i + '.item', itemOpts(['NVL', 'BTP'], b.item, k), 'aria-label="NVL định mức dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_qty', 'bom.' + i + '.qty', b.qty, 'inputmode="decimal" aria-label="Định mức dòng ' + (i + 1) + '" style="width:100px"') + '</td><td><button class="icon-btn" type="button" data-act="delBom" data-i="' + i + '" aria-label="Xóa dòng định mức ' + (i + 1) + '">×</button></td></tr>').join('') +
-        (n ? '' : '<tr><td colspan="3" class="muted">Chưa có dòng định mức.</td></tr>') + '</tbody></table></div><div><button class="btn sm" type="button" data-act="addBom">+ Thêm NVL vào định mức</button></div>' +
-        '<p class="note">Thành phẩm mới là đối tượng tính giá thành 1 giai đoạn: cần lệnh sản xuất, phiếu xuất NVL theo lệnh và phiếu nhập kho để có giá thành; SXC phân bổ theo chi phí NCTT (bảng lương).</p>'; }
+        (n ? '' : '<tr><td colspan="3" class="muted">Chưa có dòng định mức.</td></tr>') + '</tbody></table></div><div><button class="btn sm" type="button" data-act="addBom">+ Thêm NVL vào định mức</button></div>'; }
     return h; },
   onField(k, dr){ if(k === 'code') dr.codeTouched = true;
     if(k === 'kind'){ if(dr.kind !== 'NVL'){ dr.dec = '0'; if(dr.uom === 'kg') dr.uom = dr.kind === 'HH' ? 'chai' : 'hũ'; dr.qcRole = 'QC khu đóng gói'; } else dr.dec = '3'; }
@@ -2443,9 +2381,7 @@ FORMS.ITEM = {
     if(dr.kind === 'SP' || dr.kind === 'BTP'){ item.bom = bom; item.prod = Object.assign({stage:'1 GĐ', steps:''}, k ? D.items[k].prod || {} : {}, {loss: loss || 0}); }
     return {item, open:{qty:oq || 0, value:Math.round(ov || 0)}, openChanged, multi, E, W, I:[]}; },
   preview(b){ const acc = KIND_ACC[b.item.kind];
-    return '<h3>Ảnh hưởng</h3><ul class="todo"><li>' + pill('info', 'TK ' + acc) + '<span>' + (b.open.qty ? 'Tồn đầu ' + fmtQ(b.open.qty) + ' ' + esc(b.item.uom) + ', ' + fmt(b.open.value) + ' đ thành một lô đầu kỳ, cộng vào số dư đầu TK ' + acc + ' (đối ứng số cân đối 4211), nên kho vẫn khớp sổ cái.' : 'Không có tồn đầu kỳ.') + '</span></li>' +
-      '<li>' + pill('info', 'Dùng ở') + '<span>' + (b.item.kind === 'NVL' ? 'Phiếu nhập mua, phiếu xuất theo lệnh sản xuất, kiểm kê, chuyển kho, sổ chi tiết, N-X-T.' : b.item.kind === 'HH' ? 'Phiếu nhập mua, hóa đơn bán (5111), hàng trả lại, kiểm kê, chuyển kho.' : 'Lệnh sản xuất, phiếu nhập kho, hóa đơn bán (5112), thẻ giá thành, truy xuất.') + '</span></li>' +
-      '<li>' + pill('info', 'Giá xuất') + '<span>Tính theo phương pháp đang chọn (' + METHOD_NAME[S.data.settings.method].toLowerCase() + '), như mọi vật tư khác.</span></li></ul>'; },
+    return '<p style="margin:0">' + pill('info', 'TK ' + acc) + ' ' + (b.open.qty ? 'Tồn đầu ' + fmtQ(b.open.qty) + ' ' + esc(b.item.uom) + ' · ' + fmt(b.open.value) + ' đ' : 'Không có tồn đầu kỳ') + '</p>'; },
   save(b){ const k0 = F.key;
     const key = k0 || (function(){ const base = b.item.code.replace(/[^A-Z0-9]/g, '') || 'VT'; let key = base, n = 2; while(S.data.items[key]) key = base + n++; return key; })();
     const old = k0 ? clone(S.data.items[k0]) : null, oldOpen = k0 ? openOf(S.data, k0) : null;
@@ -2469,8 +2405,7 @@ FORMS.LSX = {
   body(dr){ return '<div class="frm">' + lab('Sản phẩm / giai đoạn', selx('f_item', 'item', R.PRODK.map(o => opt(o, S.data.items[o].code + ' · ' + S.data.items[o].name + ' (' + ((S.data.items[o].prod || {}).stage || '') + ')', dr.item)).join(''))) +
     lab('Số lượng kế hoạch', inp('f_plan', 'plan', dr.plan, 'inputmode="decimal"')) + lab('Kho sản xuất', whSel('f_wh', 'wh', dr.wh)) +
     lab('Ngày lệnh', '<input class="inp" type="date" id="f_date" data-k="date" min="2026-01-01" max="2026-01-31" value="' + esc(dr.date) + '">') +
-    lab('Ghi chú (công đoạn, ca, tổ)', inp('f_note', 'note', dr.note), 'wide') + '</div>' +
-    '<p class="note">Bộ phận kế hoạch gửi kế hoạch sản xuất hằng ngày; trưởng QC lên lệnh. Phiếu xuất và phiếu nhập kho tham chiếu số lệnh để lập báo cáo tiến độ và tổng hợp xuất kho theo lệnh.</p>'; },
+    lab('Ghi chú (công đoạn, ca, tổ)', inp('f_note', 'note', dr.note), 'wide') + '</div>'; },
   build(dr){ const E = [], W = [], D = S.data, p = parseNum(dr.plan), it = D.items[dr.item];
     if(!it) E.push({id:'f_item', msg:'Chọn sản phẩm.'}); else chkQty(p, it, 'f_plan', E);
     if(!dr.date || dr.date < D.period.from || dr.date > D.period.to) E.push({id:'f_date', msg:'Ngày ngoài kỳ 01/2026.'});
@@ -2478,7 +2413,7 @@ FORMS.LSX = {
     if(!no){ let n = 1; const nos = Object.values(D.lsx).map(x => x.no); while(nos.indexOf('LSX-2601-' + String(n).padStart(2, '0')) >= 0) n++; no = 'LSX-2601-' + String(n).padStart(2, '0'); }
     if(k && D.lsx[k].item !== dr.item && R.active.some(d => d.lsx === k)) E.push({id:'f_item', msg:'Lệnh đã có phiếu xuất / nhập kho, không đổi sản phẩm được.'});
     return {lsx:{no, item:dr.item, plan:p, wh:dr.wh, date:dr.date, note:(dr.note || '').trim()}, E, W, I:[]}; },
-  preview(b){ return '<h3>Số lệnh</h3><p style="margin:0"><b class="acc">' + esc(b.lsx.no) + '</b> · ' + esc(itName(b.lsx.item)) + ' · kế hoạch ' + fmtQ(b.lsx.plan || 0) + ' ' + esc(unitOf(S.data, b.lsx.item)) + '</p><p class="note">Lệnh sản xuất là danh mục, không sinh bút toán và không làm đổi số liệu.</p>'; },
+  preview(b){ return '<h3>Số lệnh</h3><p style="margin:0"><b class="acc">' + esc(b.lsx.no) + '</b> · ' + esc(itName(b.lsx.item)) + ' · kế hoạch ' + fmtQ(b.lsx.plan || 0) + ' ' + esc(unitOf(S.data, b.lsx.item)) + '</p>'; },
   save(b){ const k0 = F.key; closeDialog();
     commit(D => { let key = k0; if(!key){ let n = 1; while(D.lsx['LSX' + String(n).padStart(2, '0')]) n++; key = 'LSX' + String(n).padStart(2, '0'); }
       const old = D.lsx[key]; D.lsx[key] = b.lsx;
@@ -2505,9 +2440,9 @@ function openQC(code){
   openDialog('modal', head('QC lô ' + esc(code)) + '<div class="dlg-body"><p style="margin:0">' + esc(itName(L.item)) + ' · nhập ' + dmy(L.date) + (L.hsd ? ' · HSD ' + dmy(L.hsd) : '') + ' · đang ' + qcPill(L.qc) + '</p>' +
     '<label class="fl" for="q_status">Trạng thái QC<select class="inp" id="q_status">' + ['pass', 'hold', 'fail'].map(s => opt(s, QC_NAME[s], L.qc)).join('') + '</select></label>' +
     '<label class="fl" for="q_role">Người QC (vai trò)<select class="inp" id="q_role">' + QC_ROLES.concat(['Trưởng QC']).map(r => opt(r, r, cur)).join('') + '</select></label>' +
-    '<label class="fl" for="q_reason">Ghi chú / kết quả kiểm (bắt buộc, ít nhất 5 ký tự)<input class="inp" id="q_reason" autocomplete="off" placeholder="Ví dụ: đủ ngày bảo ôn, cảm quan đạt"></label>' +
+    '<label class="fl" for="q_reason">Kết quả kiểm (≥ 5 ký tự)<input class="inp" id="q_reason" autocomplete="off" placeholder="Ví dụ: đủ ngày bảo ôn, cảm quan đạt"></label>' +
     (sold.length ? '<div class="msg warn">Lô này đã xuất bán ở ' + esc(sold.join(', ')) + '. Đổi sang "Chờ" / "Không đạt" không sửa hóa đơn cũ; xử lý thu hồi bằng phiếu hàng bán bị trả lại.</div>' : '') +
-    '<p class="note">Lô "Chờ" / "Không đạt" không chọn được khi lập hóa đơn bán; lô "Không đạt" không xuất sản xuất, chuyển kho được. Không sinh bút toán.</p></div>' +
+    '</div>' +
     '<div class="dlg-foot"><span class="spacer"></span><button class="btn" type="button" data-act="close">Đóng</button><button class="btn primary" type="button" data-act="doQC">Lưu trạng thái QC</button></div>', '#q_status');
 }
 function doQC(){
@@ -2552,8 +2487,7 @@ function openForm(type, opts){
 function renderFormBody(){
   const a = document.activeElement, aid = a && dlg.contains(a) ? a.id : null;
   let h = '';
-  if(F.edit) h += '<div class="frm"><label class="wide">Lý do sửa (bắt buộc, ít nhất 10 ký tự)' + inp('f_reason', 'reason', F.dr.reason, 'placeholder="Ví dụ: nhập sai số lượng theo hóa đơn"') + '</label></div>' +
-    '<p class="msg info">Sửa = hủy ' + F.edit + ' và lập chứng từ mới thay thế (giữ nguyên mã lô). Chứng từ cũ vẫn giữ trong sổ (gạch ngang), cả hai lần đều vào Nhật ký sửa đổi.</p>';
+  if(F.edit) h += '<div class="frm"><label class="wide">Lý do sửa (≥ 10 ký tự)' + inp('f_reason', 'reason', F.dr.reason, 'placeholder="Ví dụ: nhập sai số lượng theo hóa đơn"') + '</label></div>';
   $('fBody').innerHTML = h + FORMS[F.type].body(F.dr);
   F._lots = (F.dr.lines || []).map(l => l.lot).join('|');
   if(aid && $(aid)) $(aid).focus();
@@ -2600,20 +2534,18 @@ function updatePreview(){
   b.E.forEach(e => { const el = $(e.id); if(el) el.setAttribute('aria-invalid', 'true'); });
   let m = '';
   if(b.E.length) m += '<div class="msg err" role="alert">' + b.E.map(e => '<span>' + esc(e.msg) + '</span>').join('') + '</div>';
-  if(F.negMsg) m += '<label class="check" for="f_allowNeg"><input type="checkbox" id="f_allowNeg" data-k="__allowNeg"' + (F.allowNeg ? ' checked' : '') + '> Vẫn lưu (ghi nhận tồn âm tạm thời để thử cơ chế kiểm soát khi khóa sổ)</label>';
-  const W = b.W.concat(extra.W || []), I = b.I.concat(extra.I || []);
+  if(F.negMsg) m += '<label class="check" for="f_allowNeg"><input type="checkbox" id="f_allowNeg" data-k="__allowNeg"' + (F.allowNeg ? ' checked' : '') + '> Vẫn lưu (chấp nhận tồn âm)</label>';
+  const W = b.W.concat(extra.W || []);
   if(W.length) m += '<div class="msg warn">' + W.map(x => '<span>' + esc(x) + '</span>').join('') + '</div>';
-  if(I.length) m += '<div class="msg info">' + I.map(x => '<span>' + esc(x) + '</span>').join('') + '</div>';
   $('fMsgs').innerHTML = m;
   let p = '';
-  if(sim){ const t = F.pv === 'TT133', L = POST[sim.d.type](sim.d, sim.Rs, t);
-    p += '<div class="panel-head"><h3>Bút toán sẽ sinh</h3><div class="spacer"></div><div class="seg" role="group" aria-label="Xem theo chế độ">' +
+  if(sim){ const t = F.pv === 'TT133', L = POST[sim.d.type](sim.d, sim.Rs, t), ld = sum(L, l => l.dr);
+    p += '<details class="fold" id="fFold"' + (F.prevOpen ? ' open' : '') + '><summary>Bút toán &amp; ảnh hưởng dự kiến <span class="muted">' + (L.length ? fmt(ld) + ' đ' : 'không bút toán') + '</span></summary><div class="in">' +
+      '<div class="panel-head"><h3>Bút toán sẽ sinh</h3><div class="spacer"></div><div class="seg" role="group" aria-label="Xem theo chế độ">' +
       ['TT99', 'TT133'].map(r => '<button type="button" data-pv="' + r + '" aria-pressed="' + (F.pv === r) + '">' + (r === 'TT99' ? 'TT 99/2025' : 'TT 133/2016') + '</button>').join('') + '</div></div>' +
-      postTable(L, t) + (L.some(l => l.alt) ? '<p class="note">Dòng tô vàng: ' + (t ? 'TT 99 ghi vào 621/622/627 rồi kết chuyển sang 154.' : 'TT 133 ghi thẳng vào 154 theo khoản mục.') + '</p>' : '');
-    p += '<h3 style="margin-top:12px">Ảnh hưởng dự kiến</h3>' + impactTable(impactRows(snapshot(R), snapshot(sim.Rs)), true);
-    p += '<p class="note">Khóa sổ: các bước từ bước ' + (Math.min(AFFECT[F.type], F.oldType ? AFFECT[F.oldType] : 99) + 1) + ' sẽ được đánh dấu "Cần chạy lại" nếu đã chạy' + (nnCount(sim) ? '; có tồn âm nên đưa về bước 4' : '') + '.</p>';
+      postTable(L, t) + '<h3>Ảnh hưởng dự kiến</h3>' + impactTable(impactRows(snapshot(R), snapshot(sim.Rs)), true) + '</div></details>';
     $('fNo').textContent = 'Số chứng từ sẽ cấp: ' + sim.d.no;
-  } else { p = '<p class="note">Nhập đủ thông tin để xem bút toán và ảnh hưởng.</p>'; $('fNo').textContent = ''; }
+  } else { $('fNo').textContent = ''; }
   $('fPrev').innerHTML = p;
   const sv = $('fSave'); if(sv){ sv.setAttribute('aria-disabled', b.E.length ? 'true' : 'false'); }
   if(aid && $(aid) && document.activeElement !== $(aid)) $(aid).focus();
@@ -2649,7 +2581,7 @@ function openBackdated(){
   if(F) hl('#fSave');
 }
 
-// ================= Hủy, mở khóa, đặt lại, sao chép, chú giải =================
+// ================= Hủy, mở khóa, đặt lại, sao chép =================
 const VOID_HINTS = ['Nhập sai số lượng', 'Trùng chứng từ', 'Sai ngày chứng từ', 'Nhà cung cấp hủy hóa đơn', 'Sai lô xuất'];
 function openVoid(no){
   if(locked()){ lockedNotice(); return; }
@@ -2663,11 +2595,10 @@ function openVoid(no){
   openDialog('modal', head('Hủy chứng từ ' + no) + '<div class="dlg-body">' +
     '<p style="margin:0">' + esc(TYPE_NAME[d.type]) + ': ' + esc(describe(d, S.data)) + '</p>' +
     (F.block ? '<div class="msg err">' + esc(F.block) + '</div>' : '') +
-    '<label class="fl" for="v_reason">Lý do hủy (bắt buộc, ít nhất 10 ký tự)<input class="inp" id="v_reason" autocomplete="off"></label>' +
+    '<label class="fl" for="v_reason">Lý do hủy (≥ 10 ký tự)<input class="inp" id="v_reason" autocomplete="off"></label>' +
     '<div class="chips">' + VOID_HINTS.map(h => '<button type="button" data-hint="' + esc(h) + '">' + esc(h) + '</button>').join('') + '</div>' +
     (F.neg ? '<div class="msg warn">' + esc(F.neg) + '</div><label class="check" for="v_force"><input type="checkbox" id="v_force"> Vẫn hủy (bước 4 khóa sổ sẽ dừng ở chỗ tồn âm)</label>' : '') +
-    '<h3 style="margin:4px 0 0;font-size:13.5px">Ảnh hưởng dự kiến</h3>' + impactTable(impactRows(snapshot(R), snapshot(Rs)), true) +
-    '<p class="note">Chứng từ hủy vẫn hiện trong danh sách (gạch ngang), không sinh bút toán, và được ghi vào Nhật ký sửa đổi. Mã lô của phiếu nhập bị hủy không được cấp lại.</p></div>' +
+    '<details class="fold"><summary>Ảnh hưởng dự kiến</summary><div class="in">' + impactTable(impactRows(snapshot(R), snapshot(Rs)), true) + '</div></details></div>' +
     '<div class="dlg-foot"><span class="spacer"></span><button class="btn" type="button" data-act="close">Không hủy</button><button class="btn danger" type="button" data-act="doVoid"' + (F.block ? ' disabled' : '') + '>Hủy chứng từ</button></div>', '#v_reason');
 }
 function doVoid(){
@@ -2682,10 +2613,8 @@ function doVoid(){
 }
 function openUnlock(){
   openDialog('modal', head('Mở khóa kỳ 01/2026') + '<div class="dlg-body">' +
-    '<p style="margin:0">Mở khóa cho phép sửa, hủy, lập chứng từ trong kỳ. Lần mở khóa được ghi vào Nhật ký sửa đổi.</p>' +
-    '<label class="check" for="u_role"><input type="checkbox" id="u_role"> Tôi là kế toán trưởng (giả lập trong bản demo)</label>' +
-    '<label class="fl" for="u_reason">Lý do mở khóa (bắt buộc, ít nhất 15 ký tự)<input class="inp" id="u_reason" autocomplete="off" placeholder="Ví dụ: nhận hóa đơn mua thính ngày 06/01 sau khi đã khóa sổ"></label>' +
-    '<p class="note">Phạm vi: mở lại toàn kỳ 01/2026. Kết quả các bước 1–11 được giữ; thay đổi sau đó sẽ đánh dấu các bước liên quan "Cần chạy lại".</p></div>' +
+    '<label class="check" for="u_role"><input type="checkbox" id="u_role"> Tôi là kế toán trưởng</label>' +
+    '<label class="fl" for="u_reason">Lý do mở khóa (≥ 15 ký tự)<input class="inp" id="u_reason" autocomplete="off" placeholder="Ví dụ: nhận hóa đơn mua thính ngày 06/01 sau khi đã khóa sổ"></label></div>' +
     '<div class="dlg-foot"><span class="spacer"></span><button class="btn" type="button" data-act="close">Để khóa</button><button class="btn primary" type="button" data-act="doUnlock">Mở khóa</button></div>', '#u_role');
 }
 function doUnlock(){
@@ -2694,12 +2623,12 @@ function doUnlock(){
   if(r.length < 15){ $('u_reason').setAttribute('aria-invalid', 'true'); $('u_reason').focus(); toast('Ghi rõ lý do mở khóa, ít nhất 15 ký tự.'); return; }
   closeDialog();
   const st = S.data.closing; st.done[11] = false; st.dirty[11] = false;
-  S.data.audit.push({at:nowISO(), actor:'Khách demo (kế toán trưởng giả lập)', action:'unlock', no:'', reason:r, detail:'Mở lại toàn kỳ 01/2026'});
-  save(); renderAll(); toast('Đã mở khóa kỳ 01/2026 và ghi nhật ký. Con dấu "Đã khóa sổ" đã gỡ.');
+  S.data.audit.push({at:nowISO(), actor:'Kế toán trưởng', action:'unlock', no:'', reason:r, detail:'Mở lại toàn kỳ 01/2026'});
+  save(); renderAll(); toast('Đã mở khóa kỳ 01/2026 và ghi nhật ký.');
 }
 function openReset(){
   const n = S.data.docs.filter(d => d.origin === 'user').length;
-  openDialog('modal', head('Đặt lại dữ liệu mẫu') + '<div class="dlg-body"><p style="margin:0">Xóa ' + n + ' chứng từ bạn đã lập, trạng thái QC đã đổi, nhật ký sửa đổi và cấu hình đã đổi, đưa kỳ 01/2026 về dữ liệu mẫu (bước 1–4 đã làm)?</p><p class="note">Dữ liệu chỉ nằm trong trình duyệt này.</p></div>' +
+  openDialog('modal', head('Đặt lại dữ liệu mẫu') + '<div class="dlg-body"><p style="margin:0">Xóa ' + n + ' chứng từ bạn đã lập, trạng thái QC đã đổi, nhật ký sửa đổi và cấu hình đã đổi, đưa kỳ 01/2026 về dữ liệu mẫu?</p></div>' +
     '<div class="dlg-foot"><span class="spacer"></span><button class="btn" type="button" data-act="close">Giữ nguyên</button><button class="btn danger" type="button" data-act="doReset">Đặt lại</button></div>', '[data-act="close"]');
 }
 function doReset(){ closeDialog(); clearSaved(); S.data = freshData(); S.ui = clone(UI0); renderAll(); toast('Đã đặt lại dữ liệu mẫu kỳ 01/2026.'); }
@@ -2717,25 +2646,6 @@ function copyText(txt){
   try{ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(() => toast('Đã sao chép ' + txt.split('\n').length + ' dòng. Dán vào Excel là ra đúng cột.'), fallback); return; } }catch(_){}
   fallback();
 }
-function openGloss(){
-  const G = [['Mã lót hàng (lô)', 'Mã lô QC lập cho mỗi lần nhập mua hoặc nhập kho sản xuất, dạng mã vật tư + ngày + số thứ tự (ví dụ NL-CL-260105-01, TP-ML5-260127-01). Tồn kho theo dõi theo (vật tư, kho, lô).'],
-    ['Thực tế đích danh', 'Giá xuất = giá của chính lô được xuất. Giá trị xuất = round(SL × giá trị tồn của lô / SL tồn của lô); phiếu làm lô về 0 nhận toàn bộ phần còn lại.'],
-    ['BTP', 'Bán thành phẩm: cá linh ủ thính sau giai đoạn 1, nhập kho theo lô rồi xuất cho giai đoạn 2. Ghi TK 155 (chưa xác minh: 155 hay giữ 154).'],
-    ['Phân bước có tính giá BTP', 'Tính giá thành từng giai đoạn: GĐ1 ra BTP, giá BTP chuyển sang GĐ2 thành khoản mục "BTP GĐ trước chuyển sang" cộng thêm chi phí của GĐ2.'],
-    ['Hao hụt định mức', 'Tỷ lệ sản phẩm không đạt được phép. Phần trong định mức tính vào giá thành sản phẩm đạt; phần vượt tính theo giá thành đơn vị và ghi Nợ 632 / Có 154.'],
-    ['QC', 'Kiểm soát chất lượng theo khu (thủy sản, nông sản, đóng gói, hàng xay). Lô "Chờ" / "Không đạt" không được bán; lô "Không đạt" không xuất sản xuất, chuyển kho.'],
-    ['Chuyển kho nội bộ', 'Đưa hàng giữa nhà máy Bà Ba Thạo, kho Bình Tây, cửa hàng 97 Nguyễn Thái Học. Giữ mã lô và giá trị, không sinh bút toán.'],
-    ['Lệnh sản xuất', 'Lệnh làm một sản phẩm / giai đoạn với số lượng kế hoạch; phiếu xuất và nhập kho tham chiếu lệnh để theo dõi tiến độ.'],
-    ['Tỷ giá ghi sổ', 'Nợ phải trả USD ghi theo tỷ giá đích danh của hóa đơn; tiền USD (1122) xuất theo tỷ giá bình quân gia quyền di động. Chênh lệch khi thanh toán: lãi Có 515, lỗ Nợ 635.'],
-    ['R1 (làm tròn)', 'Tiền làm tròn đến đồng; phân bổ theo largest remainder (phần lẻ lớn nhất nhận đồng còn thiếu); giá xuất theo nguồn giá, phần dư nằm lại ở tồn.'],
-    ['NVL', 'Nguyên vật liệu, bao bì, phụ gia (TK 152). NVL trực tiếp là phần xuất thẳng cho đối tượng tính giá thành (TK 621 theo TT 99).'], ['NCTT', 'Nhân công trực tiếp: lương và các khoản trích của công nhân (TK 622).'],
-    ['SXC', 'Sản xuất chung: lương QC, khấu hao bể ủ, điện nước (TK 627), phân bổ cho từng giai đoạn theo chi phí NCTT.'],
-    ['Dở dang (DDĐK, DDCK)', 'Cá, tôm đang ủ đầu kỳ / cuối kỳ (TK 154), đánh giá theo NVL (và BTP). Ủ có thể kéo dài nhiều kỳ.'], ['Z, z', 'Z: tổng giá thành sản phẩm đạt = DDĐK + chi phí phát sinh − DDCK − hỏng ngoài định mức. z = Z / SL đạt.'],
-    ['Kết chuyển', 'Chuyển số dư từ tài khoản này sang tài khoản khác, ví dụ 621/622/627 → 154, doanh thu, giá vốn, tài chính → 911.'], ['Dưới công suất (VAS 02)', 'Khi sản lượng thấp hơn công suất bình thường, phần định phí SXC tương ứng ghi thẳng vào giá vốn (632).'],
-    ['Bình quân cuối kỳ / tức thời, FIFO', 'Các phương pháp tính giá theo cả mặt hàng để so sánh; với các phương pháp này lô chỉ dùng để đếm số lượng và truy xuất.'],
-    ['TT 99/2025, TT 133/2016', 'Chế độ kế toán doanh nghiệp (thay TT 200) và chế độ cho doanh nghiệp nhỏ và vừa. TT 133 không dùng 621/622/627 mà ghi thẳng 154.'], ['N-X-T', 'Bảng tổng hợp nhập – xuất – tồn kho.'], ['GTGT', 'Thuế giá trị gia tăng: đầu vào (1331), đầu ra (33311).']];
-  openDialog('modal', head('Chú giải thuật ngữ') + '<div class="dlg-body"><dl class="gloss">' + G.map(g => '<dt>' + g[0] + '</dt><dd>' + g[1] + '</dd>').join('') + '</dl></div><div class="dlg-foot"><span class="spacer"></span><button class="btn" type="button" data-act="close">Đóng</button></div>', '[data-act="close"]');
-}
 function toggleTheme(){
   const root = document.documentElement, cur = root.getAttribute('data-theme');
   let dark; try{ dark = cur ? cur === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; }catch(_){ dark = false; }
@@ -2743,6 +2653,12 @@ function toggleTheme(){
   try{ localStorage.setItem(THEME_KEY, next); }catch(_){}
 }
 try{ const t = localStorage.getItem(THEME_KEY); if(t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); }catch(_){}
+function setSide(c, persist){
+  $('app').classList.toggle('collapsed', c);
+  const b = $('btnSide'); b.setAttribute('aria-expanded', c ? 'false' : 'true'); b.setAttribute('aria-label', c ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên'); b.title = b.getAttribute('aria-label');
+  if(persist) try{ localStorage.setItem(SIDE_KEY, c ? '1' : '0'); }catch(_){}
+}
+try{ if(localStorage.getItem(SIDE_KEY) === '1') setSide(true); }catch(_){}
 
 // ================= Tour hướng dẫn từng bước =================
 const TOUR_KEY = 'giagoc-tour-v2';
@@ -2799,7 +2715,7 @@ function tourGo(i){
   T.pop.innerHTML = '<span class="tour-arrow" aria-hidden="true"></span><span class="count">Bước ' + (i + 1) + '/' + n + '</span><h2 id="tourTitle">' + s.t + '</h2><p id="tourBody">' + s.b + '</p>' +
     '<div class="tour-foot"><button class="btn sm" type="button" data-tour="skip">Bỏ qua</button><span class="spacer"></span>' +
     '<button class="btn sm" type="button" data-tour="prev"' + (i === 0 ? ' disabled' : '') + '>‹ Quay lại</button><button class="btn sm primary" type="button" data-tour="next">' + (i === n - 1 ? 'Xong' : 'Tiếp ›') + '</button></div>' +
-    '<p class="note">Phím ← → để chuyển bước, Esc để đóng.</p>';
+    '';
   if(el){
     try{ el.scrollIntoView({block: mobileTour() ? 'start' : 'center', behavior:'auto'}); }catch(_){}
     if(mobileTour()){ const r = el.getBoundingClientRect(); window.scrollBy(0, r.top - 72); }
@@ -2868,7 +2784,7 @@ $('repCtl').addEventListener('change', e => { const id = e.target.id, map = {rep
 $('regime').addEventListener('change', e => {
   if(locked()){ e.target.value = S.data.settings.regime; return lockedNotice(); }
   const v = e.target.value, old = S.data.settings.regime; S.data.settings.regime = v;
-  S.data.audit.push({at:nowISO(), actor:'Khách demo', action:'config', no:'', reason:'Xem thử', detail:'Chế độ kế toán ' + old + ' → ' + v});
+  S.data.audit.push({at:nowISO(), actor:ACTOR, action:'config', no:'', reason:'', detail:'Chế độ kế toán ' + old + ' → ' + v});
   R = compute(S.data); const p = R.postByNo[S.ui.doc];
   if(!p || !p.lines.some(l => l.alt)) S.ui.doc = R.postByNo.PX0001 && R.postByNo.PX0001.d.status !== 'void' ? 'PX0001' : S.ui.doc;
   save(); renderAll();
@@ -2877,8 +2793,8 @@ $('regime').addEventListener('change', e => {
 $('method').addEventListener('change', e => {
   if(locked()){ e.target.value = S.data.settings.method; return lockedNotice(); }
   const v = e.target.value, old = S.data.settings.method;
-  commit(D => { D.settings.method = v; return {action:'config', no:'', reason:'Xem thử', detail:'Phương pháp giá xuất kho ' + METHOD_NAME[old] + ' → ' + METHOD_NAME[v]}; }, 4, 'đổi sang ' + METHOD_NAME[v].toLowerCase());
-  toast('Đã tính lại giá xuất kho, giá thành và giá vốn theo ' + METHOD_NAME[v].toLowerCase() + '. Phương pháp áp dụng nhất quán cả năm; bản demo cho đổi để xem thử.');
+  commit(D => { D.settings.method = v; return {action:'config', no:'', reason:'', detail:'Phương pháp giá xuất kho ' + METHOD_NAME[old] + ' → ' + METHOD_NAME[v]}; }, 4, 'đổi sang ' + METHOD_NAME[v].toLowerCase());
+  toast('Đã tính lại giá xuất kho, giá thành và giá vốn theo ' + METHOD_NAME[v].toLowerCase() + '.');
 });
 $('hours').addEventListener('change', e => {
   if(locked()){ e.target.value = S.data.settings.hours; return lockedNotice(); }
@@ -2910,18 +2826,18 @@ menu.addEventListener('keydown', e => {
 });
 document.addEventListener('click', e => { if(!menu.hidden && !e.target.closest('.menu-wrap')) setMenu(false); });
 $('btnSettings').addEventListener('click', () => { const s = $('settings'), o = !s.classList.contains('open'); s.classList.toggle('open', o); $('btnSettings').setAttribute('aria-expanded', o ? 'true' : 'false'); });
-['', '2'].forEach(x => { $('btnGloss' + x).addEventListener('click', openGloss); $('btnTheme' + x).addEventListener('click', toggleTheme); $('btnResetData' + x).addEventListener('click', openReset); });
+['', '2'].forEach(x => { $('btnTheme' + x).addEventListener('click', toggleTheme); $('btnResetData' + x).addEventListener('click', openReset); });
+$('btnSide').addEventListener('click', () => setSide(!$('app').classList.contains('collapsed'), true));
+dlg.addEventListener('toggle', e => { if(F && e.target && e.target.id === 'fFold') F.prevOpen = e.target.open; }, true);
 // Uỷ quyền click toàn trang
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-act],[data-item-edit],[data-item-del],[data-lsx-edit],[data-open-doc],[data-goto],[data-goto-view],[data-edit],[data-void],[data-copy],[data-lot],[data-pv],[data-hint],[data-new],[data-scen],[data-scen-nav],[data-filter],[data-wh],[data-qc]');
+  const t = e.target.closest('[data-act],[data-item-edit],[data-item-del],[data-lsx-edit],[data-open-doc],[data-goto],[data-goto-view],[data-edit],[data-void],[data-copy],[data-lot],[data-pv],[data-hint],[data-new],[data-filter],[data-wh],[data-qc]');
   if(!t) return;
   const ds = t.dataset;
   if(ds.new){ setMenu(false); if(locked() && ds.new !== 'ITEM' && ds.new !== 'LSX') return lockedNotice(); return openForm(ds.new); }
   if(ds.itemEdit) return openForm('ITEM', {key:ds.itemEdit});
   if(ds.itemDel) return openItemDel(ds.itemDel);
   if(ds.lsxEdit) return openForm('LSX', {key:ds.lsxEdit});
-  if(ds.scen != null) return runScen(+ds.scen);
-  if(ds.scenNav != null){ const c = S.ui.scen < 0 ? 0 : S.ui.scen; return runScen(Math.max(0, Math.min(SCEN.length - 1, c + (+ds.scenNav)))); }
   if(ds.filter){ S.ui.filter = ds.filter; return RENDER.docs(); }
   if(ds.wh){ S.ui.wh = ds.wh; return RENDER.stock(); }
   if(ds.qc) return openQC(ds.qc);
@@ -3082,12 +2998,10 @@ function selfTest(){
 }
 $('btnTour').addEventListener('click', () => tourStart(0));
 window.__giagoc = {get tour(){ return T; }, tourStart, tourGo, tourEnd, addNewItems, openItemDel, doItemDel, get state(){ return S; }, get R(){ return R; }, compute, runStepOn, freshData, selfTest, settle, allocate,
-  openForm, saveForm, openVoid, doVoid, openUnlock, doUnlock, runSteps, runScen, tableTSV, get F(){ return F; }, updatePreview, onFormInput, openQC, doQC, go, FORMS};
+  openForm, saveForm, openVoid, doVoid, openUnlock, doUnlock, runSteps, tableTSV, get F(){ return F; }, updatePreview, onFormInput, openQC, doQC, go, FORMS};
 
 // ================= Khởi động =================
 const h0 = (location.hash || '').slice(1); if(TITLES[h0]) S.ui.view = h0;
 renderAll();
-{ let seen = null, ok = true; try{ seen = localStorage.getItem(TOUR_KEY); }catch(_){ ok = false; }
-  if(ok && !seen && !h0) setTimeout(() => { if(!dlg.open) tourStart(0); }, 700); }
 })();
 </script>
