@@ -2,6 +2,7 @@
 
 > Phạm vi: phần mềm kế toán / quản lý kho / tính giá thành cho DN Việt Nam (tham chiếu hành vi MISA SME).
 > Ngày lập: 2026-10-04. Ký hiệu độ tin cậy: **[XM]** = đã xác minh qua nguồn web khi lập tài liệu; **[KT]** = kiến thức chuyên môn phổ biến, khớp TT200/TT133 nhưng chưa đối chiếu nguyên văn lần này; **[CXM]** = chưa xác minh / cần đối chiếu văn bản gốc trước khi code cứng.
+> Cập nhật 2026-10-06 (theo `06a`): thứ tự khóa sổ §6 (L2), ví dụ bán hàng §5.3 (L9), bất biến G1 (L10), cột TT133 bảng 911 §5.4 (L11), một mặc định giá nhập hàng bán trả lại (L13), đơn giá 4 số lẻ §3.4, luật làm tròn duy nhất R1 (§8.5), thêm §4.6 (đích danh theo lô + phân bước có tính giá BTP).
 > Nguyên tắc thiết kế: **mọi quy định có thể thay đổi (số hiệu TK, mẫu báo cáo, thuế suất) phải là dữ liệu cấu hình theo "Chế độ kế toán" (TT200 / TT133 / TT99), không hard-code.**
 
 ---
@@ -119,9 +120,13 @@ Nguồn: [VASEP – văn bản TT99](https://vasep.com.vn/van-ban/bo-tai-chinh/t
 - Tồn cuối: 50 kg, **550.000**.
 
 Quy tắc cài đặt:
-- "Nhập trong kỳ" gồm mọi chứng từ nhập có giá xác định trước (mua, nhập khẩu, thành phẩm SX sau khi tính giá thành, điều chỉnh tăng giá trị). **Nhập do hàng bán trả lại** và **nhập chuyển kho** thường lấy giá theo giá xuất → có 2 lựa chọn: (a) loại khỏi mẫu số và gán giá = ĐG_bq (MISA mặc định với hàng trả lại không có giá); (b) cho phép người dùng nhập giá cụ thể → tham gia bình quân. Phải cấu hình rõ.
+- "Nhập trong kỳ" gồm mọi chứng từ nhập có giá xác định trước (mua, nhập khẩu, thành phẩm SX sau khi tính giá thành, điều chỉnh tăng giá trị). **Nhập chuyển kho** lấy giá xuất của kho nguồn (xem dòng chuyển kho bên dưới).
+- **Nhập do hàng bán trả lại — một mặc định duy nhất (dùng chung với §3.8 và §5.3):** giá nhập lại = **giá vốn lúc xuất bán của chính dòng hóa đơn gốc**, theo tỷ lệ SL: `GT nhập lại = round(SL trả × GT vốn dòng gốc / SL dòng gốc)` (R1 (c), dòng trả lại làm SL còn lại của dòng gốc về 0 nhận toàn bộ phần còn lại). Với BQ cuối kỳ:
+  - Trả lại **cùng kỳ** với lần bán: GT vốn dòng gốc chính là SL × ĐG_bq của kỳ (chưa biết khi lập phiếu) ⇒ dòng nhập lại **loại khỏi mẫu số** công thức ĐG_bq và nhận giá theo dòng gốc sau khi chốt ĐG_bq (tránh phụ thuộc vòng). Kết quả trùng với cách MISA gán ĐG_bq cho hàng trả lại.
+  - Trả lại **khác kỳ** (dòng gốc thuộc kỳ trước, đã chốt): giá nhập = GT vốn dòng gốc đã chốt và **tham gia** bình quân của kỳ hiện tại như một lần nhập có giá.
+  - Không tham chiếu được hóa đơn gốc: chặn mặc định; chỉ người có quyền mới được nhập giá tay (ghi lý do).
 - Tính theo kho hay toàn DN (tùy chọn, MISA: "tính giá theo kho / không theo kho"; đa chi nhánh: theo từng chi nhánh hoặc chung) [XM].
-- **Chênh lệch làm tròn**: dòng xuất cuối cùng trong kỳ (hoặc khi tồn SL = 0) nhận phần chênh lệch để `GT tồn cuối = GT đầu + GT nhập − GT xuất` chính xác; khi SL tồn = 0 thì GT tồn **phải** = 0.
+- **Làm tròn**: theo R1 (§8.5). Mỗi dòng xuất = round(SL × GT có trong kỳ / SL có trong kỳ) (R1 (c), nguồn giá = cả kỳ); phần dư làm tròn nằm lại ở tồn cuối; nếu tồn cuối kỳ SL = 0 thì dòng xuất làm tồn về 0 (dòng xuất cuối cùng theo thứ tự chuẩn) nhận toàn bộ giá trị còn lại, để khi SL tồn = 0 thì GT tồn **phải** = 0.
 - Chuyển kho khi tính theo kho: chuyển kho ra lấy ĐG_bq kho xuất; kho nhận coi là "nhập có giá" → phải tính **theo thứ tự phụ thuộc giữa các kho** (lặp đến khi hội tụ, hoặc giải hệ phương trình tuyến tính khi có vòng chuyển kho A↔B trong cùng kỳ).
 
 ### 3.4 Bình quân tức thời (di động / sau mỗi lần nhập)
@@ -131,13 +136,13 @@ Xuất: GT xuất = SL xuất × ĐG hiện tại (xuất làm SL tồn về 0 �
 ```
 | Ngày | SL tồn | GT tồn | ĐG | GT xuất |
 |---|---|---|---|---|
-| 05/01 sau nhập | 300 | 3.200.000 | 10.666,67 | |
-| 10/01 xuất 250 | 50 | 533.333 | 10.666,67 | 2.666.667 |
+| 05/01 sau nhập | 300 | 3.200.000 | 10.666,6667 | |
+| 10/01 xuất 250 | 50 | 533.333 | 10.666,6667 | 2.666.667 |
 | 20/01 sau nhập | 150 | 1.733.333 | 11.555,5533 | |
 | 25/01 xuất 100 | 50 | 577.778 | 11.555,5533 | 1.155.555 |
 Tổng xuất **3.822.222**, tồn **577.778** (kiểm tra: 4.400.000 − 3.822.222 = 577.778 ✓).
 
-Cài đặt: lưu giá trị bằng số nguyên VND (hoặc decimal 4 chữ số cho đơn giá), làm tròn GT xuất từng dòng; GT tồn = phần dư (không tính lại SL × ĐG). **Sửa/chèn chứng từ có ngày trước** chứng từ đã tính → phải tính lại toàn bộ chuỗi từ ngày đó (MISA: cần chạy lại "Tính giá xuất kho") [XM].
+Cài đặt (R1, §8.5): giá trị lưu số nguyên VND; đơn giá 4 số lẻ chỉ để hiển thị; GT xuất từng dòng = round(SL xuất × GT tồn / SL tồn) tại thời điểm xuất (không nhân từ ĐG đã làm tròn); GT tồn = phần còn lại (không tính lại SL × ĐG). **Sửa/chèn chứng từ có ngày trước** chứng từ đã tính → phải tính lại toàn bộ chuỗi từ ngày đó (MISA: cần chạy lại "Tính giá xuất kho") [XM].
 
 ### 3.5 Nhập trước – xuất trước (FIFO)
 Mỗi lần nhập tạo một **lô giá (cost layer)**; xuất tiêu thụ lô cũ nhất.
@@ -149,7 +154,9 @@ Tổng xuất **3.800.000**, tồn **600.000** ✓.
 Cài đặt: bảng `cost_layer(item, warehouse, source_doc, date, qty_in, qty_remaining, unit_cost)` + bảng `layer_consumption(issue_line, layer, qty, amount)`. Một dòng xuất có thể sinh nhiều consumption → đơn giá hiển thị trên phiếu xuất = tổng tiền / SL.
 
 ### 3.6 Thực tế đích danh
-Xuất chỉ định lô/số serial cụ thể (VD xuất 25/01: 100 kg thuộc phiếu nhập 20/01 → 1.200.000). Yêu cầu: dòng xuất **bắt buộc** tham chiếu dòng nhập (lô); kiểm tra SL lô còn đủ. Phù hợp hàng giá trị lớn, ít mặt hàng (ô tô, máy móc, BĐS).
+Xuất chỉ định lô/số serial cụ thể (VD xuất 25/01: 100 kg thuộc phiếu nhập 20/01 → 1.200.000). Yêu cầu: dòng xuất **bắt buộc** tham chiếu dòng nhập (lô); kiểm tra SL lô còn đủ. Sách giáo khoa thường nói phương pháp này hợp với hàng giá trị lớn, ít mặt hàng (ô tô, máy móc, BĐS); nhưng khách hàng của dự án dùng đích danh **theo lô (mã lót)** cho cả NVL, BTP và thành phẩm — quy tắc chi tiết và ví dụ số ở §4.6.
+
+Tổng kỳ của ví dụ chung nếu chỉ định: X1 = 100 kg tồn đầu + 150 kg lô 05/01 = 1.000.000 + 1.650.000 = 2.650.000; X2 = 100 kg lô 20/01 = 1.200.000 → tổng xuất 3.850.000; tồn 50 kg thuộc lô 05/01 = 550.000 (kiểm tra 4.400.000 − 3.850.000 = 550.000 ✓).
 
 ### 3.7 So sánh kết quả ví dụ
 
@@ -158,6 +165,7 @@ Xuất chỉ định lô/số serial cụ thể (VD xuất 25/01: 100 kg thuộc
 | BQ cuối kỳ | 3.850.000 | 550.000 |
 | BQ tức thời | 3.822.222 | 577.778 |
 | FIFO | 3.800.000 | 600.000 |
+| Đích danh (chỉ định như §3.6) | 3.850.000 | 550.000 |
 
 ### 3.8 Edge case & quy tắc xử lý
 
@@ -165,10 +173,10 @@ Xuất chỉ định lô/số serial cụ thể (VD xuất 25/01: 100 kg thuộc
 |---|---|---|
 | **Tồn âm** (xuất khi SL tồn < SL xuất tại thời điểm xuất) | BQ tức thời/FIFO không có giá; BQ cuối kỳ có thể ra ĐG âm/vô nghĩa (MISA: nguyên nhân phổ biến khiến không lên giá [XM]) | Tùy chọn hệ thống "Cho phép xuất quá tồn" (mặc định **tắt**). Nếu bật: dòng xuất phần âm được gán giá tạm (ĐG gần nhất / ĐG bq), đánh dấu `provisional`; khi có nhập bù → tính lại. Báo cáo "VTHH tồn âm" bắt buộc trước khóa sổ; **không cho khóa kỳ nếu còn tồn âm** (tại cuối kỳ hoặc—tùy cấu hình—tại bất kỳ thời điểm nào). |
 | **Xuất trước nhập sau trong kỳ** (chứng từ nhập ghi ngày sau nhưng thực tế hàng đã về) | Với BQ cuối kỳ: không ảnh hưởng (chỉ cần cuối kỳ SL ≥ 0). Với BQ tức thời/FIFO: tồn âm tạm thời | Như trên; cảnh báo khi ghi sổ. Thứ tự xử lý trong cùng ngày: **nhập trước, xuất sau** (sắp xếp theo ngày hạch toán, rồi loại chứng từ nhập < xuất, rồi số thứ tự ghi sổ). |
-| **Hàng bán trả lại** | Nhập lại kho với giá nào? | Mặc định = giá vốn của dòng bán gốc (tham chiếu chứng từ bán → lấy GT xuất của dòng đó theo tỷ lệ SL). Nếu không tham chiếu: lấy ĐG bq kỳ (BQ) / ĐG tại ngày trả (tức thời) / lô gốc (FIFO). Bút toán Nợ 156/155 – Có 632. |
+| **Hàng bán trả lại** | Nhập lại kho với giá nào? | **Mặc định duy nhất** (giống §3.3 và §5.3): giá vốn lúc xuất bán của chính dòng hóa đơn gốc, theo tỷ lệ SL (R1 (c)). Với đích danh/FIFO: hàng trả lại quay về **đúng lô gốc** với giá đó. Với BQ cuối kỳ: trả lại cùng kỳ ⇒ loại khỏi mẫu số, nhận giá sau khi chốt ĐG_bq; trả lại khác kỳ ⇒ giá vốn dòng gốc đã chốt, tham gia bình quân kỳ hiện tại. Không tham chiếu được dòng gốc ⇒ chặn, trừ khi người có quyền nhập giá tay kèm lý do. Bút toán Nợ 156/155 – Có 632. |
 | **Hàng mua trả lại người bán** | Xuất kho trả NCC | Giá = giá của phiếu nhập gốc (đích danh theo chứng từ nhập), không lấy ĐG bq. Ghi Nợ 331 – Có 152/156, Có 1331. |
 | **Điều chỉnh giá nhập sau** (giảm giá/CKTM hàng mua nhận sau, HĐ điều chỉnh, chi phí mua về sau) | Hàng có thể đã xuất một phần | Chứng từ "điều chỉnh giá trị nhập" (SL = 0, GT ≠ 0) gắn với phiếu nhập gốc. BQ cuối kỳ: cộng vào GT nhập kỳ → tự phân bổ khi tính lại. BQ tức thời/FIFO: cộng vào lô/ĐG tại ngày điều chỉnh. Nếu điều chỉnh sau khi đã khóa kỳ của phiếu nhập: phân bổ thủ công theo tỷ lệ: phần còn tồn → 152/156, phần đã bán → 632, phần đã đưa vào SX dở → 154 (VD: giảm giá 1.000.000 cho lô 200 kg, đã xuất 150 kg → Có 152: 250.000; Có 632/154: 750.000). |
-| **Chi phí mua hàng phân bổ** (vận chuyển, bốc xếp, bảo hiểm, thuế NK) | 1 HĐ chi phí cho nhiều mặt hàng | Chức năng "phân bổ chi phí mua hàng" theo tiêu thức: **giá trị**, **số lượng**, **trọng lượng/thể tích** hoặc nhập tay; phần dư làm tròn dồn vào dòng cuối. VD: phí VC 600.000 cho A (giá trị 2.200.000) và B (giá trị 1.100.000), theo giá trị → A 400.000, B 200.000. Kết quả cộng vào GT nhập từng dòng. Nếu HĐ chi phí về sau → coi là "điều chỉnh giá nhập sau". |
+| **Chi phí mua hàng phân bổ** (vận chuyển, bốc xếp, bảo hiểm, thuế NK) | 1 HĐ chi phí cho nhiều mặt hàng | Chức năng "phân bổ chi phí mua hàng" theo tiêu thức: **giá trị**, **số lượng**, **trọng lượng/thể tích** hoặc nhập tay; làm tròn theo R1 (b) (largest remainder, §8.5). VD: phí VC 600.000 cho A (giá trị 2.200.000) và B (giá trị 1.100.000), theo giá trị → A 400.000, B 200.000. Kết quả cộng vào GT nhập từng dòng. Nếu HĐ chi phí về sau → coi là "điều chỉnh giá nhập sau". |
 | **Đánh giá lại HTK** | Góp vốn bằng HTK, chuyển đổi DN, kiểm kê đánh giá theo quyết định | Chứng từ "điều chỉnh giá trị kho" (SL = 0). Tăng: Nợ 152/156 – Có 711 (hoặc TK theo quyết định); giảm: Nợ 811 – Có 152/156. Góp vốn ra ngoài: Nợ 221/222 (giá đánh giá), Nợ 811 / Có 711 chênh lệch, Có 152/156 (giá ghi sổ) [KT]. |
 | **Đơn vị tính quy đổi** | Nhập thùng, xuất chai | Mọi tính toán theo **ĐVT chính**; lưu tỷ lệ quy đổi trên dòng chứng từ tại thời điểm lập; sai tỷ lệ là nguyên nhân sai giá phổ biến (MISA) [XM]. |
 | **Thành phẩm chưa có giá** | Phiếu nhập TP từ SX chỉ có SL tới khi tính giá thành | Tính giá thành xong mới cập nhật GT phiếu nhập TP → sau đó mới tính giá xuất TP. Xem mục 6 (thứ tự). |
@@ -194,7 +202,8 @@ for level in BOM_levels ascending:          # mục 3.8
            (+ nhập chuyển kho từ kho khác với giá của kho nguồn ở vòng trước)
       if Q <= 0: lỗi "tồn âm/không có giá" -> dừng & báo cáo
       p = V / Q
-      for each issue line (ordered): amount = round(qty * p); dồn chênh lệch vào dòng cuối
+      for each issue line (thứ tự chuẩn): amount = round(qty * V / Q)      # R1 (c), không dùng p đã làm tròn
+        nếu dòng này làm SL tồn cuối kỳ về 0: amount = toàn bộ GT còn lại   # phần dư nằm ở tồn, trừ khi tồn về 0
       cập nhật giá cho dòng nhận tương ứng ở kho đích
   ghi đè amount vào dòng chứng từ xuất + sinh lại bút toán GL (trong transaction)
 ```
@@ -228,7 +237,9 @@ Tính **theo từng khoản mục** (NVLTT / NCTT / MTC / SXC) để lập Thẻ
 | Phế liệu thu hồi | | Nợ 152 / Có 154 (giảm Z) | |
 
 **Ví dụ phân bổ 627** theo chi phí NCTT: 627 = 20.000.000; 622 của ĐH1 = 18.000.000, ĐH2 = 12.000.000.
-Hệ số = 20.000.000 / 30.000.000 = 2/3 → ĐH1 = 18.000.000 × 2/3 = 12.000.000, ĐH2 = **8.000.000** (dòng cuối nhận phần dư). _(Đã sửa theo phản biện 06a-L1.)_
+Hệ số = 20.000.000 / 30.000.000 = 2/3 → ĐH1 = 18.000.000 × 2/3 = **12.000.000**, ĐH2 = 12.000.000 × 2/3 = **8.000.000** (chia hết, không có phần dư). _(Đã sửa theo phản biện 06a-L1.)_
+
+**Ca có phần dư thật (R1 (b), largest remainder):** 627 = 10.000.000 phân bổ cho 3 ĐH có NCTT bằng nhau. Mỗi phần chính xác 3.333.333,33 → phần nguyên 3 × 3.333.333 = 9.999.999, thiếu 1 đồng; ba phần lẻ bằng nhau (0,33) nên hòa, xét theo thứ tự ổn định (ngày, số CT, số dòng) → đồng còn thiếu cộng cho phần đứng đầu: **3.333.334 / 3.333.333 / 3.333.333** (Σ = 10.000.000).
 
 **SXC cố định dưới công suất bình thường (VAS 02):** 627 cố định 10.000.000, công suất bình thường 1.000 SP, thực tế 800 SP → phân bổ vào Z: 10.000.000 × 800/1.000 = 8.000.000; **2.000.000 → Nợ 632** (không tính vào giá thành). SXC biến đổi phân bổ hết theo thực tế. → Dữ liệu cần: cờ "cố định/biến đổi" trên TK 627 chi tiết hoặc dòng chi phí, công suất bình thường theo đối tượng.
 
@@ -241,7 +252,7 @@ Ví dụ: Phân xưởng SX sản phẩm X. Trong kỳ: 621 = 90.000.000; 622 = 
 **(a) Theo chi phí NVL trực tiếp (hoặc NVL chính)** — DDCK chỉ gồm NVLTT, NC & SXC tính hết cho TP. Giả sử DDĐK = 10.000.000 (toàn NVLTT).
 ```
 DDCK = (DDĐK + C_NVLTT) / (SL_HT + SL_DD) × SL_DD = (10tr + 90tr)/(900+100) × 100 = 10.000.000
-Z = 10tr + (90 + 30 + 20)tr − 10tr = 140.000.000 ; z = 155.555,56
+Z = 10tr + (90 + 30 + 20)tr − 10tr = 140.000.000 ; z = 155.555,5556 (4 số lẻ, chỉ hiển thị — R1 (a))
 ```
 
 **(b) Theo sản lượng hoàn thành tương đương** — DDĐK: NVLTT 10.000.000; NCTT 1.350.000; SXC 900.000 (tổng 12.250.000).
@@ -292,6 +303,7 @@ VD 2 giai đoạn, không DD:
 - GĐ2: BTP chuyển sang 68tr + 622 = 12tr + 627 = 10tr → 1.000 TP: Z = 90.000.000, z = 90.000.
 - Kết chuyển **theo khoản mục** (để thẻ TP thể hiện đúng): NVLTT 50tr, NCTT 22tr, SXC 18tr. (Kết chuyển tổng hợp thì BTP thành 1 khoản mục "BTP GĐ trước".)
 - Nếu BTP nhập kho rồi xuất cho GĐ sau → BTP đi qua tính giá xuất kho (mục 3.8 "SX nhiều cấp").
+- Ví dụ có lô, có BTP chuyển một phần sang GĐ sau và có phần dư làm tròn: §4.6.
 
 **(6) Phân bước không tính BTP (kết chuyển song song)**
 ```
@@ -308,6 +320,59 @@ Nhập kho TP: Nợ 155 / Có 154; bán thẳng không qua kho: Nợ 632 / Có 1
 
 ### 4.5 Dữ liệu tối thiểu cho module giá thành
 `costing_period`, `cost_object` (loại: SP / nhóm SP / PX / ĐH / CT), `costing_method`, `wip_method`, `bom(version, valid_from)`, `standard_cost`, `allocation_rule(627 → tiêu thức)`, `coefficient`/`plan_cost` (hệ số, tỷ lệ), `wip_count(qty, % hoàn thành theo khoản mục)`, `costing_result(object, product, khoản mục, DDĐK, PS, DDCK, Z, z)`.
+
+### 4.6 Mô hình của khách hàng: giá đích danh theo lô (mã lót) + phân bước có tính giá BTP
+
+Khách hàng chọn phương pháp **thực tế đích danh** và thẻ giá thành đi từ NVL qua **nhiều giai đoạn** (quy trình mắm: tiếp nhận → ủ muối → rửa → ủ thính → phối trộn → đóng gói → bảo ôn → thành phẩm). Quy tắc:
+
+1. **Lô là đơn vị giá.** Mọi dòng nhập/xuất NVL, bao bì, phụ gia, BTP, thành phẩm bắt buộc có mã lô (mã lót do QC lập). Giá trị lô = GT nhập + điều chỉnh về sau (chi phí mua, giảm giá; phân bổ cho nhiều lô theo R1 (b)).
+2. **Xuất một phần lô:** GT xuất = round(SL xuất × GT còn lại của lô / SL còn lại của lô) (R1 (c)); phần dư làm tròn nằm lại ở lô; lần xuất làm lô về 0 nhận toàn bộ GT còn lại. Không bao giờ có lô SL = 0 mà GT ≠ 0 (K4, K8).
+3. **Giá thành theo lệnh SX × giai đoạn** (đối tượng tập hợp chi phí = lệnh SX/giai đoạn, xem §4.4 (5)). BTP hoàn thành ở GĐ i là một lô có giá trị = Z_GĐi; phần BTP chuyển sang GĐ i+1 cũng tính theo quy tắc 2 (chuyển một phần thì phần còn lại nằm ở 154-GĐ i, chuyển tiếp kỳ sau — phù hợp công đoạn ủ kéo dài nhiều kỳ).
+4. **Kết chuyển theo khoản mục**: giá trị BTP chuyển đi được tách theo khoản mục NVLTT/NCTT/SXC của lô BTP bằng R1 (b) (trọng số = giá trị từng khoản mục của lô), để thẻ giá thành TP vẫn đọc được NVL – NC – SXC từ đầu chuỗi.
+5. **Truy vết**: lô TP → lệnh SX GĐ cuối → lô BTP → lệnh SX GĐ đầu → lô NVL. Đây là chuỗi QC cần, và cũng là chuỗi giá.
+
+**Ví dụ (giả định riêng, chưa phải số liệu khách hàng; TT99, không có DD đầu kỳ):**
+
+Lô NVL tồn đầu kỳ: cá linh lô CL-01 1.000 kg = 30.000.000; cá linh lô CL-02 500 kg = 16.123.457; muối lô M-01 2.000 kg = 5.000.000; thính lô T-01 300 kg = 9.000.000; bao bì (hũ, TK 152) lô BB-01 2.000 cái = 6.000.000.
+
+*GĐ1 — Ủ muối (lệnh LSX-01/GĐ1):*
+
+| Xuất cho GĐ1 | Tính | GT |
+|---|---|---|
+| Cá CL-01 800 kg | round(800 × 30.000.000 / 1.000) | 24.000.000 |
+| Cá CL-02 200 kg | round(200 × 16.123.457 / 500) = round(6.449.382,8) | 6.449.383 |
+| Muối M-01 300 kg | round(300 × 5.000.000 / 2.000) | 750.000 |
+| **NVLTT GĐ1** | | **31.199.383** |
+
+Lô CL-02 còn 300 kg / 9.674.074 (= 16.123.457 − 6.449.383); lần xuất 300 kg đó về sau làm lô về 0 nên nhận đúng toàn bộ 9.674.074 (ở đây trùng với round(300 × 16.123.457 / 500) = round(9.674.074,2); quy tắc "lô về 0 nhận phần còn lại" bảo đảm điều này cả khi hai cách lệch nhau).
+NCTT GĐ1 4.000.000; SXC phân bổ cho GĐ1 2.000.000. Hoàn thành 900 kg BTP "cá ủ muối" lô BTP-01 (hao hụt trong định mức không tách bút toán): **Z_BTP = 37.199.383**, z = 41.332,6478 (chỉ hiển thị).
+
+*Chuyển 600 kg BTP-01 sang GĐ2, 300 kg tiếp tục ủ (nằm ở 154-GĐ1):* GT chuyển = round(600 × 37.199.383 / 900) = round(24.799.588,67) = **24.799.589**; còn lại 12.399.794.
+Tách theo khoản mục bằng R1 (b) (trọng số 31.199.383 / 4.000.000 / 2.000.000): phần chính xác 20.799.588,67 / 2.666.666,67 / 1.333.333,33 → phần nguyên 24.799.587, thiếu 2 đồng → cộng cho hai phần lẻ lớn nhất (NVL, NC): **NVLTT 20.799.589 / NCTT 2.666.667 / SXC 1.333.333** (Σ = 24.799.589). Phần còn ở 154-GĐ1: 10.399.794 / 1.333.333 / 666.667 (Σ = 12.399.794).
+
+*GĐ2 — Ủ thính, phối trộn, đóng gói (LSX-01/GĐ2):* BTP chuyển sang 24.799.589; thính T-01 60 kg = round(60 × 9.000.000/300) = 1.800.000; hũ BB-01 1.200 cái = 3.600.000; NCTT 3.000.000; SXC 1.500.000. Hoàn thành 1.200 hũ TP lô TP-01: **Z_TP = 34.699.589**, z = 28.916,3242. Thẻ giá thành TP theo khoản mục: NVLTT 20.799.589 + 1.800.000 + 3.600.000 = 26.199.589; NCTT 2.666.667 + 3.000.000 = 5.666.667; SXC 1.333.333 + 1.500.000 = 2.833.333 (Σ = 34.699.589 ✓).
+
+*Bán 500 hũ lô TP-01:* giá vốn = round(500 × 34.699.589 / 1.200) = round(14.458.162,08) = **14.458.162**; lô TP-01 còn 700 hũ / 20.241.427.
+
+Bút toán (TT99; TT133 thay 621/622/627 bằng 154 có khoản mục, bỏ các dòng kết chuyển):
+
+| # | Nợ | Có | Số tiền |
+|---|---|---|---|
+| 1 | 621 (LSX-01/GĐ1) | 152 | 31.199.383 |
+| 2 | 622 (GĐ1) | 334, 338 | 4.000.000 |
+| 3 | 627 (GĐ1) | 214, 334, 331… | 2.000.000 |
+| 4 | 154 (GĐ1) | 621 / 622 / 627 (GĐ1) | 31.199.383 + 4.000.000 + 2.000.000 = 37.199.383 |
+| 5 | 154 (GĐ2) | 154 (GĐ1) | 24.799.589 |
+| 6 | 621 (GĐ2) | 152 | 5.400.000 |
+| 7 | 622 (GĐ2) | 334, 338 | 3.000.000 |
+| 8 | 627 (GĐ2) | 214, 334, 331… | 1.500.000 |
+| 9 | 154 (GĐ2) | 621 / 622 / 627 (GĐ2) | 5.400.000 + 3.000.000 + 1.500.000 = 9.900.000 |
+| 10 | 155 (lô TP-01) | 154 (GĐ2) | 34.699.589 |
+| 11 | 632 | 155 (lô TP-01) | 14.458.162 |
+
+Mỗi bút toán Nợ = Có; tổng PS Nợ = tổng PS Có = 168.156.106. Sau kỳ: 621/622/627 dư 0; 154-GĐ1 dư 12.399.794 (= 300 kg BTP-01 đang ủ); 154-GĐ2 dư 0 (24.799.589 + 9.900.000 − 34.699.589); 155 lô TP-01 dư 20.241.427; 152 giảm 36.599.383. Kiểm tra: 12.399.794 + 20.241.427 + 14.458.162 = 47.099.383 = 36.599.383 (NVL) + 7.000.000 (NC) + 3.500.000 (SXC) ✓.
+
+Còn để ngỏ (cần khách hàng xác nhận): BTP có nhập kho giữa các giai đoạn không (nếu có thì BTP đi qua kho và TK nhập kho BTP theo TT99 — [CXM]); hao hụt trong/ngoài định mức của từng công đoạn ủ; thời gian ủ thực tế (ảnh hưởng DD nhiều kỳ); xử lý lô QC không đạt bị loại bỏ.
 
 ---
 
@@ -359,23 +424,26 @@ Giả định: DN nộp GTGT theo phương pháp khấu trừ. Ký hiệu: GTGT 
 | Chiết khấu thương mại (sau khi đã xuất HĐ) | 5211 (TT133: 511); 33311 | 131 | Lập HĐ điều chỉnh giảm. CKTM ghi ngay trên HĐ → ghi DT thuần, không qua 521 |
 | Giảm giá hàng bán | 5213* (TT133: 511); 33311 | 131 | *xem lưu ý số hiệu 521 mục 2 |
 | Hàng bán bị trả lại – DT | 5212* (TT133: 511); 33311 | 131/111 | HĐ điều chỉnh / HĐ của người mua (theo NĐ123/70 — [CXM] thủ tục cụ thể) |
-| – Nhập lại kho | 155/156 | 632 | Giá vốn của lần bán gốc |
+| – Nhập lại kho | 155/156 | 632 | Giá vốn lúc xuất bán của chính dòng hóa đơn gốc (mặc định duy nhất, §3.3/§3.8) |
 | Chiết khấu thanh toán cho KH | 635 | 131 | |
 | Kết chuyển giảm trừ cuối kỳ | 511 | 521 | |
 
-**Ví dụ:** Bán 50 kg A giá 15.000/kg, GTGT 10%: Nợ 131: 825.000 / Có 5111: 750.000 / Có 33311: 75.000. Giá vốn (BQ cuối kỳ 11.000): Nợ 632: 550.000 / Có 156: 550.000. KH trả lại 10 kg: Nợ 5212: 150.000; Nợ 33311: 15.000 / Có 131: 165.000; Nợ 156: 110.000 / Có 632: 110.000.
+**Ví dụ** (giả định riêng: mặt hàng H là **hàng hóa, TK 156**, tính BQ cuối kỳ, ĐG_bq tháng 01 đã chốt = 11.000; vật tư A ở §3.2 là NVL 152 nên không dùng cho ví dụ bán hàng hóa): ngày 15/01 bán 50 kg H giá 15.000/kg, GTGT 10%: Nợ 131: 825.000 / Có 5111: 750.000 / Có 33311: 75.000. Giá vốn sau khi chốt BQ cuối kỳ: Nợ 632: 550.000 / Có 156: 550.000. Ngày 28/01 (**cùng kỳ**) KH trả lại 10 kg, tham chiếu dòng hóa đơn 15/01: Nợ 5212 (TT133: Nợ 511): 150.000; Nợ 33311: 15.000 / Có 131: 165.000; nhập lại theo giá vốn dòng gốc = round(10 × 550.000 / 50) = 110.000: Nợ 156: 110.000 / Có 632: 110.000. Dòng nhập lại này loại khỏi mẫu số ĐG_bq tháng 01 (§3.3). Nếu trả lại vào tháng 02 thì giá nhập vẫn là 110.000 nhưng tham gia bình quân tháng 02.
+Bán **NVL** (152) không phải bán hàng hóa: Có 152 (không phải 156), doanh thu theo chính sách DN (5118 hoặc 5111 — [CXM] theo danh mục TK cấp 2 của chế độ đang áp dụng); nhập lại khi bị trả Nợ 152.
 
 ### 5.4 Kết chuyển cuối kỳ & xác định kết quả (911)
-| Bước | Nợ | Có |
-|---|---|---|
-| 1. Kết chuyển giảm trừ DT | 511 | 521 |
-| 2. Kết chuyển DT thuần | 511 | 911 |
-| 3. Kết chuyển DT tài chính, TN khác | 515, 711 | 911 |
-| 4. Kết chuyển giá vốn | 911 | 632 |
-| 5. Kết chuyển CP tài chính, bán hàng, QLDN, khác | 911 | 635, 641, 642, 811 |
-| 6. Tính thuế TNDN tạm tính/quyết toán | 8211 | 3334 |
-| 7. Kết chuyển CP thuế TNDN | 911 | 8211 (± 8212) |
-| 8. Kết chuyển lãi / lỗ | 911 / 4212 | 4212 / 911 |
+| Bước | TT200/TT99: Nợ | TT200/TT99: Có | TT133: Nợ | TT133: Có |
+|---|---|---|---|---|
+| 1. Kết chuyển giảm trừ DT | 511 | 521 | — (không có 521; giảm trừ đã ghi thẳng Nợ 511) | — |
+| 2. Kết chuyển DT thuần | 511 | 911 | 511 | 911 |
+| 3. Kết chuyển DT tài chính, TN khác | 515, 711 | 911 | 515, 711 | 911 |
+| 4. Kết chuyển giá vốn | 911 | 632 | 911 | 632 |
+| 5. Kết chuyển CP tài chính, bán hàng, QLDN, khác | 911 | 635, 641, 642, 811 | 911 | 635, 6421, 6422, 811 |
+| 6. Tính thuế TNDN tạm tính/quyết toán (tùy chọn hằng quý) | 8211 | 3334 | 821 | 3334 |
+| 7. Kết chuyển CP thuế TNDN | 911 | 8211 (± 8212) | 911 | 821 (không có cấp 2 8211/8212) |
+| 8. Kết chuyển lãi / lỗ | 911 / 4212 | 4212 / 911 | 911 / 4212 | 4212 / 911 |
+
+Bảng này là **dữ liệu cấu hình theo chế độ** (account role → TK), không hard-code. Cột TT133 theo hiểu biết hiện có [KT]; số hiệu chi tiết cần đối chiếu danh mục TK TT133 trước khi code cứng.
 
 Sau bước 8: mọi TK loại 5–9 **số dư = 0**. (632 có thể dư Nợ trong kỳ do điều chỉnh, nhưng phải về 0 sau kết chuyển.) Đầu năm mới: kết chuyển 4212 → 4211 (Nợ 4212 / Có 4211 hoặc ngược lại).
 
@@ -392,22 +460,24 @@ Thứ tự bắt buộc (mũi tên = phụ thuộc dữ liệu):
 | 0 | Hoàn tất & ghi sổ toàn bộ chứng từ kỳ; đối chiếu HĐ đầu vào/ra, ngân hàng, công nợ | — | | Không còn chứng từ nháp trong kỳ |
 | 1 | Đánh giá chênh lệch tỷ giá cuối kỳ (khoản mục tiền tệ có gốc ngoại tệ) | 0 | 413 → 515/635 | Không ảnh hưởng giá kho |
 | 2 | Phân bổ chi phí trả trước 242, khấu hao TSCĐ (214), lương & trích theo lương | 0 | Bút toán vào 627/641/642 | Phải xong **trước** tính giá thành vì tạo 627 |
-| 3 | Phân bổ chi phí mua hàng; kiểm tra tồn âm | 0 | | Chặn nếu tồn âm |
+| 3 | (a) **Kiểm kê, ghi nhận chênh lệch thừa/thiếu** (phiếu nhập/xuất chênh lệch kiểm kê của 3 kho, kể cả NVL thiếu tại phân xưởng); (b) phân bổ chi phí mua hàng; (c) kiểm tra tồn âm | 0 | Chứng từ kho chênh lệch kiểm kê; GT nhập đã gồm chi phí mua | Chênh lệch kiểm kê là chứng từ kho, làm đổi SL/GT dùng để tính giá xuất ⇒ phải xong **trước** bước 4. Kiểm tồn âm sau (a) vì kiểm kê thừa có thể bù âm. Chặn nếu còn tồn âm |
 | 4 | **Tính giá xuất kho NVL/HH mua ngoài** (BOM cấp thấp nhất) | 3 | Giá trị xuất 621/627/641/642/632 | |
 | 5 | Nhập SL & % HT sản phẩm dở dang; kết chuyển 621/622/623/627 → 154; phân bổ 627 | 2, 4 | 154 theo đối tượng & khoản mục | |
 | 6 | **Tính giá thành** → cập nhật GT phiếu nhập TP/BTP | 5 | Nợ 155 / Có 154 | Lặp 4–6 theo cấp BOM nếu có BTP nhập kho |
 | 7 | **Tính giá xuất kho thành phẩm** (và BTP) | 6 | Giá vốn 632 TP | |
-| 8 | Kiểm kê, xử lý thừa thiếu; lập/hoàn nhập dự phòng 2294 (thường cuối năm/giữa niên độ) | 7 | | |
+| 8 | Lập/hoàn nhập dự phòng 2294 (thường cuối năm/giữa niên độ) | 7 | Nợ 632 / Có 2294 hoặc ngược lại | Cần giá gốc cuối kỳ đã chốt nên đứng sau 7 |
 | 9 | Bù trừ thuế GTGT (Nợ 33311 / Có 1331 theo số nhỏ hơn); thuế TNDN tạm tính | 0 | | |
 | 10 | Kết chuyển giảm trừ DT, kết chuyển 911, LNST (mục 5.4) | 1–9 | | Kết chuyển phải chạy **lại** nếu có thay đổi bước trước |
 | 11 | Kiểm tra bất biến (mục 8); lập Bảng cân đối số phát sinh | 10 | | |
 | 12 | Lập BCTC (năm) / báo cáo quản trị (tháng) | 11 | | |
-| 13 | **Khóa sổ kỳ** | 11 | Kỳ bị khóa; số dư cuối thành số dư đầu kỳ sau | Mở khóa cần quyền đặc biệt + ghi log + lý do |
+| 13 | **Khóa sổ kỳ** (theo kỳ tháng) | 11 | Kỳ bị khóa; số dư cuối thành số dư đầu kỳ sau | Mở khóa cần quyền đặc biệt + ghi log + lý do |
+
+_(Bản trước đặt kiểm kê ở bước 8, sau tính giá; đã chuyển lên bước 3 theo 06a-L2. Số bước 0–13 giữ nguyên để khớp `05` §7.2.)_
 
 **Ràng buộc phụ thuộc:**
 - Bất kỳ chứng từ nào sửa ở bước ≤ k làm **mất hiệu lực** kết quả các bước > k → hệ thống đánh dấu `dirty` cho kỳ (và các kỳ sau nếu ảnh hưởng tồn đầu), yêu cầu chạy lại.
 - Sửa chứng từ kỳ N khi kỳ N+1 đã tính giá: số dư đầu kỳ N+1 thay đổi → phải tính lại N+1… (không cho phép nếu N+1 đã khóa).
-- Không cho chạy bước 10 nếu bước 4/6/7 đang `dirty`.
+- Không cho chạy bước 10 nếu bước 3/4/6/7 đang `dirty`. Sửa chứng từ kiểm kê (bước 3) làm `dirty` bước 4–8.
 - Khóa sổ theo thứ tự thời gian: không khóa kỳ N+1 khi kỳ N chưa khóa; mở khóa kỳ N phải mở các kỳ sau (hoặc cấm).
 - Năm tài chính mới: chuyển số dư; kết chuyển 4212 → 4211.
 
@@ -466,9 +536,9 @@ Thời hạn nộp BCTC năm (DN ngoài nhà nước): chậm nhất **90 ngày*
 ### 8.3 Bất biến giá thành
 | # | Bất biến |
 |---|---|
-| G1 | Sau kết chuyển: số dư 621, 622, 623, 627 = 0 (trừ phần 627 dưới công suất đã chuyển 632) |
+| G1 | (TT200/TT99) Sau kết chuyển: số dư 621, 622, 623, 627 = 0; và với từng TK 627 chi tiết × phân xưởng: **PS Nợ 627 = Σ phân bổ vào 154 (các đối tượng) + Σ chuyển 632 (SXC cố định dưới công suất)** — tức là không phần nào của 627 bị bỏ sót hoặc tính hai lần. (TT133: PS tập hợp vào 154-chung = Σ phân bổ ra 154-đối tượng + Σ chuyển 632, và 154-chung dư 0.) |
 | G2 | Theo đối tượng & khoản mục: DDĐK + PS − Z − DDCK − giảm giá thành = 0; Σ DDCK các đối tượng = số dư 154 |
-| G3 | Σ phân bổ 627 = Σ 627 phát sinh (sau trừ phần vào 632); dòng cuối nhận phần làm tròn |
+| G3 | Σ phân bổ 627 = Σ 627 phát sinh (sau trừ phần vào 632); làm tròn theo R1 (b) (largest remainder, §8.5) |
 | G4 | GT phiếu nhập TP = Z đã tính (Σ theo SP); SP hoàn thành có SL > 0 mà Z = 0 → cảnh báo |
 | G5 | Hệ số/tỷ lệ: Σ Z các SP = Z nhóm |
 
@@ -485,7 +555,12 @@ Thời hạn nộp BCTC năm (DN ngoài nhà nước): chậm nhất **90 ngày*
 
 ### 8.5 Quy tắc kỹ thuật
 - Tiền: lưu **số nguyên VND** (hoặc decimal(18,0)); đơn giá decimal(18,4+); SL decimal(18,4+). Ngoại tệ decimal(18,2) + tỷ giá decimal(18,4). Không dùng float.
-- Làm tròn: tại dòng chứng từ; quy tắc "dòng cuối nhận phần dư" cho mọi phép phân bổ.
+- **Luật làm tròn duy nhất R1** (dùng nguyên văn ở mọi tài liệu, golden test và demo; các mục khác trong tài liệu này chỉ trích dẫn R1):
+  - (a) ROUND_HALF_UP đến đồng cho mọi số tiền. Đơn giá lưu 4 số lẻ chỉ để hiển thị/giải thích; giá trị luôn tính từ tổng giá trị, không nhân lại từ đơn giá đã làm tròn.
+  - (b) Phân bổ một số tiền T cho n phần theo trọng số w (SXC, chi phí mua, Z cho các phiếu nhập kho, trích theo lương…): **largest remainder** — mỗi phần lấy phần nguyên floor(T·wᵢ/W) đến đồng; số đồng còn thiếu cộng 1 đồng lần lượt cho các phần có phần lẻ lớn nhất; hòa thì theo thứ tự ổn định (ngày, số CT, số dòng).
+  - (c) Giá trị xuất kho = round(SL × giá trị tồn / SL tồn) theo nguồn giá (lô với đích danh/FIFO, cả kỳ với BQ cuối kỳ, thời điểm với BQ tức thời); phần dư nằm lại ở tồn; phiếu xuất làm tồn của nguồn đó về 0 nhận toàn bộ giá trị còn lại.
+  - Ví dụ: (b) §4.2 (10.000.000 chia 3 phần bằng nhau → 3.333.334 / 3.333.333 / 3.333.333), §4.6 (tách khoản mục BTP); (c) §3.4, §4.6. Thành tiền trên hóa đơn là gốc, không tính lại SL × ĐG.
+  - Ghi chú: MISA được cho là dùng "dòng cuối nhận phần dư" cho phân bổ (06a-L16, [CXM]); R1 (b) có thể lệch MISA 1 đồng/dòng ở các ca có phần dư — khi chạy song song phải đối chiếu theo R1, chênh lệch loại này được giải thích, không coi là lỗi.
 - Thứ tự xử lý trong ngày: theo (ngày hạch toán, thứ tự loại chứng từ: nhập < chuyển < xuất, thời điểm ghi sổ, số chứng từ) — phải **xác định & ổn định** để tính lại cho cùng kết quả.
 - Mọi tác vụ cuối kỳ (tính giá, giá thành, kết chuyển) là **idempotent**: chạy lại xóa kết quả cũ của cùng tác vụ rồi sinh mới, trong một transaction.
 - Cấu hình theo chế độ kế toán & ngày hiệu lực: danh mục TK, mapping chỉ tiêu BCTC, thuế suất GTGT (giảm 8% theo thời kỳ), mẫu sổ.

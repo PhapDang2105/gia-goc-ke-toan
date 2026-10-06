@@ -1,5 +1,7 @@
 # 06b — Phản biện kiến trúc (05-kien-truc-de-xuat.md + KE-HOACH-DU-AN.md)
 
+> **Ghi chú (2026-10-06):** con số "~20–24 người-tháng" ở §0 (dòng 21) lệch với bảng ước lượng §5 (dòng 112: ghi ~18–22, cộng đúng các khoảng trong bảng là 17,5–22 người-tháng). Tiến độ chính thức nằm ở `docs/KE-HOACH-DU-AN.md`, không lấy từ tài liệu này. Số dòng `05` trong tài liệu này là của bản 0.1; `05` bản 0.2 đã sửa theo phản biện (bảng "Đã sửa theo 06b" đầu file).
+
 > Ngày: 2026-10-04 · Người phản biện: kiến trúc sư PostgreSQL/TypeScript (độc lập)
 > Phạm vi: §4 DDL, §5 engine giá vốn, §7 audit, §8 lộ trình/kiểm thử của `05`; đối chiếu `KE-HOACH-DU-AN.md`.
 > Phương pháp: rà bằng mắt. Máy không có Docker/psql/Node nên **không chạy được DDL** (thử cài pglite thất bại vì không có `npm`). Mọi nhận định về cú pháp là suy luận theo tài liệu PostgreSQL 17/18 và cần xác nhận lại khi có Postgres 18 thật.
