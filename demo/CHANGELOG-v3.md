@@ -1,5 +1,51 @@
 # Giá Gốc demo v3: nhật ký thay đổi
 
+## v4.0: giá vốn theo lô, giá thành theo lệnh sản xuất, bỏ khóa sổ
+
+Mục tiêu người dùng: biết giá vốn hàng bán của mọi sản phẩm; kiểm soát giá nguyên liệu; mỗi lô một giá; bấm vào lô thấy giá vốn cấu thành từ những lô nguyên liệu nào, giá bao nhiêu. Theo phản biện `docs/PHAN-BIEN-v3.md`.
+
+### Bỏ khóa sổ
+- Bỏ trang, menu, 12 bước, khóa / mở khóa kỳ, giá tạm / đã chốt / cần tính lại, thanh tiến độ, nhắc khóa sổ trong tour, Việc cần làm, thanh trên. Bỏ bù trừ thuế (TH0001) và kết chuyển 911 (KQ0001); báo cáo kết quả kinh doanh lấy thẳng từ số dư tài khoản loại 5–8 (thêm chi phí khác 811).
+- KC0001 giữ là chứng từ hệ thống luôn cập nhật: kết chuyển 621 / 622 / 627 sang 154 theo từng lệnh sản xuất (Thông tư 99); Thông tư 133 phân bổ sản xuất chung trong 154.
+- Engine luôn tính theo phương pháp đã chọn (bình quân cuối kỳ không còn giá tạm bình quân tức thời).
+- Tồn âm bị chặn ngay khi lưu, sửa hoặc hủy chứng từ (bỏ "Vẫn lưu", "Vẫn hủy"); sửa tồn đầu kỳ của vật tư gây tồn âm cũng bị chặn. Tổng quan vẫn báo nếu có.
+
+### Giá thành theo lệnh sản xuất
+- Mỗi lệnh là một đối tượng tập hợp chi phí: nguyên vật liệu / bán thành phẩm xuất cho chính lệnh (giá theo lô); nhân công trực tiếp của sản phẩm phân bổ cho các lệnh của sản phẩm đó; sản xuất chung (sau phần cố định dưới công suất → 632) phân bổ cho mọi lệnh trong kỳ. Một tiêu thức: chi phí nguyên vật liệu trực tiếp của lệnh (không gồm bán thành phẩm giai đoạn trước); hiện trong bảng phân bổ. Làm tròn R1(b) `allocate()`.
+- Trạng thái lệnh: Mới / Đang sản xuất / Hoàn thành. Lệnh hoàn thành khi có phiếu nhập kho: toàn bộ chi phí lệnh − hỏng ngoài định mức (→ 632) = tổng giá thành, chia cho các dòng nhập kho theo số lượng đạt. Lệnh chưa nhập kho: toàn bộ chi phí là dở dang 154 của lệnh (bỏ ô nhập số dở dang thủ công).
+- Chặn sai thời gian: phiếu xuất cho lệnh không được sau ngày nhập kho đầu tiên của lệnh; phiếu nhập kho không được trước phiếu xuất cuối của lệnh.
+- Dữ liệu mẫu (key lưu trữ `giagoc-demo-v40`): 6 lệnh. LSX-2512-05 bán thành phẩm cá linh mua 12/2025 ủ nhiều kỳ, dở dang đầu kỳ 18.000.000, còn dở dang cuối kỳ 19.529.099. LSX-2601-01 (cá lô 050126-01, 45.000 đ/kg) → bán thành phẩm 180126-01, 1.760 kg × 72.825,15. LSX-2601-02 (cá lô 120126-01, 52.000 đ/kg, +15,6%) → 240126-01, 970 kg × 82.530,79. LSX-2601-04 (bán thành phẩm tồn đầu 70.000 + lô 180126-01) → mắm cá linh 270126-01, 2.400 hũ × 43.457,56. LSX-2601-05 (lô 240126-01) → 290126-01, 1.570 hũ × 48.788,92. Mắm tôm 1 giai đoạn LSX-2601-03 → 270126-02, 1.940 hũ × 40.482,89 (hỏng ngoài định mức 793.301).
+- Số chính: doanh thu thuần 266.790.000; giá vốn 183.496.965; lãi gộp 83.293.035 (31,22%); lợi nhuận trước thuế 83.371.035; hàng tồn kho 262.575.035; 154 = 19.529.099.
+
+### Trang mới, trang làm lại
+- **Giá nguyên liệu** (nhóm Kho & giá): mọi lô nguyên liệu, bao bì, phụ gia: mã lô, mã hóa, nhà cung cấp, ngày nhập, đơn giá, so với lô trước cùng vật tư (tăng > 10% chữ đỏ, > 5% chữ cam; hằng số `PRICE_BAD`, `PRICE_WARN`), số lượng nhập / còn, kho · vị trí; lọc vật tư, tìm không dấu. Bấm vật tư: biểu đồ đường lịch sử giá (một trục, điểm 8px, tooltip theo điểm, nút Biểu đồ / Bảng) và bảng "Đã dùng cho" (truy xuôi lô nguyên liệu → lệnh → lô bán thành phẩm → lô thành phẩm).
+- **Giá vốn theo lô** (thay Truy xuất theo lô): lọc Thành phẩm / Bán thành phẩm / Hàng hóa; mỗi lô: mã lô, mã hóa, lệnh, ngày, số lượng, đơn giá thành, giá trị, đã bán, giá vốn đã bán, còn. Bấm lô: cây cấu thành theo bảng (thành phần · lô · mã hóa · nhà cung cấp · phiếu · số lượng · đơn giá · thành tiền · đ/đơn vị · %); dòng bán thành phẩm mở xuống lệnh giai đoạn 1 và lô cá của nó (đệ quy); nhân công, sản xuất chung phân bổ; tổng = giá trị lô; chỉ phiếu xuất của chính lệnh (sửa U1). Cuối cây: hóa đơn bán từ lô (ngày, khách, số lượng, giá vốn, doanh thu, lãi gộp) hoặc lệnh đã dùng lô bán thành phẩm.
+- **Giá thành theo lệnh sản xuất**: bảng lệnh (dở dang đầu kỳ, nguyên vật liệu, bán thành phẩm, nhân công, sản xuất chung, tổng, hỏng → 632, tổng giá thành, giá thành đơn vị, dở dang cuối kỳ), bảng phân bổ có dòng tiêu thức, thẻ giá thành của lệnh đang chọn.
+- **Tổng quan**: bảng "Giá vốn hàng bán theo sản phẩm" (số lượng bán, doanh thu, giá vốn, lãi gộp, biên, số lô đã bán, đơn giá vốn thấp – cao) cộng các dòng ngoài lô (sản xuất chung dưới công suất, hỏng ngoài định mức, hao hụt kiểm kê, xuất hủy) = số dư 632; cơ cấu giá thành theo từng lệnh đã hoàn thành; giữ biểu đồ doanh thu – lãi gộp.
+
+### In phiếu
+- Mẫu theo sổ kho của nhà máy: phiếu xuất kho (02-VT: khách / người nhận, địa chỉ, mã số thuế, điện thoại, lý do, kho, lệnh sản xuất; bảng STT · nhóm hàng · tên hàng · lô · mã hóa · vị trí · đơn vị tính · số lượng yêu cầu · số lượng thực xuất · đơn giá · thành tiền · ghi chú; tổng cộng, tiền bằng chữ, ngày / địa điểm giao, hình thức thanh toán; ký Người lập phiếu · Người nhận hàng · Bảo vệ · Tài xế · Thủ kho), phiếu nhập kho (01-VT; ký Người lập phiếu · Người giao hàng · Thủ kho · Kế toán), phiếu xuất kho kiêm vận chuyển nội bộ (chuyển kho), biên bản kiểm kê (sổ sách, kiểm kê, chênh lệch, %, ký Thủ kho · Kế toán · QC), phiếu thu, phiếu chi. Chỉ ghi "Nhà máy chế biến mắm", không chép thông tin công ty từ file. Đọc số tiền bằng chữ (`moneyWords`).
+- Dễ thấy: nút "Lưu và in" trong form; biểu tượng in và ô chọn ở đầu mỗi dòng danh sách chứng từ (ghim khi cuộn ngang ở màn hẹp); nút chính "In phiếu nhập kho / xuất kho…" đầu hàng nút ở chi tiết; lọc nhanh Phiếu nhập kho / Phiếu xuất kho; "In các phiếu đã chọn" in liên tiếp, mỗi phiếu một trang.
+
+### Sửa lỗi phản biện
+- L2, L3: Sửa và Hủy dùng chung điều kiện chặn (hóa đơn có hàng trả lại, phiếu nhập có phiếu chi). L4: trong ngày, nhập trước, các phiếu còn lại theo thứ tự lập. L6: lần trả lại cuối nhận phần còn lại. L7: nhân / chia làm tròn bằng số nguyên (`mulRound`, `ratioRound`; 1,001 × 31.500 = 31.532). L9: bảng lương khấu trừ 10,5% người lao động. L10: cảnh báo phiếu nhập trả tiền mặt ≥ 5 triệu.
+- U2 cảnh báo "phiếu kiểm kê lỗi thời" (form và Việc cần làm). U3 Enter sang ô kế, Ctrl+Enter ghi sổ. U5 Esc / Hủy bỏ khi đang nhập: hỏi "Bỏ phiếu đang nhập?". U6 "sau phiếu này X / Y". U7 cảnh báo trộn lô khi nhập / chuyển / nhận trả vào vị trí đang chứa lô khác. U8 "+ Vị trí" (phiếu nhập) và thêm vị trí (nhập kho sản xuất): dòng đầu tự nhận phần còn lại. U9 nhận hàng trả chọn QC và vị trí; chưa đạt vào lô con riêng (`270126-01-T1`). U10 phiếu xuất hủy lô Không đạt, Nợ 632 hoặc 811 (nút "Xuất hủy" ở Tồn kho chi tiết). U11 bảng không cắt cột ở 1366; ở 390 cuộn ngang trong vùng bảng, cột đầu ghim nhưng hẹp. U12 tìm không dấu. U13 ô Ảnh hưởng một dòng gập được, tự ẩn khi chuyển màn. U14 ô mã vật tư luôn hiện đúng mã sẽ lưu. U16 nút "Tải bảng" tải CSV UTF-8 có BOM.
+
+### Chữ trên giao diện
+- Bỏ mã mẫu sổ trong tiêu đề màn hình (S10-DN, S11-DN, S37-DN…; bản in vẫn ghi mẫu số) và dòng nhắc lại ngữ cảnh ở sổ chi tiết vật tư.
+- Viết đầy đủ, không chữ viết tắt (nguyên vật liệu, bán thành phẩm, nhân công trực tiếp, sản xuất chung, dở dang, lệnh sản xuất, giai đoạn, số lượng, đơn vị tính, hạn sử dụng, nhà cung cấp, chứng từ, tài khoản, Thông tư 99/2025, Thông tư 133/2016, tổng giá thành, giá thành đơn vị…); bỏ `<abbr>`. Giữ mã định danh (PN0001, LSX-2601-01, mã lô, mã hóa, mã vật tư, mã kho), số hiệu tài khoản, QC, thuế GTGT.
+
+### Đã kiểm tra (Playwright, Chromium, thao tác giao diện)
+- `__giagoc.selfTest()`: **384 tổ hợp, 0 lỗi** = 2 chế độ × 4 phương pháp × giờ máy 800 / 1200 × 24 biến thể. Bất biến: Nợ = Có từng chứng từ; kho = sổ cái 152 / 155 / 156 / 154; 621 / 622 / 627 = 0; tổng chi phí lệnh = DDĐK + nguyên vật liệu + bán thành phẩm + nhân công + sản xuất chung; lệnh hoàn thành: tổng giá thành = tổng − hỏng, Σ lô = tổng giá thành, không phiếu xuất sau ngày nhập kho; lệnh dở dang: dở dang = tổng; cây cấu thành mỗi lô cộng đúng giá trị lô, nhánh bán thành phẩm cộng đúng dòng; Σ phân bổ = phát sinh; giá vốn theo lô + ngoài lô = 632; không tồn âm ở biến thể hợp lệ; biến thể tồn âm (xuất, bán, hủy nhập kho, vượt tồn vị trí) bị hàm chặn và `docCheck` của form báo lỗi. Biến thể mới: trả lại không đạt + xuất hủy 811, trả lại 3 lần (L6), trả lại rồi bán lại cùng ngày (L4), kiểm kê lỗi thời (U2), lệnh mới với cá giá mới. Độ nhạy: bỏ phần còn lại L6 → 4 lỗi; bỏ sản xuất chung khỏi tổng giá thành → 2.336 lỗi; thứ tự cũ trong ngày → 16 lỗi.
+- Tính tay độc lập (Python, phân số): lô 180126-01 = nguyên vật liệu 98.910.000 + nhân công 15.093.020 + sản xuất chung 14.169.252 = 128.172.272, trùng engine.
+- 1366×768 và 390×844, sáng và tối, 41 bước mỗi khung: 10 trang không lỗi / NaN / cuộn ngang / bo góc > 2px / chữ khóa sổ / mã mẫu sổ; Giá nguyên liệu (2 lô cá 45.000 / 52.000, +15,6% đỏ, tooltip, truy xuôi); Giá vốn theo lô (2 lô mắm cá linh 43.457,56 / 48.788,92; cây tới lô cá 050126-01 và nhà cung cấp; tổng 104.298.152 = round(z × 2.400); phiếu xuất ≤ ngày nhập kho); nhập cá 60.000 → lệnh mới → nhập kho bán thành phẩm → lệnh giai đoạn 2 → nhập kho → bán 100 hũ: giá vốn hóa đơn = round(100 × giá trị lô / số lượng lô); Enter / Ctrl+Enter / Esc; bán 99.999 hũ bị chặn; tìm không dấu; tải CSV có BOM. In phiếu (1366 và 390): Lưu và in, in từ dòng, in 3 phiếu đã chọn (3 trang), chuyển kho đúng tiêu đề, phiếu thu / chi; đọc số 1.005.000, 21.000.100, 0 đúng. Quét chữ hiển thị (mọi trang, báo cáo, form, tooltip, tour, bản in): 0 chữ viết tắt trong danh sách.
+
+### Giả định chưa chắc
+- Tiêu thức phân bổ nhân công và sản xuất chung cho lệnh: chi phí nguyên vật liệu trực tiếp của lệnh (không gồm bán thành phẩm); chưa có giờ công theo lệnh. Bảng lương vẫn ghi nhân công theo sản phẩm.
+- Lệnh hoàn thành khi có phiếu nhập kho đầu tiên; toàn bộ chi phí vào các lô nhập kho của lệnh, không có dở dang một phần.
+- Hàng trả lại chưa đạt nhận vào lô con riêng; đơn giá trên phiếu xuất kho là giá vốn.
+
+
 ## v3.4: biểu đồ
 
 Thiết kế lại các biểu đồ theo quy trình dataviz (chọn dạng → màu → kiểm bảng màu bằng `validate_palette.js` → vạch, khe → lớp hover → a11y). Chỉ đổi giao diện; engine, số liệu, ID và `window.__giagoc` giữ nguyên.
