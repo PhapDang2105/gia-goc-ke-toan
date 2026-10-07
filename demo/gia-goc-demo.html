@@ -1964,7 +1964,11 @@ function blockReason(no){
   if(ct.length) return 'Phiếu nhập đã có phiếu chi thanh toán tham chiếu (' + ct.map(x => x.no).join(', ') + '). Hủy phiếu chi trước.';
   return null;
 }
-function docAmount(p){ if(p.d.status === 'void') return p.d.lastAmt || 0; if(p.d.type === 'CK') return sum(p.d.lines.map((l, i) => valOf(R, p.d, i))); return p.dr; }
+function docAmount(p){ const d = p.d; if(d.status === 'void') return d.lastAmt || 0; if(d.type === 'CK') return sum(d.lines.map((l, i) => valOf(R, d, i)));
+  if(d.type === 'HD') return sum(p.lines.filter(l => l.acc === d.pay), l => l.dr);
+  if(d.type === 'TL') return sum(p.lines.filter(l => l.acc === '131' || l.acc === '1111'), l => l.cr);
+  if(d.type === 'NK') return sum(p.lines.filter(l => l.acc === '155'), l => l.dr);
+  return p.dr; }
 RENDER.docs = function(){
   const D = S.data, list = docList();
   if(!R.postByNo[S.ui.doc]) S.ui.doc = R.postByNo.PX0001 ? 'PX0001' : R.posts[0].d.no;
@@ -2050,9 +2054,15 @@ const tblH = (id, head, body, foot) => '<div class="tbl-wrap"><table id="' + id 
 const td = (v, cls) => '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + v + '</td>';
 const nz = v => Math.round(v) ? fmt(v) : '';
 function postedLines(){ const out = [];
-  R.posts.filter(p => p.d.status !== 'void' && p.lines.length).sort((a, b) => a.d.date < b.d.date ? -1 : a.d.date > b.d.date ? 1 : (a.d.no < b.d.no ? -1 : 1))
+  R.posts.filter(p => p.d.status !== 'void' && p.lines.length).sort((a, b) => a.d.date < b.d.date ? -1 : a.d.date > b.d.date ? 1 : (a.sys !== b.sys ? (a.sys ? 1 : -1) : a.d.no < b.d.no ? -1 : 1))
     .forEach(p => p.lines.forEach((l, i) => out.push({p, l, i}))); return out; }
-function contraOf(p, l){ const side = l.dr ? 'cr' : 'dr'; return [...new Set(p.lines.filter(x => x[side]).map(x => x.acc))].join(', '); }
+// Tài khoản đối ứng theo cặp: hai dòng liền nhau, khác phía, cùng số tiền là một cặp Nợ – Có; dòng không thuộc cặp đối ứng với các dòng không thuộc cặp phía bên kia
+function pairsOf(p){ if(p._pairs) return p._pairs; const L = p.lines, m = new Array(L.length).fill(-1);
+  for(let i = 0; i < L.length - 1; i++){ const a = L[i], b = L[i + 1]; if(m[i] < 0 && m[i + 1] < 0 && ((a.dr && b.cr && Math.round(a.dr) === Math.round(b.cr)) || (a.cr && b.dr && Math.round(a.cr) === Math.round(b.dr)))){ m[i] = i + 1; m[i + 1] = i; } }
+  return (p._pairs = m); }
+function contraOf(p, l){ const m = pairsOf(p), i = p.lines.indexOf(l); if(i >= 0 && m[i] >= 0) return p.lines[m[i]].acc;
+  const side = l.dr ? 'cr' : 'dr', xs = p.lines.filter((x, j) => x[side] && m[j] < 0);
+  return [...new Set((xs.length ? xs : p.lines.filter(x => x[side])).map(x => x.acc))].join(', '); }
 function accList(){ const s = {}; Object.keys(R.gOpen).forEach(a => s[a] = 1); R.posts.forEach(p => p.lines.forEach(l => s[l.acc] = 1)); return Object.keys(s).sort(); }
 RENDER.reports = function(){
   const D = S.data, t = isTT133(), u = S.ui, accs = accList();
@@ -3106,6 +3116,7 @@ const FORMS = {
           const ln = {item:l.item, qty:q, value, vat: usd ? 0 : +l.vat, lot:codes[i], mh:mh[codes[i]] || '', qc:l.qc || 'pass', loc:l.loc || ''}; if(usd) ln.fc = fc;
           lines.push(ln); idx.push(i);
           const prev = Rb.items[l.item].rows.filter(x => x.kind === 'in' && x.type === 'PN'), last = prev[prev.length - 1], u = value / q;
+          if(last && last.unit > 0 && u / last.unit - 1 > PRICE_WARN / 100 && u / last.unit - 1 <= 0.5) W.push('Giá ' + it.name.toLowerCase() + ' ' + fmt(u) + ' đ/' + it.uom + ' tăng ' + fmtD((u / last.unit - 1) * 100, 1) + '% so với lần nhập trước (' + fmt(last.unit) + ' đ, ' + last.doc + ').');
           if(last && last.unit > 0 && Math.abs(u / last.unit - 1) > 0.5) W.push('Đơn giá ' + it.name.toLowerCase() + ' ' + fmt2(u) + ' đ lệch ' + fmtD(Math.abs(u / last.unit - 1) * 100, 0) + '% so với lần nhập gần nhất (' + fmt2(last.unit) + ' đ, ' + last.doc + '). Có gõ nhầm số 0?');
           const ld = laterDocs(l.item, dr.date, Rb); if(ld.length) later[l.item] = ld; } });
       if(!lines.length && !E.length) E.push({id:'f_l0_qty', msg:'Cần ít nhất 1 dòng vật tư.'});
@@ -3740,7 +3751,7 @@ function saveForm(andPrint){
     doc.no = nextNo(D, type); doc.origin = 'user'; doc.status = 'posted'; doc.createdAt = nowISO(); newNo = doc.no;
     const kn = nextKno(D, doc); if(kn) doc.kno = kn;
     if(type === 'HD') doc.inv = Math.max.apply(null, D.docs.filter(d => d.type === 'HD').map(d => d.inv || 0).concat([0])) + 1;
-    if(editNo){ const old = D.docs.find(d => d.no === editNo); old.lastAmt = R.postByNo[old.no] ? R.postByNo[old.no].dr : 0; old.status = 'void'; old.voidedBy = doc.no; old.voidReason = reason; old.voidAt = nowISO(); doc.replaces = old.no;
+    if(editNo){ const old = D.docs.find(d => d.no === editNo); old.lastAmt = R.postByNo[old.no] ? docAmount(R.postByNo[old.no]) : 0; old.status = 'void'; old.voidedBy = doc.no; old.voidReason = reason; old.voidAt = nowISO(); doc.replaces = old.no;
       D.docs.push(doc); return {action:'edit', no:editNo, newNo:doc.no, reason, detail:describe(old, D) + ' → ' + describe(doc, D)}; }
     D.docs.push(doc); return {action:'create', no:doc.no, reason:'', detail:TYPE_NAME[type] + ': ' + describe(doc, D)};
   }, null, (editNo ? 'sửa ' + editNo + ' → ' : 'ghi sổ ') + newNo);
@@ -3782,7 +3793,7 @@ function doVoid(){
   if(F.block){ toast(F.block); return; }
   if(reason.length < 10){ $('v_reason').setAttribute('aria-invalid', 'true'); $('v_reason').focus(); toast('Ghi lý do hủy, ít nhất 10 ký tự.'); return; }
   closeDialog();
-  commit(D => { const x = D.docs.find(z => z.no === no); x.lastAmt = R.postByNo[no].dr; x.status = 'void'; x.voidReason = reason; x.voidAt = nowISO();
+  commit(D => { const x = D.docs.find(z => z.no === no); x.lastAmt = docAmount(R.postByNo[no]); x.status = 'void'; x.voidReason = reason; x.voidAt = nowISO();
     return {action:'void', no, reason, detail:TYPE_NAME[x.type] + ': ' + describe(x, D)}; }, null, 'hủy ' + no);
   toast('Đã hủy ' + no + '. Chứng từ vẫn còn trong sổ (gạch ngang) và trong Nhật ký sửa đổi.');
 }
