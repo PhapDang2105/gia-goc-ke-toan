@@ -36,6 +36,13 @@ Nếu người làm demo đổi dữ liệu mẫu, cập nhật bảng này và 
 | 7 | Quy trình chỉ có cá linh (2 giai đoạn) và mắm tôm (1 giai đoạn) | 4 quy trình theo [YEU-CAU-KHACH-HANG](../docs/01-yeu-cau/YEU-CAU-KHACH-HANG.md) §4 | GT-01 |
 | 8 | Tiêu thức phân bổ nhân công / sản xuất chung = chi phí nguyên vật liệu trực tiếp của lệnh; lệnh hoàn thành khi có phiếu nhập kho đầu tiên | Tiêu thức cấu hình theo giai đoạn (đề xuất khối lượng × số ngày cho công đoạn ủ); trạng thái lệnh có Hoàn thành → Đóng | [QD-29](../docs/02-ke-hoach/QUYET-DINH.md#qd-29) — cố ý giản lược, chỉ cần nói rõ khi trình diễn |
 
+## v4.5 — sơ đồ nghiệp vụ (2026-10-07)
+
+- Trang **Sơ đồ nghiệp vụ** (menu Tổng hợp): quy trình từ mua hàng đến lãi lỗ, 8 bước, 6 làn theo bộ phận (Kế hoạch, Kho, Kiểm tra chất lượng, Sản xuất, Bán hàng, Kế toán) kèm tên người phụ trách theo tài liệu HỆ THỐNG.
+- Mỗi bước ghi: việc, số chứng từ thật trong kỳ (8 phiếu nhập mua, 10 phiếu xuất kho, 5 lô thành phẩm…), người làm, bút toán (Nợ / Có). Mũi tên nét đứt: bán thành phẩm quay lại xuất cho giai đoạn sau.
+- Bấm một bước mở trang tương ứng (phiếu xuất kho → Chứng từ lọc phiếu xuất; sản xuất → Giá thành theo lệnh; thanh toán nhà cung cấp → Báo cáo công nợ phải trả…).
+- Vừa một màn hình 1366px; điện thoại cuộn ngang trong khung, cột làn đứng yên.
+
 ## v4.4 — truy xuất lô, giả lập giá nguyên liệu, tem lô có mã QR (2026-10-07)
 
 - **Truy xuất lô** (menu Sản xuất): chọn lô bất kỳ. Sơ đồ nhánh hai chiều: bên trái nguồn gốc (nhà cung cấp → lô nguyên liệu → lệnh sản xuất → lô bán thành phẩm…), bên phải nơi đi (lệnh dùng lô → lô sinh ra → khách hàng). Bấm ô lô trên sơ đồ để chuyển sang lô đó. 4 ô số: lô liên quan phía sau, số khách đã nhận, đã bán, còn trong kho. Bảng khách đã nhận (bấm số hóa đơn mở chứng từ) và tồn trong kho theo kho, vị trí, thủ kho, QC.

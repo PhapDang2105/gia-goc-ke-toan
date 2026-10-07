@@ -384,6 +384,23 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
   .tbl-wrap tbody tr.click td{padding-block:12px}
   .field select,.field input,.inp{min-height:44px}
 }
+/* Sơ đồ nghiệp vụ */
+.fl-scroll{overflow-x:auto}
+.fl-grid{position:relative;display:grid;grid-template-columns:100px repeat(8,minmax(104px,1fr));grid-template-rows:22px;column-gap:16px;row-gap:16px;min-width:1060px;padding:4px 4px 8px 0}
+.fl-svg{position:absolute;left:0;top:0;pointer-events:none;z-index:1;overflow:visible}
+.fl-svg path{stroke:var(--muted);stroke-width:1.4}.fl-svg path.back{stroke-dasharray:5 4}
+.fl-svg text{font-size:11px;fill:var(--muted)}
+.fl-lane{grid-column:1 / -1;background:var(--surface-2);margin:-8px -4px;border-top:1px solid var(--line-2)}
+.fl-ln{grid-column:1;position:sticky;left:0;z-index:3;background:var(--surface-2);display:flex;flex-direction:column;justify-content:center;gap:2px;padding:0 10px;border-right:2px solid var(--line)}
+.fl-ln b{font-size:12.5px}.fl-ln span{font-size:11px;color:var(--muted)}
+.fl-step{grid-row:1;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;align-self:end}
+.fl-n{position:relative;z-index:2;align-self:center;display:flex;flex-direction:column;gap:2px;text-align:left;font:inherit;font-size:12px;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--k1);border-radius:var(--r);padding:7px 8px;cursor:pointer}
+.fl-n:hover{background:var(--hover);border-color:var(--accent)}
+.fl-n b{font-size:12.5px;font-weight:600;line-height:1.3}
+.fl-c{font-weight:600;color:var(--kpi-val)}
+.fl-w{color:var(--muted)}
+.fl-a{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);border-top:1px solid var(--line-2);padding-top:3px;margin-top:2px}
+.fl-qc{border-top-color:var(--k3)}.fl-prod{border-top-color:var(--k4)}.fl-sale{border-top-color:var(--k2)}.fl-acc{border-top-color:var(--warn)}.fl-plan{border-top-color:var(--muted)}
 /* Truy xuất lô */
 .tr-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:start}
 .tr-qr{background:#fff;border:1px solid var(--line);padding:4px;line-height:0}
@@ -473,6 +490,7 @@ button.tn{cursor:pointer}button.tn:hover{background:var(--hover)}
       <button data-view="dash" title="Tổng quan"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="11" y="3" width="6" height="4" rx="1.5"/><rect x="11" y="9" width="6" height="8" rx="1.5"/><rect x="3" y="11" width="6" height="6" rx="1.5"/></svg><span class="nl">Tổng quan</span></button>
       <button data-view="docs" title="Chứng từ &amp; bút toán"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 2.5h7l3 3v12H5z"/><path d="M8 9h5M8 12h5M8 15h3"/></svg><span class="nl">Chứng từ &amp; bút toán</span></button>
       <button data-view="reports" title="Báo cáo"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17h14"/><path d="M5 14V9M9 14V5M13 14v-7M17 14v-3"/></svg><span class="nl">Báo cáo</span></button>
+      <button data-view="flow" title="Sơ đồ nghiệp vụ"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="3" width="5" height="4" rx="1"/><rect x="12.5" y="3" width="5" height="4" rx="1"/><rect x="7.5" y="13" width="5" height="4" rx="1"/><path d="M7.5 5h5M15 7v3.5H10V13"/></svg><span class="nl">Sơ đồ nghiệp vụ</span></button>
       <div class="nav-label">Kho &amp; giá</div>
       <button data-view="stock" title="Kho &amp; lô"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2.5 7.5 10 3l7.5 4.5V17h-15z"/><path d="M6 17v-6h8v6"/></svg><span class="nl">Kho &amp; lô</span></button>
       <button data-view="mat" title="Giá nguyên liệu"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 16l4-5 3 3 4-6 3 4"/><path d="M3 3v14h14"/></svg><span class="nl">Giá nguyên liệu</span></button>
@@ -693,6 +711,14 @@ button.tn{cursor:pointer}button.tn:hover{background:var(--hover)}
         <p class="note" id="lotMethodNote" hidden></p>
       </div>
       <div class="panel" id="lotTree" tabindex="-1"></div>
+    </section>
+
+    <!-- SƠ ĐỒ NGHIỆP VỤ -->
+    <section class="view" id="v-flow" hidden>
+      <div class="panel">
+        <div class="panel-head"><h2>Từ mua hàng đến lãi lỗ</h2><div class="spacer"></div><span class="tr-leg">Số liệu kỳ 01/2026 · bấm từng bước để mở</span></div>
+        <div class="fl-scroll"><div class="fl-grid" id="flowGrid"></div></div>
+      </div>
     </section>
 
     <!-- TRUY XUẤT LÔ -->
@@ -1566,7 +1592,7 @@ function impactTable(imp, short){
 }
 
 // ================= Render chung =================
-const TITLES = {dash:'Tổng quan', docs:'Chứng từ & bút toán', reports:'Báo cáo', stock:'Kho & lô', mat:'Giá nguyên liệu', cogs:'Giá xuất kho', cost:'Giá thành theo lệnh sản xuất', lots:'Giá vốn theo lô', trace:'Truy xuất lô', sim:'Giả lập giá nguyên liệu', audit:'Nhật ký sửa đổi', items:'Danh mục & lệnh sản xuất'};
+const TITLES = {dash:'Tổng quan', docs:'Chứng từ & bút toán', reports:'Báo cáo', stock:'Kho & lô', mat:'Giá nguyên liệu', cogs:'Giá xuất kho', cost:'Giá thành theo lệnh sản xuất', lots:'Giá vốn theo lô', trace:'Truy xuất lô', flow:'Sơ đồ nghiệp vụ', sim:'Giả lập giá nguyên liệu', audit:'Nhật ký sửa đổi', items:'Danh mục & lệnh sản xuất'};
 const RENDER = {};
 function renderAll(){
   R = compute(S.data);
@@ -2480,6 +2506,61 @@ function simRun(){
         '<td class="n">' + (pr ? fmt(pr) : '<span class="muted">—</span>') + '</td><td class="n">' + (m0 != null ? fmtD(m0, 1) + '%' : '—') + '</td><td class="n">' + (m1 != null ? '<span class="' + (m1 < m0 - 0.05 ? 's-bad' : '') + '">' + fmtD(m1, 1) + '%</span>' : '—') + '</td><td class="n">' + (need != null ? (need !== pr ? '<b>' + fmt(need) + '</b>' : fmt(need)) : '—') + '</td></tr>'; }).join('') + '</tbody>';
   $('simReset').setAttribute('aria-disabled', String(!any));
 }
+
+
+// ================= Sơ đồ nghiệp vụ: từ mua hàng đến lãi lỗ =================
+const FLOW_LANES = [
+  ['plan', 'Kế hoạch', 'Ms Thảo · Ms Lan'], ['buy', 'Kho', 'Mr Phú · Ms Trâm · Mr Hải'], ['qc', 'Kiểm tra chất lượng', 'Ms Hằng · Ms Huỳnh · Ms Tú · Ms Trâm'],
+  ['prod', 'Sản xuất', 'Trưởng QC Ms Lan'], ['sale', 'Bán hàng', 'Ms Phượng Anh'], ['acc', 'Kế toán', 'Ms Nhung · Ms Loan · Ms Huyền']];
+const FLOW_NODES = [
+  {id:'kh', lane:'plan', col:1, t:'Kế hoạch sản xuất ngày', who:'Ms Thảo', go:['items', {itab:'lsx'}]},
+  {id:'pn', lane:'buy', col:1, t:'Mua nguyên liệu, nhập kho', doc:'PN', dn:'phiếu nhập mua', who:'Mr Phú', acc:'Nợ 152, 1331 / Có 331', go:['mat']},
+  {id:'qcin', lane:'qc', col:1, t:'Kiểm lô nhập, cấp mã lô', lots:'NVL', who:'QC theo khu', go:['stock']},
+  {id:'tt', lane:'acc', col:2, t:'Thanh toán nhà cung cấp', doc:'CT', dn:'phiếu chi', who:'Ms Loan', acc:'Nợ 331 / Có 111, 112', go:['reports', {rep:'debt', repDebt:'331'}]},
+  {id:'lsx', lane:'plan', col:2, t:'Lệnh sản xuất', lsx:true, who:'Ms Lan', go:['items', {itab:'lsx'}]},
+  {id:'px', lane:'buy', col:3, t:'Xuất kho cho sản xuất', doc:'PX', dn:'phiếu xuất kho', who:'Mr Phú', acc:'Nợ 621 / Có 152, 155', go:['docs', {filter:'out'}]},
+  {id:'cp', lane:'acc', col:3, t:'Lương, khấu hao, chi phí chung', docs:['BL', 'KH', 'CP'], dn:'chứng từ', who:'Ms Loan', acc:'Nợ 622, 627 / Có 334, 214, 331', go:['cost']},
+  {id:'sx', lane:'prod', col:4, t:'Sản xuất theo công đoạn', run:true, who:'Ms Lan', acc:'Nợ 154 / Có 621, 622, 627', go:['cost']},
+  {id:'qcout', lane:'qc', col:5, t:'Kiểm thành phẩm, lập mã lô', lots:'OUT', who:'QC theo khu', go:['trace']},
+  {id:'nk', lane:'buy', col:5, t:'Nhập kho bán thành phẩm, thành phẩm', doc:'NK', dn:'phiếu nhập kho', who:'Mr Phú', acc:'Nợ 155 / Có 154', go:['lots']},
+  {id:'ck', lane:'buy', col:6, t:'Chuyển kho Bình Tây, 97 Nguyễn Thái Học', doc:'CK', dn:'phiếu chuyển kho', who:'Mr Phú → Ms Trâm, Mr Hải', go:['stock']},
+  {id:'hd', lane:'sale', col:7, t:'Bán hàng, xuất hóa đơn', doc:'HD', dn:'hóa đơn', who:'Ms Phượng Anh', acc:'Nợ 131 / Có 511, 3331 · Nợ 632 / Có 155', go:['docs', {filter:'all'}]},
+  {id:'tn', lane:'acc', col:7, t:'Thu tiền khách hàng', doc:'TN', dn:'phiếu thu', who:'Ms Loan', acc:'Nợ 111, 112 / Có 131', go:['reports', {rep:'debt', repDebt:'131'}]},
+  {id:'kq', lane:'acc', col:8, t:'Giá vốn theo lô, lãi lỗ', kq:true, who:'Ms Nhung', acc:'Kết chuyển 911', go:['dash']}];
+const FLOW_EDGES = [['kh', 'lsx'], ['pn', 'qcin'], ['pn', 'tt'], ['qcin', 'px'], ['lsx', 'px'], ['px', 'sx'], ['cp', 'sx'], ['sx', 'qcout'], ['qcout', 'nk'], ['nk', 'px', 'back'], ['nk', 'ck'], ['ck', 'hd'], ['hd', 'tn'], ['hd', 'kq'], ['tn', 'kq']];
+function flowCount(n){
+  const D = S.data, act = D.docs.filter(d => d.status !== 'void');
+  if(n.doc) return act.filter(d => d.type === n.doc).length + ' ' + n.dn;
+  if(n.docs) return act.filter(d => n.docs.indexOf(d.type) >= 0).length + ' ' + n.dn;
+  if(n.lsx) return Object.keys(D.lsx).length + ' lệnh';
+  if(n.run){ const c = Object.values(R.card || {}); return c.filter(x => x.status === 'done').length + ' hoàn thành · ' + c.filter(x => x.status === 'wip').length + ' dở dang'; }
+  if(n.lots === 'NVL') return Object.values(R.lots).filter(L => S.data.items[L.item] && S.data.items[L.item].kind === 'NVL').length + ' lô nguyên liệu';
+  if(n.lots === 'OUT'){ const xs = Object.values(R.lots).filter(L => L.src === 'NK'); return xs.length + ' lô · ' + xs.filter(L => L.qc !== 'pass').length + ' chưa đạt'; }
+  if(n.kq) return 'Lãi gộp ' + fmt(R.gross) + ' đ';
+  return '';
+}
+RENDER.flow = function(){
+  const lane = {}; FLOW_LANES.forEach((l, i) => lane[l[0]] = i + 2);
+  let h = FLOW_LANES.map((l, i) => '<div class="fl-lane" style="grid-row:' + (i + 2) + '"></div><div class="fl-ln" style="grid-row:' + (i + 2) + '"><b>' + esc(l[1]) + '</b><span>' + esc(l[2]) + '</span></div>').join('');
+  for(let c = 1; c <= 8; c++) h += '<div class="fl-step" style="grid-column:' + (c + 1) + '">Bước ' + c + '</div>';
+  h += FLOW_NODES.map(n => '<button type="button" class="fl-n fl-' + n.lane + '" data-flow="' + n.id + '" style="grid-row:' + lane[n.lane] + ';grid-column:' + (n.col + 1) + '"><b>' + esc(n.t) + '</b>' +
+    '<span class="fl-c">' + esc(flowCount(n)) + '</span><span class="fl-w">' + esc(n.who) + '</span>' + (n.acc ? '<span class="fl-a">' + esc(n.acc) + '</span>' : '') + '</button>').join('');
+  $('flowGrid').innerHTML = '<svg class="fl-svg" id="flowSvg" aria-hidden="true"><defs><marker id="flArr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="var(--muted)"/></marker></defs></svg>' + h;
+  requestAnimationFrame(drawFlow);
+};
+function drawFlow(){
+  const g = $('flowGrid'), svg = $('flowSvg'); if(!g || !svg || g.offsetParent === null) return;
+  const W = g.scrollWidth, H = g.scrollHeight, o = g.getBoundingClientRect(); svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  const bx = id => { const r = g.querySelector('[data-flow="' + id + '"]').getBoundingClientRect(); return {l:r.left - o.left, r:r.right - o.left, t:r.top - o.top, b:r.bottom - o.top, cx:r.left - o.left + r.width / 2, cy:r.top - o.top + r.height / 2}; };
+  const defs = svg.querySelector('defs').outerHTML;
+  svg.innerHTML = defs + FLOW_EDGES.map(([a, b, k]) => { const A = bx(a), B = bx(b); let d;
+    if(k === 'back'){ const y = Math.min(A.t, B.t) - 12; d = 'M' + A.cx + ' ' + A.t + 'V' + y + 'H' + B.cx + 'V' + (B.t - 2); }
+    else if(Math.abs(A.cx - B.cx) < 4){ d = B.cy > A.cy ? 'M' + A.cx + ' ' + A.b + 'V' + (B.t - 2) : 'M' + A.cx + ' ' + A.t + 'V' + (B.b + 2); }
+    else { const m = (A.r + B.l) / 2; d = 'M' + A.r + ' ' + A.cy + 'H' + m + 'V' + B.cy + 'H' + (B.l - 2); }
+    return '<path d="' + d + '" class="' + (k === 'back' ? 'back' : '') + '" fill="none" marker-end="url(#flArr)"/>'; }).join('') +
+    (() => { const A = bx('nk'), B = bx('px'), y = Math.min(A.t, B.t) - 12; return '<text x="' + ((A.cx + B.cx) / 2) + '" y="' + (y - 5) + '" text-anchor="middle">Bán thành phẩm vào giai đoạn sau</text>'; })();
+}
+window.addEventListener('resize', () => { if(S.ui.view === 'flow') drawFlow(); });
 
 // ================= Giá nguyên liệu theo lô =================
 const PRICE_BAD = 10, PRICE_WARN = 5;   // % tăng so với lô trước cùng vật tư: > 10% đỏ, > 5% cam
@@ -3693,7 +3774,7 @@ $('btnSide').addEventListener('click', () => setSide(!$('app').classList.contain
 dlg.addEventListener('toggle', e => { if(F && e.target && e.target.id === 'fFold') F.prevOpen = e.target.open; }, true);
 // Uỷ quyền click toàn trang
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-act],[data-item-edit],[data-item-del],[data-lsx-edit],[data-open-doc],[data-goto],[data-goto-view],[data-goto-lot],[data-goto-lots],[data-edit],[data-void],[data-csv],[data-pv],[data-hint],[data-new],[data-filter],[data-wh],[data-qc],[data-lk],[data-goto-trace],[data-itab],[data-tlot],[data-tem],[data-print],[data-lot-kind],[data-tree],[data-scrap]');
+  const t = e.target.closest('[data-act],[data-item-edit],[data-item-del],[data-lsx-edit],[data-open-doc],[data-goto],[data-goto-view],[data-goto-lot],[data-goto-lots],[data-edit],[data-void],[data-csv],[data-pv],[data-hint],[data-new],[data-filter],[data-wh],[data-qc],[data-lk],[data-flow],[data-goto-trace],[data-itab],[data-tlot],[data-tem],[data-print],[data-lot-kind],[data-tree],[data-scrap]');
   if(!t) return;
   const ds = t.dataset;
   if(ds.new){ setMenu(false); return openForm(ds.new); }
@@ -3703,6 +3784,7 @@ document.addEventListener('click', e => {
   if(ds.filter){ S.ui.filter = ds.filter; return RENDER.docs(); }
   if(ds.wh){ S.ui.wh = ds.wh; return RENDER.stock(); }
   if(ds.qc) return openQC(ds.qc);
+  if(ds.flow){ const n = FLOW_NODES.find(x => x.id === ds.flow); if(n) return go(n.go[0], n.go[1]); return; }
   if(ds.gotoTrace) return go('trace', {tlot:ds.gotoTrace});
   if(ds.tlot){ S.ui.tlot = ds.tlot; RENDER.trace(); const f = document.querySelector('#trGraph [data-tlot="' + CSS.escape(ds.tlot) + '"]'); if(f) f.focus({preventScroll:true}); return; }
   if(ds.tem){ const [k, lot, wh, loc] = ds.tem.split('|'), c = Object.values(R.items[k].lcells).find(x => x.lot === lot && x.wh === wh && (x.loc || '') === loc); return printTems(c ? [{item:k, lot, wh, loc, q:c.q}] : []); }
