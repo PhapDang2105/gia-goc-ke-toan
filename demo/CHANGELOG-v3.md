@@ -1,5 +1,35 @@
 # Giá Gốc demo v3: nhật ký thay đổi
 
+## v3.3: giao diện phẳng
+
+Theo phản hồi của người dùng (kế toán / vận hành): bỏ nhãn màu, màu sắc "kiểu AI" và bo góc. Chỉ đổi giao diện; engine, số liệu, ID, `window.__giagoc`, a11y và bản in giữ nguyên.
+
+### Trạng thái: chữ thường, không nhãn
+- Bỏ toàn bộ nhãn dạng viên thuốc / chip / con dấu (CSS `.pill`, `.chip`, `.chips`, `.stamp`, `.mini-stamp`, `.brand-mark` đã xóa). Trạng thái hiển thị bằng chữ thường, không nền, không viền: cam đậm cho tạm tính / cảnh báo, đỏ cho lỗi / lệch / tồn âm, xám cho đã hủy.
+- Dòng Cộng của bảng bút toán (chi tiết chứng từ và xem trước trong form): chỉ "Cộng" và hai số tổng. Khi lệch, hai số tổng tô đỏ và có thêm chữ đỏ "Lệch X".
+- Danh sách chứng từ: bỏ cột "Trạng thái". Chứng từ đã ghi sổ không hiện gì; ngoại lệ hiện ngay sau diễn giải: "tạm tính" (cam), "cần tính lại" (đỏ), "đã hủy" (cả dòng gạch ngang và chữ xám, riêng chữ "đã hủy" không gạch). Bỏ "Do bạn lập", "Hệ thống tự sinh", "Lùi ngày", "USD", "Thay PN…" (thông tin thay thế và nguyên tệ vẫn có trong phần chi tiết). Chi tiết chứng từ chỉ hiện trạng thái ngoại lệ ("giá vốn tạm tính"…).
+- QC lô: "Đạt" (chữ thường), "Chờ" (cam), "Không đạt" (đỏ). HSD sắp hết: ngày màu cam; quá HSD: "Quá HSD …" màu đỏ.
+- Đối chiếu kho – sổ cái, kết quả kỳ ở khóa sổ: "Khớp", "Cân", "Không" là chữ thường; chỉ "Lệch" / "N chỗ" màu đỏ. Báo cáo: bỏ "Khớp sổ cái", "Cân", "Từ 911", "Xong / Đang làm / Chưa"; chỉ hiện chữ đỏ "lệch sổ cái", "lệch", hoặc chữ cam "tạm tính từ số dư TK 5–8" khi có.
+- Khóa sổ: số bước là chữ (không còn vòng tròn màu), cột phải "Xong" (xám), "Tiếp theo" (màu nhấn), "Dừng" / "Cần chạy lại" (đỏ). Bỏ con dấu tròn "ĐÃ KHÓA SỔ" và con dấu nhỏ trên thanh trên; thanh trên ghi "Kỳ 01/2026 Đang mở" / "Đã khóa sổ" bằng chữ thường.
+- Việc cần làm: cột nhãn là chữ đậm thường (cam / đỏ khi là cảnh báo / lỗi), không nhãn màu; "Bước 5/12" chuyển vào nội dung dòng "Khóa sổ".
+- Ô Ảnh hưởng, KPI, cơ cấu giá thành: chênh lệch hiện "+1.234" / "−1.234" chữ thường thay cho chip ▲▼.
+- Bộ lọc chứng từ, lọc kho, lọc loại vị trí, chọn lô truy xuất: nút segmented vuông, phẳng. Gợi ý lý do hủy: nút nhỏ thường.
+
+### Màu, bo góc, kiểu chữ
+- Bảng màu doanh nghiệp: nền trang #f5f6f7, bề mặt trắng, chữ #1d2226, viền #d0d4d9 (đường kẻ hàng #e3e6ea); một màu nhấn xanh dương trầm #1f5fa8 (hover #184d8a) chỉ cho nút chính, liên kết, mục / dòng đang chọn, nút lọc đang bật; đỏ #b42318, cam đậm #9a5b00. Bỏ tím / indigo, mọi nền pastel (tím, mint, kem) và gradient. Dark mode trung tính (#16181b / #1e2124, nhấn #5b9ae0).
+- Biểu đồ và cơ cấu giá thành: dải xanh dương – xám (navy #12355e, #1f5fa8, #6e9fd4, xám #56616c, #a4adb6), các đoạn ngăn bằng vạch 1px.
+- Sidebar trắng có viền phải; mục đang chọn = vạch trái màu nhấn + nền xám nhạt, không bo. Màn hẹp: thanh menu ngang, mục chọn = vạch dưới. Bỏ ô "GG", chỉ giữ chữ "Giá Gốc".
+- Bo góc ≤ 2px cho nút, ô nhập, select, bảng, panel, dialog, menu; 0 cho dòng bảng, mục menu, thanh. Bóng chỉ còn một bóng mảnh ở dropdown, dialog, toast, tour.
+- Font hệ thống `"Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif`; mã dùng `Consolas, ui-monospace, monospace`. Bỏ link Google Fonts. Nội dung 13–13,5px, tiêu đề trang 18px đậm vừa, tiêu đề panel 14px. Bảng: hàng ~31px, header nền xám chữ đậm, số canh phải tabular-nums. Panel viền 1px, không bóng, padding 12–14px; khoảng cách gọn hơn.
+- KPI: khung vuông viền mảnh, nhãn chữ thường xám, số đậm, không nền màu.
+- Thông báo lỗi / cảnh báo trong form: viền trái 3px màu ngữ nghĩa, không nền màu. Dòng bút toán khác nhau giữa TT 99 và TT 133: vạch cam bên trái thay cho nền vàng.
+- Focus ring 2px màu nhấn, vuông. Màn ≤ 900px: tiêu đề trang dòng 1, kỳ / "Lập chứng từ" dòng 2.
+
+### Đã kiểm tra (Playwright, Chromium)
+- `node --check` phần script: đạt. `__giagoc.selfTest()`: **1.216 tổ hợp, 0 lỗi** (~15 giây); số chính không đổi (doanh thu 225.990.000, giá vốn 154.605.503, z BTP 71.848,61, tồn kho 284.266.497, lợi nhuận 71.462.497, TH0001 5.898.500).
+- Thao tác giao diện thật (click / gõ / phím Enter trên phần tử nhìn thấy) ở **1366×768 và 390×844, sáng và tối: 4 × 93 bước, 0 lỗi**: mở 10 trang bằng menu; không cột "Trạng thái", không "Nợ = Có" ở dòng Cộng; lập phiếu nhập mua; hóa đơn bán 99.999 hũ bị chặn ("Xuất quá tồn", nút lưu khóa, Enter không lưu) rồi bán 10 hũ lưu được; hủy CT0001 → cả dòng gạch ngang, chữ "đã hủy" không nền / không viền / không gạch; có chữ "tạm tính" trong danh sách; In phiếu PN0001 → với `emulateMedia('print')` chỉ còn PHIẾU NHẬP KHO PNK-2601001; "Chạy tất cả" khóa đủ 12 bước, 12 "Xong", thanh trên "Đã khóa sổ" chữ thường; 10 trang sau khóa sổ. Mọi trang: không pageerror / console error, không NaN / undefined, không cuộn ngang, không phần tử `.pill/.chip/.badge/.stamp/.tag`.
+- `getComputedStyle` mọi phần tử hiển thị (cả khi mở menu "Lập chứng từ", form phiếu nhập, tour, hộp QC lô): **không phần tử nào có border-radius > 2px**.
+
 ## v3.2: theo dõi theo vị trí chứa và mã hóa
 
 Theo file Excel sổ kho BTP của nhà máy Bà Ba Thạo và yêu cầu "hàng tồn kho theo dõi: tên hàng + mã lot + mã hóa + bồn/trái/phuy". Đối chiếu tính năng file → yêu cầu: `docs/YEU-CAU-KHACH-HANG.md` §9; dữ liệu và DDL: `docs/research/07-…` §2.8. Không thêm chữ giải thích trên giao diện.
