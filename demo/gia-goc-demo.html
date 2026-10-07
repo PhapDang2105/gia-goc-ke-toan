@@ -84,6 +84,10 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 .top{display:flex;align-items:center;gap:8px 12px;padding:8px 20px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:6;min-height:48px}
 .top h1{font-size:18px;font-weight:600;margin:0;display:flex;align-items:center;gap:10px;white-space:nowrap;min-width:0}
 .top .spacer{flex:1}
+.fromflow{display:flex;align-items:center;gap:12px;padding:8px 20px;background:var(--kpi-bg);border-bottom:1px solid var(--line);border-left:3px solid var(--accent);font-size:13px}
+.fromflow span{color:var(--muted)}.fromflow b{color:var(--fg)}
+@media (max-width:640px){.fromflow{padding-inline:16px}}
+.fl-n.last{box-shadow:0 0 0 2px var(--accent)}
 .top .back{gap:4px;padding-inline:8px 10px;max-width:260px}
 .top .back span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media (max-width:640px){.top .back span{display:none}}
@@ -558,6 +562,7 @@ button.tn{cursor:pointer}button.tn:hover{background:var(--hover)}
     </header>
     <section class="impact" id="impact" hidden aria-label="Ảnh hưởng của thay đổi gần nhất"></section>
 
+    <div class="fromflow" id="fromFlow" hidden><button class="btn sm primary" type="button" data-act="goBack"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>Quay lại sơ đồ nghiệp vụ</button><span id="fromFlowTxt"></span></div>
     <main id="content" tabindex="-1">
     <!-- TỔNG QUAN -->
     <section class="view" id="v-dash">
@@ -1611,7 +1616,9 @@ function goBack(){
 }
 function renderChrome(){
   const set = S.data.settings, hs = S.ui.hist || [], prev = hs[hs.length - 1];
-  $('btnBack2').hidden = !prev; if(prev){ $('backLbl').textContent = TITLES[prev.view]; $('btnBack2').title = 'Quay lại ' + TITLES[prev.view]; $('btnBack2').setAttribute('aria-label', 'Quay lại ' + TITLES[prev.view]); }
+  $('btnBack2').hidden = !prev;
+  const ff = prev && prev.view === 'flow' && S.ui.view !== 'flow' && S.ui.flowStep; $('fromFlow').hidden = !ff;
+  if(ff) $('fromFlowTxt').innerHTML = 'Đang xem <b>Bước ' + S.ui.flowStep.col + ' · ' + esc(S.ui.flowStep.t) + '</b>'; if(prev){ $('backLbl').textContent = TITLES[prev.view]; $('btnBack2').title = 'Quay lại ' + TITLES[prev.view]; $('btnBack2').setAttribute('aria-label', 'Quay lại ' + TITLES[prev.view]); }
   document.querySelectorAll('#nav button').forEach(b => { if(b.dataset.view === S.ui.view) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== 'v-' + S.ui.view);
   $('viewTitle').textContent = TITLES[S.ui.view];
@@ -2558,7 +2565,7 @@ RENDER.flow = function(){
   const lane = {}; FLOW_LANES.forEach((l, i) => lane[l[0]] = i + 2);
   let h = FLOW_LANES.map((l, i) => '<div class="fl-lane" style="grid-row:' + (i + 2) + '"></div><div class="fl-ln" style="grid-row:' + (i + 2) + '"><b>' + esc(l[1]) + '</b><span>' + esc(l[2]) + '</span></div>').join('');
   for(let c = 1; c <= 8; c++) h += '<div class="fl-step" style="grid-column:' + (c + 1) + '">Bước ' + c + '</div>';
-  h += FLOW_NODES.map(n => '<button type="button" class="fl-n fl-' + n.lane + '" data-flow="' + n.id + '" style="grid-row:' + lane[n.lane] + ';grid-column:' + (n.col + 1) + '"><b>' + esc(n.t) + '</b>' +
+  h += FLOW_NODES.map(n => '<button type="button" class="fl-n fl-' + n.lane + (S.ui.flowStep && S.ui.flowStep.id === n.id ? ' last' : '') + '" data-flow="' + n.id + '" style="grid-row:' + lane[n.lane] + ';grid-column:' + (n.col + 1) + '"><b>' + esc(n.t) + '</b>' +
     '<span class="fl-c">' + esc(flowCount(n)) + '</span><span class="fl-w">' + esc(n.who) + '</span>' + (n.acc ? '<span class="fl-a">' + esc(n.acc) + '</span>' : '') + '</button>').join('');
   $('flowGrid').innerHTML = '<svg class="fl-svg" id="flowSvg" aria-hidden="true"><defs><marker id="flArr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="var(--muted)"/></marker></defs></svg>' + h;
   requestAnimationFrame(drawFlow);
@@ -3799,7 +3806,7 @@ document.addEventListener('click', e => {
   if(ds.filter){ S.ui.filter = ds.filter; return RENDER.docs(); }
   if(ds.wh){ S.ui.wh = ds.wh; return RENDER.stock(); }
   if(ds.qc) return openQC(ds.qc);
-  if(ds.flow){ const n = FLOW_NODES.find(x => x.id === ds.flow); if(n) return go(n.go[0], n.go[1]); return; }
+  if(ds.flow){ const n = FLOW_NODES.find(x => x.id === ds.flow); if(n) return go(n.go[0], Object.assign({flowStep:{id:n.id, t:n.t, col:n.col}}, n.go[1] || {})); return; }
   if(ds.gotoTrace) return go('trace', {tlot:ds.gotoTrace});
   if(ds.tlot){ S.ui.tlot = ds.tlot; RENDER.trace(); const f = document.querySelector('#trGraph [data-tlot="' + CSS.escape(ds.tlot) + '"]'); if(f) f.focus({preventScroll:true}); return; }
   if(ds.tem){ const [k, lot, wh, loc] = ds.tem.split('|'), c = Object.values(R.items[k].lcells).find(x => x.lot === lot && x.wh === wh && (x.loc || '') === loc); return printTems(c ? [{item:k, lot, wh, loc, q:c.q}] : []); }
