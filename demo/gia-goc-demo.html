@@ -1,16 +1,21 @@
+<!doctype html>
+<html lang="vi">
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Hệ thống quản lý</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
 <style>
 /* Hệ thống quản lý v4.1 (ngành mắm) — giao diện phẳng kiểu phần mềm kế toán: một màu nhấn, bo góc ≤ 2px, không nhãn màu. */
 :root{
-  --bg:#f5f6f7; --surface:#ffffff; --surface-2:#eef0f2; --hover:#f3f5f7; --sel:#e6ebf1; --fg:#1d2226; --muted:#59626b; --line:#d0d4d9; --line-2:#e3e6ea;
+  --bg:#f3f4f6; --surface:#ffffff; --surface-2:#f0f2f4; --hover:#f5f7f9; --sel:#e6ebf1; --fg:#1d2226; --muted:#5b636c; --line:#dadee3; --line-2:#eceef1;
   --accent:#1f5fa8; --accent-h:#184d8a; --on-accent:#ffffff; --neg:#b42318; --warn:#9a5b00; --pos:#1e7a46;
   /* Biểu đồ: 4 ô categorical (đã kiểm validate_palette.js: light / #ffffff, cả cặp kề và mọi cặp); chữ trong ô màu dùng --kN-ink */
   --k1:#1f5fa8; --k2:#6899e2; --k3:#1e8163; --k4:#67c7a4; --k1-ink:#ffffff; --k2-ink:#0f1a2a; --k3-ink:#ffffff; --k4-ink:#0f1a2a;
   --c-nvl:var(--k1); --c-btp:var(--k2); --c-nc:var(--k3); --c-sxc:var(--k4); --c-rev:var(--k1); --c-gp:var(--k2);
   --kpi-bg:#e8eef6; --kpi-line:#1f5fa8; --kpi-val:#123f73; --grid:#e8eaed; --axis:#c3c8ce; --track:#dbe4ef; --band:rgba(29,34,38,.05);
   --scrim:rgba(20,24,28,.45); --shadow:0 2px 8px rgba(20,24,28,.18);
-  --font-ui:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-ui:"Be Vietnam Pro","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
   --font-mono:Consolas,ui-monospace,monospace;
   --r:2px; --side:212px;
 }
@@ -34,7 +39,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{min-height:100%}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-size:13.5px;line-height:1.45;font-variant-numeric:tabular-nums;overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums;overflow-x:hidden}
 button,select,input,textarea{font:inherit;color:inherit;border-radius:var(--r)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:help}
@@ -63,7 +68,7 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 .icon-btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
 .icon-btn.ghost:hover{background:var(--surface-2);color:var(--fg)}
 .nav{display:flex;flex-direction:column}
-.nav button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;padding:6px 12px 6px 14px;color:var(--fg);white-space:normal;line-height:1.3;min-height:32px;border-left:3px solid transparent}
+.nav button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;padding:7px 12px 7px 14px;color:var(--fg);white-space:normal;line-height:1.3;min-height:32px;border-left:3px solid transparent}
 .nav button:hover{background:var(--hover)}
 .nav button[aria-current="page"]{background:var(--surface-2);border-left-color:var(--accent);color:var(--accent);font-weight:600}
 .nav button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
@@ -103,18 +108,22 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 .impact .tbl-wrap{align-self:flex-start;max-width:100%}
 .impact table{width:auto;min-width:min(100%,720px)}
 /* Vùng nội dung: lấp toàn chiều rộng */
-.view{padding:12px 20px 32px;display:flex;flex-direction:column;gap:12px;width:100%}
+.view{padding:16px 24px 40px;display:flex;flex-direction:column;gap:16px;width:100%;animation:vin .14s ease-out}
+@keyframes vin{from{opacity:.35}to{opacity:1}}
+/* khung nằm ngoài màn hình: trình duyệt chưa dàn trang cho tới khi cuộn tới */
+.view>.panel:not(:first-child),.view>.duo,.view>.split>.panel+.panel{content-visibility:auto;contain-intrinsic-size:auto 480px}
 .view[hidden]{display:none!important}
 .grid{display:grid;gap:12px}
 .kpis{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr))}
 .tabs{align-self:flex-start;flex-wrap:wrap}
+tr.more{display:none}
 .tabs .cnt,#traceTabs .cnt{font-size:12px;opacity:.75}
 .duo{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(480px,calc((100% - 12px) / 2))),1fr))}
 .split{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) minmax(380px,36%)}
 .split.wide-side{grid-template-columns:minmax(0,1fr) minmax(420px,42%)}
 .cards{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(560px,calc((100% - 12px) / 2))),1fr))}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;min-width:0;display:flex;flex-direction:column;gap:10px}
-.panel h2{font-size:14px;font-weight:600;margin:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.panel h2{font-size:15px;font-weight:600;margin:0}
 .panel-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;min-height:30px}
 .panel-head .spacer{flex:1}
 .kpi{gap:2px;padding:10px 14px;background:var(--kpi-bg);border-color:var(--kpi-bg);border-left:3px solid var(--kpi-line)}
@@ -127,9 +136,9 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 /* Bảng */
 .tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--r);max-width:100%}
 .view .tbl-wrap{max-height:calc(100vh - 140px)}
-table{border-collapse:collapse;width:100%;font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
 thead{position:sticky;top:0;z-index:2}
-th,td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--line-2);white-space:nowrap;background:var(--surface)}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line-2);white-space:nowrap;background:var(--surface)}
 th{background:var(--surface-2);font-weight:600;font-size:12.5px;color:var(--fg);border-bottom:1px solid var(--line);white-space:normal;vertical-align:bottom}
 td.n,th.n{text-align:right}
 td.wrap{white-space:normal;min-width:200px}
@@ -475,6 +484,7 @@ button.tn{cursor:pointer}button.tn:hover{background:var(--hover)}
 .tn.on{border-color:var(--accent);border-left-width:3px;background:var(--kpi-bg);box-shadow:0 0 0 1px var(--accent)}
 .tr-leg{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
 .tr-leg i{display:inline-block;width:16px;height:3px;background:var(--k2)}.tr-leg i.dn{background:var(--k3);margin-left:8px}
+@media (max-width:640px){ .field{max-width:100%;min-width:0} .field select{max-width:100%;min-width:0} }
 @media (max-width:640px){ .tr-head{grid-template-columns:1fr} .tr-col{width:172px} .tr-graph{gap:28px} }
 /* Giả lập giá */
 .sim-ctl{display:grid;gap:6px 18px;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
@@ -1677,15 +1687,18 @@ function impactTable(imp, short){
 // ================= Render chung =================
 const TITLES = {dash:'Tổng quan', docs:'Chứng từ & bút toán', reports:'Báo cáo', stock:'Kho & lô', mat:'Giá nguyên liệu', cogs:'Giá xuất kho', cost:'Giá thành theo lệnh sản xuất', lots:'Giá vốn theo lô', trace:'Truy xuất lô', tanks:'Bản đồ bồn', count:'Kiểm kê', flow:'Sơ đồ nghiệp vụ', sim:'Giả lập giá nguyên liệu', audit:'Nhật ký sửa đổi', items:'Danh mục & lệnh sản xuất'};
 const RENDER = {};
-function renderAll(){
-  R = compute(S.data);
+// Chuyển trang không vẽ lại khi dữ liệu và bộ lọc không đổi: DV tăng mỗi khi dữ liệu / thiết lập đổi; RV[view] = DV lúc trang được vẽ gần nhất
+let DV = 0; const RV = {};
+function renderAll(nav){
+  if(!nav || !R){ DV++; R = compute(S.data); }
   renderChrome();
-  RENDER[S.ui.view]();
+  if(!nav || nav === 'force' || RV[S.ui.view] !== DV) RENDER[S.ui.view]();
   if(S.ui.refocus){ const el = document.querySelector(S.ui.refocus); S.ui.refocus = null; if(el) try{ el.focus({preventScroll:true}); }catch(_){ el.focus(); } }
 }
 function goBack(){
   const hs = S.ui.hist || [], e = hs.pop(); if(!e) return;
-  S.ui.impact = null; S.ui.view = e.view; Object.assign(S.ui, e.keep); renderAll();
+  const force = Object.keys(e.keep).some(k => S.ui[k] !== e.keep[k]);
+  S.ui.impact = null; S.ui.view = e.view; Object.assign(S.ui, e.keep); renderAll(force ? 'force' : 'nav');
   requestAnimationFrame(() => window.scrollTo(0, e.y || 0));
 }
 function renderChrome(){
@@ -1718,7 +1731,8 @@ function go(view, opt){
     const hs = S.ui.hist || (S.ui.hist = []), keep = {}; HIST_KEYS.forEach(k => keep[k] = S.ui[k]);
     hs.push({view:S.ui.view, keep, y:window.scrollY}); if(hs.length > 30) hs.shift();
     try{ history.pushState({gg:hs.length}, '', '#' + view); }catch(_){} }
-  S.ui.view = view; Object.assign(S.ui, opt || {}); renderAll();
+  const force = opt && Object.keys(opt).some(k => S.ui[k] !== opt[k]);
+  S.ui.view = view; Object.assign(S.ui, opt || {}); renderAll(force ? 'force' : 'nav');
   window.scrollTo(0, 0);
   const b = document.querySelector('#nav button[data-view="' + view + '"]');
   if(b && b.scrollIntoView && matchMedia('(max-width:1080px)').matches) try{ b.scrollIntoView({inline:'center', block:'nearest'}); }catch(_){}
@@ -2041,8 +2055,9 @@ RENDER.reports = function(){
   let h = '';
   if(u.rep === 'nkc'){ const L = postedLines();
     h = '<h2>Sổ nhật ký chung · kỳ 01/2026</h2>' + tblH('repTbl', '<tr><th>Ngày</th><th>Số chứng từ</th><th>Diễn giải</th><th>Tài khoản</th><th>Đối tượng</th><th class="n">Nợ</th><th class="n">Có</th></tr>',
-      L.map(x => '<tr>' + td(ddmm(x.p.d.date)) + td(x.p.d.no, 'acc') + td(x.i ? '' : esc(x.p.d.desc), 'wrap') + td(x.l.acc, 'acc') + td(esc(x.l.obj), 'wrap') + td(nz(x.l.dr), 'n') + td(nz(x.l.cr), 'n') + '</tr>').join(''),
-      '<tr><td colspan="5">Cộng phát sinh</td>' + td(fmt(sum(L, x => x.l.dr)), 'n') + td(fmt(sum(L, x => x.l.cr)), 'n') + '</tr>');
+      L.map((x, i) => '<tr' + (i >= 60 && !u.nkcAll ? ' class="more"' : '') + '>' + td(ddmm(x.p.d.date)) + td(x.p.d.no, 'acc') + td(x.i ? '' : esc(x.p.d.desc), 'wrap') + td(x.l.acc, 'acc') + td(esc(x.l.obj), 'wrap') + td(nz(x.l.dr), 'n') + td(nz(x.l.cr), 'n') + '</tr>').join(''),
+      '<tr><td colspan="5">Cộng phát sinh</td>' + td(fmt(sum(L, x => x.l.dr)), 'n') + td(fmt(sum(L, x => x.l.cr)), 'n') + '</tr>') +
+      (L.length > 60 && !u.nkcAll ? '<div class="btn-row"><button class="btn sm" type="button" data-act="nkcAll">Hiện tất cả ' + L.length + ' dòng</button></div>' : '');
   }
   if(u.rep === 'ledger'){ const acc = u.repAcc, op = R.gOpen[acc] || 0; let bal = op; const L = postedLines().filter(x => x.l.acc === acc);
     const okL = () => Math.round(bal) === Math.round(R.gl[acc] || 0);
@@ -2733,7 +2748,7 @@ function varianceHTML(v, a, b){
   if(v.root && Math.abs(v.root.p1 - v.root.p0) > 0.5) say += ' Gốc ở nguyên liệu: ' + esc(D.items[v.root.k].name.toLowerCase()) + ' ' + fmt(v.root.p0) + ' → ' + fmt(v.root.p1) + ' đ/' + esc(D.items[v.root.k].uom) + ' (' + (v.root.p1 > v.root.p0 ? '+' : '−') + fmtD(Math.abs(v.root.p1 / v.root.p0 - 1) * 100, 1) + '%).';
   const rows = v.fx.map(f => { const w = Math.abs(f.d) / mx * 50;
     return '<div class="vr-r"><span class="vr-l">' + esc(f.l) + (f.note ? '<small>' + esc(f.note) + '</small>' : '') + '</span><span class="vr-b"><i class="' + (f.d > 0 ? 'up' : 'dn') + '" style="' + (f.d > 0 ? 'left:50%' : 'right:50%') + ';width:' + w.toFixed(1) + '%"></i></span><span class="vr-v ' + (f.d > 0 ? 's-bad' : 'pos') + '">' + (f.d > 0 ? '+' : '−') + fmt(Math.abs(f.d)) + '</span></div>'; }).join('');
-  return '<p class="vr-say">' + say + '</p><div class="vr-head"><span>' + fmt(v.A.z) + ' đ/' + esc(u) + ' · lô ' + esc(a) + '</span><span>' + fmt(v.B.z) + ' đ/' + esc(u) + ' · lô ' + esc(b) + '</span></div><div class="vr">' + rows +
+  return '<div class="vr-head"><span>' + fmt(v.A.z) + ' đ/' + esc(u) + ' · lô ' + esc(a) + '</span><span>' + fmt(v.B.z) + ' đ/' + esc(u) + ' · lô ' + esc(b) + '</span></div><div class="vr">' + rows +
     '<div class="vr-r vr-t"><span class="vr-l">Tổng chênh lệch</span><span class="vr-b"></span><span class="vr-v ' + (v.diff > 0 ? 's-bad' : 'pos') + '">' + (v.diff > 0 ? '+' : '−') + fmt(Math.abs(v.diff)) + '</span></div></div>';
 }
 function varianceLots(code){ const L = R.lots[code]; if(!L || L.src !== 'NK') return []; return Object.values(R.lots).filter(x => x.item === L.item && x.src === 'NK' && x.code !== code && lotUnitParts(x.code)).sort((a, b) => a.date < b.date ? -1 : 1).map(x => x.code); }
@@ -4034,7 +4049,7 @@ document.addEventListener('click', e => {
   if(ds.brief){ const x = (S.ui._brief || [])[+ds.brief]; if(x) go(x.go, x.opt); return; }
   if(ds.kwh){ const d = S.ui._kk; if(d && Object.keys(d.counts).length && d.wh !== ds.kwh) return toast('Đang đếm ' + WH[d.wh].name + ': lập biên bản hoặc xóa số đã đếm trước khi đổi kho.'); S.ui.kwh = ds.kwh; if(d) d.wh = ds.kwh; return RENDER.count(); }
   if(ds.ttab){ if(trTabOf(S.ui.tlot) === ds.ttab) return; const xs = trLots(ds.ttab); if(!xs.length) return; S.ui.tlot = (xs.find(L => L.src === 'NK') || xs[0]).code; return RENDER.trace(); }
-  if(ds.flow){ const n = FLOW_NODES.find(x => x.id === ds.flow); if(n) return go(n.go[0], Object.assign({flowStep:{id:n.id, t:n.t, col:n.col}}, n.go[1] || {})); return; }
+  if(ds.flow){ const n = FLOW_NODES.find(x => x.id === ds.flow); delete RV.flow; if(n) return go(n.go[0], Object.assign({flowStep:{id:n.id, t:n.t, col:n.col}}, n.go[1] || {})); return; }
   if(ds.gotoTrace) return go('trace', {tlot:ds.gotoTrace});
   if(ds.tlot){ S.ui.tlot = ds.tlot; RENDER.trace(); const f = document.querySelector('#trGraph [data-tlot="' + CSS.escape(ds.tlot) + '"]'); if(f) f.focus({preventScroll:true}); return; }
   if(ds.tem){ const [k, lot, wh, loc] = ds.tem.split('|'), c = Object.values(R.items[k].lcells).find(x => x.lot === lot && x.wh === wh && (x.loc || '') === loc); return printTems(c ? [{item:k, lot, wh, loc, q:c.q}] : []); }
@@ -4073,6 +4088,7 @@ document.addEventListener('click', e => {
     case 'goBack': { if(history.state && history.state.gg) history.back(); else goBack(); return; }
     case 'kkMake': if(t.getAttribute('aria-disabled') === 'true') return; return kkMake();
     case 'kkClear': { kkSave(null); S.ui._kk = null; return RENDER.count(); }
+    case 'nkcAll': S.ui.nkcAll = true; return RENDER.reports();
     case 'toggleAlloc': { const w = $('allocWrap'), on = w.hidden; w.hidden = !on; t.setAttribute('aria-expanded', String(on)); t.textContent = on ? 'Ẩn bảng phân bổ' : 'Xem bảng phân bổ'; return; }
     case 'printPicked': { const nos = Object.keys(S.ui.picked || {}).filter(no => S.ui.picked[no]).sort((a, b) => { const x = S.data.docs.find(d => d.no === a), y = S.data.docs.find(d => d.no === b); return x.date < y.date ? -1 : x.date > y.date ? 1 : a < b ? -1 : 1; });
       if(!nos.length) return toast('Chọn phiếu cần in bằng ô tích ở đầu dòng.'); printDocs(nos); return toast('Đang in ' + nos.length + ' phiếu, mỗi phiếu một trang.'); }
@@ -4406,6 +4422,9 @@ const lotHash = () => { const m = /^#lo=(.+)$/.exec(location.hash || ''); if(!m)
   S.ui.view = 'trace'; S.ui.tlot = code; return true; };
 lotHash(); window.addEventListener('hashchange', () => { if(lotHash()) renderAll(); });
 window.addEventListener('popstate', () => { if((S.ui.hist || []).length) goBack(); });
+// Mọi lần vẽ trang (kể cả gọi trực tiếp RENDER.x khi lọc, chọn tab) ghi lại phiên bản dữ liệu đã vẽ
+Object.keys(RENDER).forEach(k => { const f = RENDER[k]; RENDER[k] = function(){ const r = f.apply(this, arguments); RV[k] = DV; return r; }; });
+window.addEventListener('resize', () => { Object.keys(RV).forEach(k => { if(k !== S.ui.view) delete RV[k]; }); });
 renderAll();
 })();
 </script>

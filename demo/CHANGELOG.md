@@ -36,6 +36,21 @@ Nếu người làm demo đổi dữ liệu mẫu, cập nhật bảng này và 
 | 7 | Quy trình chỉ có cá linh (2 giai đoạn) và mắm tôm (1 giai đoạn) | 4 quy trình theo [YEU-CAU-KHACH-HANG](../docs/01-yeu-cau/YEU-CAU-KHACH-HANG.md) §4 | GT-01 |
 | 8 | Tiêu thức phân bổ nhân công / sản xuất chung = chi phí nguyên vật liệu trực tiếp của lệnh; lệnh hoàn thành khi có phiếu nhập kho đầu tiên | Tiêu thức cấu hình theo giai đoạn (đề xuất khối lượng × số ngày cho công đoạn ủ); trạng thái lệnh có Hoàn thành → Đóng | [QD-29](../docs/02-ke-hoach/QUYET-DINH.md#qd-29) — cố ý giản lược, chỉ cần nói rõ khi trình diễn |
 
+## v4.11 — nhanh hơn, thoáng hơn (2026-10-07)
+
+**Tốc độ chuyển trang** (đo với CPU chậm 4 lần, mô phỏng máy văn phòng):
+- Trang đã mở và dữ liệu chưa đổi thì không vẽ lại, chỉ hiện ra (phiên bản dữ liệu DV; mọi lần vẽ ghi RV[trang]); dữ liệu hoặc thiết lập đổi thì vẽ lại.
+- Khung nằm ngoài màn hình chưa dàn trang cho tới khi cuộn tới (`content-visibility:auto`).
+- Sổ nhật ký chung hiện 60 dòng đầu, nút "Hiện tất cả 208 dòng"; tải bảng Excel vẫn đủ dòng.
+- Kết quả (ms, lần mở thứ hai): Báo cáo 436 → 69, Kho & lô 290 → 96, Truy xuất lô 191 → 66, Sơ đồ nghiệp vụ 190 → 53, Giá vốn theo lô 136 → 100.
+- Trang hiện ra mờ dần 0,14 giây thay vì chớp (tắt khi máy đặt giảm chuyển động).
+
+**Thoải mái khi nhìn**:
+- Phông Be Vietnam Pro (thiết kế cho tiếng Việt), chữ 14px, dòng 1,5; tải không chặn trang, mất mạng thì dùng Segoe UI.
+- Khung, bảng rộng rãi hơn (đệm khung 16/18px, ô bảng 8/10px, khoảng giữa khung 16px); đường kẻ và nền nhạt hơn.
+- Thêm `<!doctype html>` và thẻ viewport: mở trên điện thoại thật (quét mã QR trên tem) hiện đúng khổ màn hình, không thu nhỏ như máy tính.
+- Vì sao giá thành khác: bỏ câu giải thích, chỉ giữ số và biểu đồ.
+
 ## v4.10 — chuyển trang mượt, khuôn trang thống nhất (2026-10-07)
 
 Đo 15 trang ở 1366px và 390px, sửa các điểm làm chuyển trang bị "giật":
