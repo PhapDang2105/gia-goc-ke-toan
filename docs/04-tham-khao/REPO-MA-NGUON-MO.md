@@ -1,4 +1,7 @@
-# 02 — Repo mã nguồn mở tham khảo cho phần mềm kế toán / kho / giá thành (kiểu MISA SME)
+# Repo mã nguồn mở tham khảo cho phần mềm kế toán / kho / giá thành (kiểu MISA SME)
+
+> Phiên bản: 1.0 · Ngày: 2026-10-04 (đổi tên file 2026-10-07; cũ: `research/02-repo-tham-khao.md`) · Người phụ trách: Nhóm nghiên cứu · Trạng thái: Đã duyệt (tài liệu tham khảo, không sửa nội dung)
+> Viết tắt: theo [THUAT-NGU](../00-tong-quan/THUAT-NGU.md) §2. Kết luận đã đưa vào kiến trúc: [KIEN-TRUC-VA-CSDL](../03-thiet-ke/KIEN-TRUC-VA-CSDL.md) §0.1; giấy phép: [QD-20](../02-ke-hoach/QUYET-DINH.md#qd-20).
 
 > Ngày khảo sát: **2026-10-04**. Số sao, license, ngày push lấy từ GitHub REST API (gọi không xác thực) trong ngày này.
 > Mã nguồn trích dẫn được tải trực tiếp từ `raw.githubusercontent.com` (nhánh `develop` của ERPNext; nhánh `master`, `18.0`, `17.0` của Odoo; `master` của iDempiere).

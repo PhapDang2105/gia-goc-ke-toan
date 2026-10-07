@@ -1,5 +1,7 @@
 # Phản biện UI/UX: bản demo "Giá Gốc" (gia-goc-demo.html)
 
+> **Lưu trữ — bản demo xưởng gỗ cũ, chỉ để lưu.** Phiên bản: 1.0 · Ngày: 2026-10-04 · Người phụ trách: phản biện viên demo · Trạng thái: Đã duyệt — lưu trữ. Tài liệu này rà bản demo v1–v2 (xưởng bàn ghế gỗ, trước khi chuyển sang nhà máy chế biến mắm ở demo v3). Số dòng, tên trang, dữ liệu và kết luận **không còn đúng** với demo hiện tại; chuyển từ thư mục `demo/` sang đây ngày 2026-10-07. Demo hiện tại: [demo/CHANGELOG.md](../../../demo/CHANGELOG.md). Nội dung giữ nguyên.
+
 Người phản biện: góc nhìn UI/UX phần mềm kế toán/ERP Việt Nam. Ngày: 04/10/2026.
 
 **Cách kiểm tra.** Đọc toàn bộ 769 dòng code. Chạy thật trong Chrome qua `http://127.0.0.1` (Chrome chặn `file://`). Dùng bản sao trong scratchpad có thêm `<meta charset>` vì skeleton chỉ được thêm lúc publish. Các thao tác chạy bằng JS trên DOM thật: đổi phương pháp, đổi TT99/TT133, chọn phiếu, thêm phiếu lùi ngày, chạy từng bước và chạy tất cả, làm lại. Xem bản điện thoại bằng iframe rộng 390px. Không chụp được màn hình (Chrome báo timeout 2 lần), nên phần hình ảnh được đánh giá qua số đo DOM và code. Console không có lỗi JS. File HTML gốc không bị sửa.

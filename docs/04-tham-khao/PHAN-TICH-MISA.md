@@ -1,4 +1,7 @@
-# 04 — Phân tích MISA SME / MISA AMIS Kế toán và đối thủ
+# Phân tích MISA SME / MISA AMIS Kế toán và đối thủ
+
+> Phiên bản: 1.0 · Ngày: 2026-10-04 (đổi tên file 2026-10-07; cũ: `research/04-phan-tich-misa.md`) · Người phụ trách: Nhóm nghiên cứu · Trạng thái: Đã duyệt (tài liệu tham khảo). Phạm vi đề xuất ở §6 là của thời điểm 2026-10-04, đã được thay bằng [KE-HOACH-DU-AN](../02-ke-hoach/KE-HOACH-DU-AN.md)
+> Viết tắt: theo [THUAT-NGU](../00-tong-quan/THUAT-NGU.md) §2.
 
 > Ngày nghiên cứu: 2026-10-04. Nguồn chính: trang hướng dẫn công khai helpsme.misa.vn (bản SME 2026, một số trang bản 2022/2023 khi bản 2026 chưa có trang tương ứng), helpact.misa.vn (AMIS Kế toán), trang giá chính thức của MISA, và trang của FAST, Bravo, Viindoo, KiotViet, Sapo, Base.
 > Quy ước: chỉ ghi điều xác minh được qua nguồn dẫn. Mục nào nguồn mâu thuẫn hoặc chưa xác minh được thì ghi rõ **[chưa xác minh]** / **[mâu thuẫn nguồn]**.
