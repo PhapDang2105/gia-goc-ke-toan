@@ -1,5 +1,7 @@
 # Phản biện nghiệp vụ — `gia-goc-demo.html`
 
+> **Lưu trữ — bản demo xưởng gỗ cũ, chỉ để lưu.** Phiên bản: 1.0 · Ngày: 2026-10-04 · Người phụ trách: phản biện viên demo · Trạng thái: Đã duyệt — lưu trữ. Tài liệu này rà bản demo v1–v2 (xưởng bàn ghế gỗ, trước khi chuyển sang nhà máy chế biến mắm ở demo v3). Số dòng, tên trang, dữ liệu và kết luận **không còn đúng** với demo hiện tại; chuyển từ thư mục `demo/` sang đây ngày 2026-10-07. Demo hiện tại: [demo/CHANGELOG.md](../../../demo/CHANGELOG.md). Nội dung giữ nguyên.
+
 > Góc nhìn: kế toán trưởng doanh nghiệp sản xuất (TT99/2025, TT133/2016, VAS 02). Ngày 2026-10-04.
 > Cách làm: chép nguyên logic `valuate / compute / buildDocs / glBalances` sang Python, chạy 144 tổ hợp: 2 chế độ × 3 phương pháp × giờ máy 800/1000/1200 × dở dang 0/20 × có/không PN0015 × trạng thái khóa sổ (mới mở = bước 1–4 xong, chạy hết). Trạng thái "phiếu lùi ngày sau khi đã chạy hết" làm các bước 5–12 bị đánh dấu "cần chạy lại", nên số liệu trùng với trạng thái mới mở.
 > Không sửa file HTML. Số dòng là dòng trong `gia-goc-demo.html`.

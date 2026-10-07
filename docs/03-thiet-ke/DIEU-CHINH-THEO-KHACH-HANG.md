@@ -1,40 +1,40 @@
-# 07 — Điều chỉnh kiến trúc và dữ liệu theo yêu cầu khách hàng
+# Điều chỉnh kiến trúc và dữ liệu theo yêu cầu khách hàng
 
-> Phiên bản: 0.3 · Ngày: 2026-10-07 · Trạng thái: đề xuất để review · 0.2 thêm §2.8 (vị trí chứa, mã hóa lô) · 0.3 sửa theo `../PHAN-BIEN-v3.md` §4 (A3, A4, A5, A8, A9, A10) và chốt giá thành theo lệnh SX + giá vốn theo lô (§4, §4.8)
-> Đầu vào: `../YEU-CAU-KHACH-HANG.md` (mã yêu cầu dẫn trong tài liệu này), `../KE-HOACH-DU-AN.md` v0.4, `05-kien-truc-de-xuat.md` v0.3.
-> Quan hệ với 05: 07 **chỉ mô tả phần thêm hoặc thay đổi** so với 05 để đáp ứng tài liệu khách; phần không nhắc tới giữ như 05. Quy ước khối SQL, vai trò CSDL và ngữ cảnh tenant theo 05 (đầu tài liệu, §2.1).
-> Kiểm chứng (2026-10-07): khối SQL của 05 rồi 07 **chạy nguyên văn theo thứ tự** trên PostgreSQL 16.15 bằng vai trò `app_owner` (chỉ thêm `uuidv7()` → `gen_random_uuid()` vì PG16 chưa có); truy vấn mẫu kiểm bằng `PREPARE`; phép thử chức năng và tấn công ở §11 chạy bằng `app_user`. **Chưa** chạy trên PG18, **chưa** thử hai phiên đồng thời.
+> Phiên bản: 0.3.1 · Ngày: 2026-10-07 · Người phụ trách: Trưởng kỹ thuật · Trạng thái: Chờ duyệt (review kỹ thuật, KTT duyệt §4) · 0.3.1: đổi tên file (cũ: `research/07-dieu-chinh-kien-truc-theo-khach-hang.md`), mã câu hỏi theo [CAU-HOI-MO](../01-yeu-cau/CAU-HOI-MO.md), không đổi DDL · 0.2 thêm §2.8 (vị trí chứa, mã hóa lô) · 0.3 sửa theo `PHAN-BIEN-v3.md` §4 (A3, A4, A5, A8, A9, A10) và chốt giá thành theo lệnh SX + giá vốn theo lô (§4, §4.8)
+> Đầu vào: [YEU-CAU-KHACH-HANG](../01-yeu-cau/YEU-CAU-KHACH-HANG.md) (mã yêu cầu dẫn trong tài liệu này), [KE-HOACH-DU-AN](../02-ke-hoach/KE-HOACH-DU-AN.md), [KIEN-TRUC-VA-CSDL](KIEN-TRUC-VA-CSDL.md) v0.3. Quyết định: [QUYET-DINH](../02-ke-hoach/QUYET-DINH.md). Viết tắt, quy ước mã, R1: [THUAT-NGU](../00-tong-quan/THUAT-NGU.md).
+> Quan hệ với `KIEN-TRUC-VA-CSDL.md`: tài liệu này **chỉ mô tả phần thêm hoặc thay đổi** so với kiến trúc nền để đáp ứng tài liệu khách; phần không nhắc tới giữ như `KIEN-TRUC-VA-CSDL.md`. Quy ước khối SQL, vai trò CSDL và ngữ cảnh tenant theo `KIEN-TRUC-VA-CSDL.md` (đầu tài liệu, §2.1).
+> Kiểm chứng (2026-10-07): khối SQL của `KIEN-TRUC-VA-CSDL.md` rồi tài liệu này **chạy nguyên văn theo thứ tự** trên PostgreSQL 16.15 bằng vai trò `app_owner` (chỉ thêm `uuidv7()` → `gen_random_uuid()` vì PG16 chưa có); truy vấn mẫu kiểm bằng `PREPARE`; phép thử chức năng và tấn công ở §11 chạy bằng `app_user`. **Chưa** chạy trên PG18, **chưa** thử hai phiên đồng thời.
 
 ---
 
-## 0. Tóm tắt thay đổi so với 05
+## 0. Tóm tắt thay đổi so với `KIEN-TRUC-VA-CSDL.md`
 
-| # | Chủ đề | 05 | 07 | Yêu cầu |
+| # | Chủ đề | `KIEN-TRUC-VA-CSDL.md` | tài liệu này | Yêu cầu |
 |---|---|---|---|---|
 | 1 | Phương pháp giá xuất | BQ cuối kỳ / BQ tức thời là chính; FIFO, đích danh ở giai đoạn sau | **Đích danh theo lô là chính**. Cost key = `(company, item, warehouse, lot)`; lô chính là lớp giá, không cần `cst.cost_layers` | GT-07 |
 | 2 | Lô | `inv.lots` tối giản, `lot_id` tuỳ chọn | Lô có loại, NSX/HSD, **trạng thái QC**, nguồn (phiếu nhập / lệnh SX), khu QC; hàng đích danh **bắt buộc lô** | QC-03, QC-05 |
 | 3 | Kiểm âm | Theo `(item, warehouse, lot)` bằng truy vấn trên sổ kho | Thêm vị trí chứa: theo `(item, warehouse, lot, location)` (§2.8); vì cost key đã gồm lô nên lũy kế vật lý và lũy kế định giá **trùng nhau** | KHO-02 |
 | 4 | Giá thành | Giản đơn; phân bước tự động qua SCC/BOM đa cấp | **Chốt: giá thành theo lệnh SX (job-order)**. Mỗi lệnh SX công đoạn (lô × giai đoạn) là một đối tượng tập hợp chi phí; dở dang = chi phí luỹ kế của lệnh chưa hoàn thành, kể cả lệnh ủ qua nhiều kỳ; BTP **luôn có lô và sổ kho** (phương án A, §4.2) và đi tiếp **bằng giá lô**; không gộp theo sản phẩm/tháng | GT-01..06 |
-| 4b | Giá vốn theo lô | Truy vết chi phí theo đồ thị (05 §6) | **Mục tiêu trọng tâm của khách**: mỗi lô TP/hàng hoá có giá vốn riêng; bấm vào lô thấy cây cấu thành: lô TP ← lệnh ← lô BTP ← lệnh ← lô NVL (NCC, giá lô) — §4.8 | GT-09, GT-10, GT-R4, GT-R5 |
+| 4b | Giá vốn theo lô | Truy vết chi phí theo đồ thị (`KIEN-TRUC-VA-CSDL.md` §6) | **Mục tiêu trọng tâm của khách**: mỗi lô TP/hàng hoá có giá vốn riêng; bấm vào lô thấy cây cấu thành: lô TP ← lệnh ← lô BTP ← lệnh ← lô NVL (NCC, giá lô) — §4.8 | GT-09, GT-10, GT-R4, GT-R5 |
 | 5 | Hệ phương trình BQ cuối kỳ | Gauss / Gauss–Seidel cho SCC | **Không cần** với đích danh: chuỗi lô là đồ thị có hướng theo thời gian; làm lại (rework) là lệnh mới nên không tạo vòng | — |
 | 6 | Hàng không đạt QC | Không có | Trong định mức dồn vào SL đạt; ngoài định mức ra 632/811/1388; phiếu QC → quyết định xử lý → chứng từ | GT-06, QC-06 |
 | 7 | Ngoại tệ | Cột `currency, amount_fc, fx_rate` trên dòng bút toán, chưa có nghiệp vụ | Tỷ giá theo ngày có **khoá ngày**; khoản mục mở theo chứng từ gốc; tất toán sinh 515/635; đánh giá lại qua 413 | NT-01..05 |
 | 8 | TSCĐ, CCDC, khế ước vay | Ngoài phạm vi (nhập qua chứng từ tổng hợp) | Bảng riêng, lịch, bút toán tự sinh qua chứng từ hệ thống | TSCD-*, CCDC-*, NH-03 |
 | 9 | Đơn hàng, đề nghị thanh toán | Ngoài phạm vi | Bảng đơn mua/bán, đề nghị thanh toán, luồng duyệt dùng chung | MUA-01, BAN-01, TIEN-01 |
-| 10 | LCTT | Nhắc trong 01 | Mã dòng tiền trên dòng bút toán tiền (trực tiếp) + bảng công thức (gián tiếp) | BC-R4 |
+| 10 | LCTT | Nhắc trong `NGHIEP-VU-KE-TOAN.md` | Mã dòng tiền trên dòng bút toán tiền (trực tiếp) + bảng công thức (gián tiếp) | BC-R4 |
 | 11 | QC | Không có | Điểm kiểm soát theo thao tác, chỉ tiêu, phiếu kiểm, xử lý không đạt | QC-01..08 |
 | 12 | Vị trí chứa, mã hóa | Không có | Bồn / trái / phuy theo kho; **kiểm âm theo `(item, warehouse, lot, location)`**, cost key vẫn theo lô; mã hóa lô tự sinh, bất biến; tồn tối thiểu, mã MISA, số phiếu kho theo tháng (§2.8) | KHO-06..11, KHO-R7..R9 |
 
 ## 1. Quy ước tuân thủ cho mọi bảng mới
 
-- `tenant_id uuid NOT NULL`, PK `(tenant_id, id)`, FK kép `(tenant_id, x_id)`; RLS `ENABLE` + `FORCE` do `app.apply_tenant_rls()` của 05 §2.1 tự bật cho mọi schema (gọi lại ở §11); quyền hẹp hơn mặc định khai trong `sys.table_privileges`.
+- `tenant_id uuid NOT NULL`, PK `(tenant_id, id)`, FK kép `(tenant_id, x_id)`; RLS `ENABLE` + `FORCE` do `app.apply_tenant_rls()` của `KIEN-TRUC-VA-CSDL.md` §2.1 tự bật cho mọi schema (gọi lại ở §11); quyền hẹp hơn mặc định khai trong `sys.table_privileges`.
 - Số chứng từ/đơn/phiếu duy nhất **theo năm**: `UNIQUE (tenant_id, company_id, [loại,] fiscal_year, số)`.
 - FK từ dòng tới header: `ON DELETE RESTRICT` (mặc định), **không** `CASCADE`.
-- Dòng con của header đã chốt: trigger chặn **INSERT/UPDATE/DELETE** (`app.guard_child_rows`); header: chặn xoá khi rời nháp, chỉ cho chuyển trạng thái theo danh sách, và **ngoài trạng thái được sửa thì chỉ được đổi các cột khai báo** (`app.guard_header_status`, so `jsonb` — A4). Header kế toán dùng `acc.documents` và guard của 05.
+- Dòng con của header đã chốt: trigger chặn **INSERT/UPDATE/DELETE** (`app.guard_child_rows`); header: chặn xoá khi rời nháp, chỉ cho chuyển trạng thái theo danh sách, và **ngoài trạng thái được sửa thì chỉ được đổi các cột khai báo** (`app.guard_header_status`, so `jsonb` — A4). Header kế toán dùng `acc.documents` và guard của `KIEN-TRUC-VA-CSDL.md`.
 - Không partition ở Giai đoạn 1.
-- Bảng dữ liệu hệ thống không thuộc tenant nằm trong schema `sys` (`sys.currencies`, `sys.cash_flow_lines`), được `app.check_rls_coverage()` loại trừ theo schema (06b-N4).
+- Bảng dữ liệu hệ thống không thuộc tenant nằm trong schema `sys` (`sys.currencies`, `sys.cash_flow_lines`), được `app.check_rls_coverage()` loại trừ theo schema (`PHAN-BIEN-v2-KIEN-TRUC.md` N4).
 - Trạng thái có ý nghĩa kiểm soát (trạng thái QC của lô, duyệt, khoá kỳ) **chỉ đổi qua hàm** `SECURITY DEFINER` có kiểm vai trò; `app_user` không có quyền UPDATE cột đó.
-- Mọi số tiền theo **R1** (`../KE-HOACH-DU-AN.md` §2).
+- Mọi số tiền theo **R1** ([THUAT-NGU](../00-tong-quan/THUAT-NGU.md) §5).
 
 Hai hàm guard dùng chung:
 
@@ -125,18 +125,18 @@ CREATE TABLE md.work_areas (
 ### 2.1 Mô hình lô
 
 - **Mã lót** = `lot_no` (chốt, A9 — mọi tài liệu và demo theo dòng này):
-  - **Định dạng gợi ý mặc định `DDMMYY-nn`** (ngày nhập / ngày bắt đầu lệnh + số mẻ 2 chữ số đếm trong ngày theo mặt hàng); người dùng sửa được; nhận chữ, số, `.`, `-`, 3–20 ký tự; lưu **chuỗi** (không mất số 0 đầu). Mẫu sinh là cấu hình (A4, D6).
+  - **Định dạng gợi ý mặc định `DDMMYY-nn`** (ngày nhập / ngày bắt đầu lệnh + số mẻ 2 chữ số đếm trong ngày theo mặt hàng); người dùng sửa được; nhận chữ, số, `.`, `-`, 3–20 ký tự; lưu **chuỗi** (không mất số 0 đầu). Mẫu sinh là cấu hình (CH-44, CH-46).
   - **Phạm vi duy nhất: theo (công ty, mặt hàng)** — `UNIQUE (tenant_id, company_id, item_id, lot_no)`. Lý do: file Excel kho BTP của khách có **16 mã lô dùng chung cho 2–4 mặt hàng khác nhau** (ví dụ cùng một mã ngày cho nhiều loại BTP làm cùng ngày); bắt duy nhất toàn công ty sẽ chặn dữ liệu thật. Demo bản trước kiểm trùng toàn công ty — sửa theo dòng này. Muốn phân biệt toàn công ty thì dùng **mã hóa** (§2.8, duy nhất toàn công ty).
   - Mã đã cấp không cấp lại kể cả khi huỷ phiếu.
 - **Loại lô**: `PURCHASED` (tạo khi lập dòng phiếu nhập mua; nếu người dùng không chọn lô có sẵn thì mỗi dòng nhập một lô mới), `SEMI_FINISHED` / `FINISHED` (tạo bởi lệnh công đoạn), `OPENING` (tồn đầu kỳ khi chuyển đổi), `BYPRODUCT` (phế liệu, phụ phẩm thu hồi).
 - **Trạng thái QC**: `PENDING` → `RELEASED` / `REJECTED` / `HOLD`. Chỉ đổi qua hàm `qc.finalize_inspection`, `qc.void_inspection`, `qc.execute_disposition` (§10), trong cùng transaction với phiếu đó; `app_user` không có quyền UPDATE cột `qc_status`, lô mới luôn bắt đầu `PENDING` (trigger) — A3; mọi thay đổi vào nhật ký sửa đổi.
-- **Bồn trộn nhiều lô (A8, suy luận — chờ khách trả lời câu B1/B12):** đích danh theo lô đúng khi mỗi bồn chỉ chứa một lô. File Excel có 3 bồn có số (`A.54`, `C.48`, `E.2`) từng chứa đồng thời 2 lô. Nếu khách thật sự **châm thêm / trộn** lô vào bồn đang ủ thì không được ghi "hai lô cùng nằm một bồn" rồi xuất đích danh tuỳ chọn; mô hình đề xuất là **gộp lô**: thao tác trộn là một lệnh SX (giai đoạn "phối trộn/châm") xuất các lô đầu vào và **sinh lô mới** với giá trị = tổng giá trị các lô vào (R1), phả hệ ghi đủ các lô nguồn. Trong khi chờ, hệ thống **cảnh báo** khi nhập/chuyển một lô vào bồn đang chứa lô khác (phản biện v3 U7) và không tự gộp.
+- **Bồn trộn nhiều lô (phản biện vòng 3 A8, suy luận — chờ khách trả lời CH-47, CH-31):** đích danh theo lô đúng khi mỗi bồn chỉ chứa một lô. File Excel có 3 bồn có số (`A.54`, `C.48`, `E.2`) từng chứa đồng thời 2 lô. Nếu khách thật sự **châm thêm / trộn** lô vào bồn đang ủ thì không được ghi "hai lô cùng nằm một bồn" rồi xuất đích danh tuỳ chọn; mô hình đề xuất là **gộp lô**: thao tác trộn là một lệnh SX (giai đoạn "phối trộn/châm") xuất các lô đầu vào và **sinh lô mới** với giá trị = tổng giá trị các lô vào (R1), phả hệ ghi đủ các lô nguồn. Trong khi chờ, hệ thống **cảnh báo** khi nhập/chuyển một lô vào bồn đang chứa lô khác (phản biện v3 U7) và không tự gộp.
 - Hàng có `costing_method = 'SPECIFIC'` bắt buộc `track_lot` (CHECK trên `md.items`); dòng kho của hàng theo lô bắt buộc có `lot_id` (trigger). Theo giả định của tài liệu yêu cầu, **mọi** hàng tồn kho đều đích danh theo lô; bao bì, phụ gia được hệ thống tự gợi ý lô (FEFO rồi lô cũ nhất) để người dùng không phải chọn tay.
 
 ### 2.2 Cost key và khoá
 
-- Cost key đích danh = `(company, item, warehouse, lot)`: trong `inv.stock_ledger` của 05, `cost_key_scope = warehouse_id` và `lot_id` NOT NULL. Lũy kế định giá và lũy kế vật lý (dùng để kiểm âm, 06b-A4) **cùng một khoá**, nên truy vấn kiểm âm của 05 §4.7 dùng trực tiếp.
-- Khoá: `inv.lock_cost_key(tenant, item, warehouse, lot)` (§2.7), gọi cho **mọi** cost key của chứng từ, **sắp tăng dần theo giá trị băm**, trước khi đọc tồn, cấp `seq`, ghi sổ kho; worker tính lại dùng cùng khoá. Chuyển kho lấy cả khoá kho đi và kho đến. Va chạm băm chỉ làm tuần tự hoá thừa, không sai. Chuỗi khoá trùng định dạng `'ck:'||tenant||':'||item||':'||scope||':'||lot` của 05 §5.1 (với đích danh `scope` = kho), nên ghi sổ và worker tính lại dùng chung một khoá.
+- Cost key đích danh = `(company, item, warehouse, lot)`: trong `inv.stock_ledger` của `KIEN-TRUC-VA-CSDL.md`, `cost_key_scope = warehouse_id` và `lot_id` NOT NULL. Lũy kế định giá và lũy kế vật lý (dùng để kiểm âm, `PHAN-BIEN-v2-KIEN-TRUC.md` A4) **cùng một khoá**, nên truy vấn kiểm âm của `KIEN-TRUC-VA-CSDL.md` §4.7 dùng trực tiếp.
+- Khoá: `inv.lock_cost_key(tenant, item, warehouse, lot)` (§2.7), gọi cho **mọi** cost key của chứng từ, **sắp tăng dần theo giá trị băm**, trước khi đọc tồn, cấp `seq`, ghi sổ kho; worker tính lại dùng cùng khoá. Chuyển kho lấy cả khoá kho đi và kho đến. Va chạm băm chỉ làm tuần tự hoá thừa, không sai. Chuỗi khoá trùng định dạng `'ck:'||tenant||':'||item||':'||scope||':'||lot` của `KIEN-TRUC-VA-CSDL.md` §5.1 (với đích danh `scope` = kho), nên ghi sổ và worker tính lại dùng chung một khoá.
 
 ### 2.3 Quy tắc định giá đích danh
 
@@ -151,9 +151,9 @@ CREATE TABLE md.work_areas (
 | Nhập BTP/TP từ lệnh | Từ giá thành lệnh (§4), tính **ngay** khi lệnh hoàn thành và tính lại khi chi phí của kỳ đổi | Lô chỉ xuất được khi đã có giá; nhập kho từ lệnh chưa hoàn thành không có (đề xuất: chặn xuất lô `PENDING`, thay cho "giá tạm" của bản 0.2) |
 | Kiểm kê thừa của lô đang có | `round(q × V/Q)` của lô tại kho; nếu lô đã hết ở kho: theo giá trị đơn vị của lô ở lần nhập gốc | Nợ 15x / Có 3381 |
 
-Tính lại: **phát lại toàn bộ** cost key từ mốc kỳ khoá gần nhất (06b §5 đề xuất 2), không repost tăng dần. Với đích danh, mỗi cost key là một lô ở một kho nên chuỗi dòng rất ngắn. Lan truyền: lô NVL đổi giá → lệnh dùng lô → lô BTP → lệnh sau → lô TP → giá vốn; trong kỳ mở do lần chạy giá thành xử lý, không vượt kỳ đã khoá.
+Tính lại: **phát lại toàn bộ** cost key từ mốc kỳ khoá gần nhất (`PHAN-BIEN-v2-KIEN-TRUC.md` §5 đề xuất 2), không repost tăng dần. Với đích danh, mỗi cost key là một lô ở một kho nên chuỗi dòng rất ngắn. Lan truyền: lô NVL đổi giá → lệnh dùng lô → lô BTP → lệnh sau → lô TP → giá vốn; trong kỳ mở do lần chạy giá thành xử lý, không vượt kỳ đã khoá.
 
-### 2.4 Bút toán phần kho theo mục đích xuất (sửa C5 của kế hoạch)
+### 2.4 Bút toán phần kho theo mục đích xuất (sửa lỗi C5 của kế hoạch v0.2)
 
 Composer của 05 lấy `Σ value_change` làm vế **TK kho**; vế đối ứng lấy theo **account role của mục đích dòng** × chế độ kế toán, không mặc định 154/632:
 
@@ -174,7 +174,7 @@ Composer của 05 lấy `Σ value_change` làm vế **TK kho**; vế đối ứn
 Trigger trên `inv.stock_moves` khi **INSERT hoặc UPDATE** (bản 0.2 chỉ INSERT nên đổi `lot_id` sau khi chèn là lách được — A3):
 - Phương pháp giá **hiệu lực** = `coalesce(items.costing_method, companies.inventory_costing_method)`: vật tư để trống phương pháp ở công ty đích danh vẫn **bắt buộc lô** (bản 0.2 chỉ xem cột của vật tư — A3 cách 3).
 - Dòng xuất `SALE`, `PROD_ISSUE`, `CONSUME` (dùng nội bộ, khuyến mại) từ lô `REJECTED` hoặc `HOLD` luôn bị chặn; từ lô `PENDING` bị chặn khi vật tư bật `qc_required`.
-- `move_kind` là danh sách đóng (CHECK ở 05 §4.7) nên không đặt được loại "lạ" để lách (A3 cách 1). Chuyển kho, trả NCC (`RETURN_OUT`), xuất huỷ (`SCRAP`), kiểm kê (`ADJUST`) **không** bị chặn, để đưa hàng không đạt ra khu cách ly, trả, huỷ.
+- `move_kind` là danh sách đóng (CHECK ở `KIEN-TRUC-VA-CSDL.md` §4.7) nên không đặt được loại "lạ" để lách (A3 cách 1). Chuyển kho, trả NCC (`RETURN_OUT`), xuất huỷ (`SCRAP`), kiểm kê (`ADJUST`) **không** bị chặn, để đưa hàng không đạt ra khu cách ly, trả, huỷ.
 - Trigger lấy `FOR SHARE` trên dòng lô nên không chạy song song với việc đổi trạng thái QC của chính lô đó.
 
 ### 2.6 Phả hệ lô và truy xuất
@@ -210,11 +210,11 @@ ALTER TABLE md.items
   ADD CONSTRAINT items_specific_needs_lot
     CHECK (costing_method IS DISTINCT FROM 'SPECIFIC' OR track_lot);
 
--- inv.lots tạo ở 05 §4.6 (A10: không tạo lại); ở đây chỉ bổ sung cột và ràng buộc
+-- inv.lots tạo ở KIEN-TRUC-VA-CSDL §4.6 (A10: không tạo lại); ở đây chỉ bổ sung cột và ràng buộc
 ALTER TABLE inv.lots
   ADD COLUMN lot_kind text NOT NULL
     CHECK (lot_kind IN ('PURCHASED','SEMI_FINISHED','FINISHED','OPENING','BYPRODUCT','MERGED')),
-                                            -- MERGED = lô gộp sinh ra khi trộn/châm bồn (§2.1, A8 — chờ khách)
+                                            -- MERGED = lô gộp sinh ra khi trộn/châm bồn (§2.1, A8 — chờ CH-31)
   ADD COLUMN qc_status text NOT NULL DEFAULT 'PENDING'
     CHECK (qc_status IN ('PENDING','RELEASED','HOLD','REJECTED')),
   ADD COLUMN supplier_id uuid,
@@ -243,7 +243,7 @@ ALTER TABLE inv.stock_ledger
   ADD CONSTRAINT sle_lot_fk FOREIGN KEY (tenant_id, lot_id) REFERENCES inv.lots (tenant_id, id);
 
 -- Hàng tính giá đích danh (theo phương pháp HIỆU LỰC) bắt buộc có lô; lô chưa Đạt không được xuất SX/bán/dùng.
--- INSERT OR UPDATE (A3); 05 §7.1 đã chặn đổi lot_id sau khi chèn, trigger này là lớp thứ hai.
+-- INSERT OR UPDATE (A3); KIEN-TRUC-VA-CSDL §7.1 đã chặn đổi lot_id sau khi chèn, trigger này là lớp thứ hai.
 CREATE FUNCTION inv.guard_move_lot() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE v_method text; v_track boolean; v_qc_req boolean; v_item_company uuid;
         v_lot_item uuid; v_lot_company uuid; v_qc text;
@@ -281,7 +281,7 @@ CREATE TRIGGER stock_moves_lot_guard BEFORE INSERT OR UPDATE ON inv.stock_moves
 CREATE FUNCTION inv.lock_cost_key(p_tenant uuid, p_item uuid, p_warehouse uuid, p_lot uuid)
 RETURNS void LANGUAGE sql AS $$
   SELECT pg_advisory_xact_lock(hashtextextended(
-    'ck:' || p_tenant || ':' || p_item || ':' || p_warehouse || ':' || coalesce(p_lot::text, ''), 0));   -- cùng chuỗi khoá với 05 §5.1 (scope = kho)
+    'ck:' || p_tenant || ':' || p_item || ':' || p_warehouse || ':' || coalesce(p_lot::text, ''), 0));   -- cùng chuỗi khoá với KIEN-TRUC-VA-CSDL §5.1 (scope = kho)
 $$;
 
 -- Phả hệ lô: lô đầu vào của một lệnh → lô đầu ra của cùng lệnh (suy ra, không lưu trùng)
@@ -302,7 +302,7 @@ JOIN (SELECT tenant_id, production_order_id, lot_id, item_id, sum(qty) AS qty
 
 ### 2.8 Vị trí chứa (bồn / trái / phuy) và mã hóa lô
 
-Nguồn: file Excel kho BTP của nhà máy Bà Ba Thạo (`../YEU-CAU-KHACH-HANG.md` §9). Sổ kho của khách theo dõi tồn theo **tên hàng + mã lô + mã hóa + bồn/trái/phuy**; một lô BTP nằm ở nhiều bồn (vd một lô mắm nêm ở 6 bồn A.15, A.26…A.30), chuyển bồn là nghiệp vụ thường ngày.
+Nguồn: file Excel kho BTP của nhà máy Bà Ba Thạo (`YEU-CAU-KHACH-HANG.md` §9). Sổ kho của khách theo dõi tồn theo **tên hàng + mã lô + mã hóa + bồn/trái/phuy**; một lô BTP nằm ở nhiều bồn (vd một lô mắm nêm ở 6 bồn A.15, A.26…A.30), chuyển bồn là nghiệp vụ thường ngày.
 
 **Quyết định**
 
@@ -310,7 +310,7 @@ Nguồn: file Excel kho BTP của nhà máy Bà Ba Thạo (`../YEU-CAU-KHACH-HAN
 |---|---|---|
 | 1 | Bảng `inv.storage_locations` = khu + loại (`TANK` bồn, `JAR` trái, `DRUM` phuy) + số (tuỳ chọn, bắt buộc với bồn) + sức chứa, **theo kho** | Ký hiệu của khách (`A.15`, `5.Trái`, `B.Phuy`) tách được thành 3 phần; chuẩn hoá cách ghi (`2. trái`, `B.phuy`, `A.` thiếu số) |
 | 2 | `location_id` trên `inv.stock_moves`, `inv.stock_ledger`, `inv.stock_balances`; **NULL = không theo vị trí** (hàng đóng gói, kho Bình Tây / 97 chưa theo bồn) | Không bắt mọi kho phải có danh mục vị trí; hàng `track_location` mới bắt buộc |
-| 3 | **Kiểm âm theo `(item, warehouse, lot, location)`** — thay cấp `(item, warehouse, lot)` của §2.2 / 05 §4.7 | Xuất 250 kg từ bồn chỉ còn 100 kg phải bị chặn dù cả lô còn 1.200 kg |
+| 3 | **Kiểm âm theo `(item, warehouse, lot, location)`** — thay cấp `(item, warehouse, lot)` của §2.2 / `KIEN-TRUC-VA-CSDL.md` §4.7 | Xuất 250 kg từ bồn chỉ còn 100 kg phải bị chặn dù cả lô còn 1.200 kg |
 | 4 | **Cost key giữ `(company, item, warehouse, lot)`**; vị trí chỉ chia số lượng | Giá trị đích danh thuộc về lô; chuyển bồn không được làm đổi giá lô. Giá trị theo vị trí (nếu cần hiển thị) = giá trị lô tại kho phân bổ theo SL theo R1(b), không ghi sổ |
 | 5 | Khoá advisory vẫn theo cost key (§2.2): một khoá cho mọi vị trí của lô tại kho | Truy vấn kiểm âm theo vị trí chạy **sau** khi đã giữ khoá cost key nên không có hai phiên cùng xuất một bồn; chuyển bồn trong cùng kho chỉ cần **một** khoá |
 | 6 | Chuyển vị trí trong cùng kho = chứng từ chuyển kho có `warehouse_id = to_warehouse_id`, `location_id ≠ to_location_id`; hai dòng `TRANSFER_OUT`/`TRANSFER_IN` `LINKED` cùng giá trị | Tổng giá trị cost key không đổi; không sinh bút toán (cùng TK kho); vẫn có số phiếu kho, in được |
@@ -321,7 +321,7 @@ Nguồn: file Excel kho BTP của nhà máy Bà Ba Thạo (`../YEU-CAU-KHACH-HAN
 
 Mã lô: định dạng gợi ý `DDMMYY-nn`, duy nhất theo **(công ty, mặt hàng)** — chốt ở §2.1 (A9). Mã hóa (`lot_code`) mới là mã duy nhất toàn công ty.
 
-**DDL** (đã chạy trên PostgreSQL 16 cùng bộ giả lập tối thiểu các bảng của 05/07 — xem phép thử cuối mục):
+**DDL** (đã chạy trên PostgreSQL 16 cùng bộ giả lập tối thiểu các bảng của `KIEN-TRUC-VA-CSDL.md`, tài liệu này — xem phép thử cuối mục):
 
 ```sql
 CREATE TABLE inv.storage_locations (
@@ -401,7 +401,7 @@ ALTER TABLE inv.stock_balances ADD COLUMN location_id uuid;
 ALTER TABLE inv.stock_balances DROP CONSTRAINT stock_balances_tenant_id_item_id_warehouse_id_lot_id_key;
 ALTER TABLE inv.stock_balances ADD CONSTRAINT stock_balances_key
   UNIQUE NULLS NOT DISTINCT (tenant_id, item_id, warehouse_id, lot_id, location_id);
--- thay sle_phys_time của 05 §4.7: kiểm âm theo (item, warehouse, lot, location)
+-- thay sle_phys_time của KIEN-TRUC-VA-CSDL §4.7: kiểm âm theo (item, warehouse, lot, location)
 DROP INDEX IF EXISTS inv.sle_phys_time;
 CREATE INDEX sle_phys_time ON inv.stock_ledger
   (tenant_id, item_id, warehouse_id, lot_id, location_id, posting_date, posting_time, kind_rank, seq) WHERE NOT is_cancelled;
@@ -422,7 +422,7 @@ CREATE TRIGGER stock_moves_location_guard BEFORE INSERT ON inv.stock_moves
   FOR EACH ROW EXECUTE FUNCTION inv.guard_move_location();
 ```
 
-Truy vấn kiểm âm của 05 §4.7 thêm một điều kiện vị trí, vẫn chạy sau khi giữ khoá cost key:
+Truy vấn kiểm âm của `KIEN-TRUC-VA-CSDL.md` §4.7 thêm một điều kiện vị trí, vẫn chạy sau khi giữ khoá cost key:
 
 ```sql
 -- mẫu truy vấn: tồn khả dụng tại T theo (vật tư, kho, lô, vị trí); $9 = vị trí (NULL nếu không theo vị trí)
@@ -465,11 +465,11 @@ Chưa thử: hai phiên đồng thời gọi `inv.next_lot_code` (dựa vào kho
 
 ### 3.1 Mô hình
 
-- `mfg.routings` → `mfg.routing_stages` (**giai đoạn tính giá**, có SP đầu ra, cách xử lý BTP, cờ nhiều kỳ, tỷ lệ không đạt trong định mức, tiêu thức SXC, khu) → `mfg.routing_operations` (ô trong sơ đồ khách: thao tác, điểm QC, có sinh lô hay không). Ánh xạ 4 quy trình khách ở `../YEU-CAU-KHACH-HANG.md` §4.
-- `mfg.production_orders` (05) thêm: `routing_stage_id` (lệnh công đoạn) hoặc NULL (lệnh tổng theo kế hoạch ngày), `plan_order_id`, `work_area_id`, `wip_warehouse_id` (kho/khu nơi lô đang ủ), `fiscal_year`; số lệnh duy nhất theo năm.
-- Mỗi lệnh công đoạn vẫn trỏ tới một `mfg.cost_objects` (05) — đối tượng tập hợp chi phí. Đối tượng "công đoạn × sản phẩm" mà báo cáo cần = **tổng các lệnh** cùng `(routing_stage, output_item)` trong kỳ; không tạo đối tượng riêng.
+- `mfg.routings` → `mfg.routing_stages` (**giai đoạn tính giá**, có SP đầu ra, cách xử lý BTP, cờ nhiều kỳ, tỷ lệ không đạt trong định mức, tiêu thức SXC, khu) → `mfg.routing_operations` (ô trong sơ đồ khách: thao tác, điểm QC, có sinh lô hay không). Ánh xạ 4 quy trình khách ở `YEU-CAU-KHACH-HANG.md` §4.
+- `mfg.production_orders` (`KIEN-TRUC-VA-CSDL.md`) thêm: `routing_stage_id` (lệnh công đoạn) hoặc NULL (lệnh tổng theo kế hoạch ngày), `plan_order_id`, `work_area_id`, `wip_warehouse_id` (kho/khu nơi lô đang ủ), `fiscal_year`; số lệnh duy nhất theo năm.
+- Mỗi lệnh công đoạn vẫn trỏ tới một `mfg.cost_objects` (`KIEN-TRUC-VA-CSDL.md`) — đối tượng tập hợp chi phí. Đối tượng "công đoạn × sản phẩm" mà báo cáo cần = **tổng các lệnh** cùng `(routing_stage, output_item)` trong kỳ; không tạo đối tượng riêng.
 - `mfg.stage_outputs`: đầu ra theo lô của lệnh, kèm SL đạt, SL không đạt trong/ngoài định mức, phế liệu/phụ phẩm và giá trị ước tính.
-- `mfg.order_cost_sheets`: giá thành lệnh theo **kỳ × khoản mục** `DM` (NVL), `SEMI` (BTP giai đoạn trước), `DL` (nhân công), `MOH` (SXC); CHECK cân `DDĐK + PS − phế liệu − hỏng ngoài định mức − DDCK − chuyển ra = 0` và CHECK khoản mục (sửa 06b-N1 cho bảng mới).
+- `mfg.order_cost_sheets`: giá thành lệnh theo **kỳ × khoản mục** `DM` (NVL), `SEMI` (BTP giai đoạn trước), `DL` (nhân công), `MOH` (SXC); CHECK cân `DDĐK + PS − phế liệu − hỏng ngoài định mức − DDCK − chuyển ra = 0` và CHECK khoản mục (sửa `PHAN-BIEN-v2-KIEN-TRUC.md` N1 cho bảng mới).
 
 ### 3.2 DDL
 
@@ -603,7 +603,7 @@ Kiểm tra tổng: 57.241.210 + 958.790 = 58.200.000. Mọi phép chia theo kho�
 | | Phương án A — `STOCKED` | Phương án B — `DIRECT` |
 |---|---|---|
 | Cách làm | Hoàn thành lệnh → phiếu nhập BTP (sinh tự động) vào kho/khu xưởng, có lô và sổ kho. Lệnh sau xuất đích danh lô BTP | Hoàn thành lệnh → bút toán chuyển chi phí Nợ 154 (lệnh sau) / Có 154 (lệnh trước). Lô BTP có mã nhưng **không có sổ kho** |
-| Bút toán nhập BTP | Nợ [TK BTP] / Có 154 (lệnh trước). [TK BTP] là **155 chi tiết BTP hay 154 chi tiết "BTP chờ"**: **chưa xác minh**, KTT chọn (B4) | — |
+| Bút toán nhập BTP | Nợ [TK BTP] / Có 154 (lệnh trước). [TK BTP] là **155 chi tiết BTP hay 154 chi tiết "BTP chờ"**: **chưa xác minh**, KTT chọn (CH-11) | — |
 | Bút toán xuất BTP cho giai đoạn sau | Nợ 154 (lệnh sau, khoản mục `SEMI`) / Có [TK BTP]. Có DN ghi qua 621 thay vì thẳng 154 — **chưa xác minh**, cấu hình bằng role `WIP_SEMI` | Như trên, không qua kho |
 | Lô ủ qua tháng, chờ phối trộn | Thấy được trên tồn kho, kiểm kê được, chặn QC bằng trạng thái lô | Chỉ thấy trên bảng lệnh; không kiểm kê bằng sổ kho |
 | Chặn QC, truy xuất | Dùng chung cơ chế lô (§2.5, §2.6) | Phải có đường riêng qua `stage_outputs` |
@@ -614,19 +614,19 @@ Kiểm tra tổng: 57.241.210 + 958.790 = 58.200.000. Mọi phép chia theo kho�
 
 ### 4.3 Phân bổ chi phí chung cho lệnh đang ủ
 
-Lệnh ủ chiếm chỗ (bể, kho, nhân công trông coi) theo khối lượng và thời gian, nên tiêu thức đề xuất là **khối lượng × số ngày lệnh mở trong kỳ** (`QTY_DAYS`); lệnh không ủ dùng SL đầu ra hoặc giờ công. Ví dụ (giả định): SXC tháng 9.000.000; lệnh A 1.000 kg × 31 ngày, B 600 kg × 15 ngày, C 400 kg × 10 ngày → trọng số 31.000 : 9.000 : 4.000. R1(b): phần nguyên 6.340.909 / 1.840.909 / 818.181, thiếu 1 đồng cộng cho C (phần lẻ 0,8182 lớn nhất) → **6.340.909 / 1.840.909 / 818.182**. Tiêu thức thật: câu hỏi B3.
+Lệnh ủ chiếm chỗ (bể, kho, nhân công trông coi) theo khối lượng và thời gian, nên tiêu thức đề xuất là **khối lượng × số ngày lệnh mở trong kỳ** (`QTY_DAYS`); lệnh không ủ dùng SL đầu ra hoặc giờ công. Ví dụ (giả định): SXC tháng 9.000.000; lệnh A 1.000 kg × 31 ngày, B 600 kg × 15 ngày, C 400 kg × 10 ngày → trọng số 31.000 : 9.000 : 4.000. R1(b): phần nguyên 6.340.909 / 1.840.909 / 818.181, thiếu 1 đồng cộng cho C (phần lẻ 0,8182 lớn nhất) → **6.340.909 / 1.840.909 / 818.182**. Tiêu thức thật: CH-10. Demo v4.0 dùng tiêu thức giản lược ([QD-29](../02-ke-hoach/QUYET-DINH.md#qd-29)).
 
-SXC cố định dưới công suất bình thường (VAS 02) giữ nguyên thiết kế 05 (`mfg.normal_capacity`), mặc định **tắt** cho đến khi khách trả lời B11.
+SXC cố định dưới công suất bình thường (VAS 02) giữ nguyên thiết kế `KIEN-TRUC-VA-CSDL.md` (`mfg.normal_capacity`), mặc định **tắt** cho đến khi khách trả lời CH-14.
 
 ### 4.4 Dở dang nhiều kỳ
 
-- Lệnh mở qua kỳ: DDCK = toàn bộ chi phí luỹ kế; không cần SL dở dang và % hoàn thành (khác 05 §5.8 bước 3).
+- Lệnh mở qua kỳ: DDCK = toàn bộ chi phí luỹ kế; không cần SL dở dang và % hoàn thành (khác `KIEN-TRUC-VA-CSDL.md` §5.8 bước 3).
 - Mỗi tháng một `costing_run`; lệnh đã có bảng giá thành ở kỳ đã khoá thì kỳ sau lấy DDCK đó làm DDĐK, không tính lại.
 - Một lệnh chỉ hoàn thành một lần (giả định). Nếu khách rút một phần bể ủ trong khi phần còn lại tiếp tục ủ → tách lệnh (chia chi phí luỹ kế theo khối lượng, R1(b)) rồi hoàn thành phần rút.
 
 ### 4.5 Thẻ tính giá thành theo lô TP
 
-Thẻ của lô TP = bảng giá thành lệnh tạo ra lô đó + đệ quy theo phả hệ (§2.6) xuống các lệnh tạo lô BTP đầu vào, mỗi tầng theo tỷ lệ giá trị lô đầu vào thực dùng / giá trị lô. Khoản mục `SEMI` của tầng trên được nổ ra thành DM/DL/MOH của tầng dưới theo tỷ lệ, giống đồ thị dòng chi phí của 05 §6 (`cst.cost_flow_edges`, `cst.product_cost_trace`). Hạn chế phải nói với khách: khi một lô BTP cấp cho nhiều lệnh, phần NC/SXC của lô đó chia **theo tỷ lệ**, không đích danh.
+Thẻ của lô TP = bảng giá thành lệnh tạo ra lô đó + đệ quy theo phả hệ (§2.6) xuống các lệnh tạo lô BTP đầu vào, mỗi tầng theo tỷ lệ giá trị lô đầu vào thực dùng / giá trị lô. Khoản mục `SEMI` của tầng trên được nổ ra thành DM/DL/MOH của tầng dưới theo tỷ lệ, giống đồ thị dòng chi phí của `KIEN-TRUC-VA-CSDL.md` §6 (`cst.cost_flow_edges`, `cst.product_cost_trace`). Hạn chế phải nói với khách: khi một lô BTP cấp cho nhiều lệnh, phần NC/SXC của lô đó chia **theo tỷ lệ**, không đích danh.
 
 ### 4.6 Hàng không đạt QC
 
@@ -640,19 +640,19 @@ Khuyến nghị cho quy trình cá bạc má: đặt "đóng gói – tiệt tr�
 
 ### 4.7 Tính lại ngay và khoá kỳ
 
-Trình tự cuối kỳ và điều kiện khoá kỳ: **chỉ một nguồn là 05 §7.2** (A9). Phần riêng của 07:
+Trình tự cuối kỳ và điều kiện khoá kỳ: **chỉ một nguồn là `KIEN-TRUC-VA-CSDL.md` §7.2** (A9). Phần riêng của tài liệu này:
 
 - Giá thành lệnh được tính lại **ngay** khi có chứng từ ảnh hưởng (xuất NVL/BTP cho lệnh, chi phí NC/SXC của kỳ, hoàn thành lệnh), theo **thứ tự thời gian hoàn thành và chuỗi giai đoạn** (lệnh trước xong mới có giá lô BTP cho lệnh sau); giá lô BTP/TP và các dòng xuất lô đó cập nhật theo. Không có bước "tính giá thành" cuối kỳ.
 - Thêm vào điều kiện của `acc.lock_period`: mọi dòng tiền có mã dòng tiền (§9); khoá kỳ khoá luôn tỷ giá các ngày trong kỳ (§5.2).
 
 ### 4.8 Giá nguyên liệu theo lô, giá vốn theo lô và cây cấu thành (mục tiêu trọng tâm)
 
-Yêu cầu: `../YEU-CAU-KHACH-HANG.md` GT-09, GT-10, GT-R4, GT-R5.
+Yêu cầu: `YEU-CAU-KHACH-HANG.md` GT-09, GT-10, GT-R4, GT-R5.
 
-- **Giá nguyên liệu theo lô (GT-09)**: giá lô NVL = (thành tiền HĐ theo VND + chi phí mua phân bổ ± điều chỉnh về sau) / SL nhập — đúng giá trị dòng nhập trong sổ kho (§2.3), không tính riêng. Kiểm soát giá: so giá lô với lô gần nhất cùng mặt hàng (và cùng NCC), với giá trên đơn mua (MUA-01); vượt ngưỡng % cấu hình theo nhóm hàng thì cảnh báo khi ghi phiếu nhập và hiện trong báo cáo GT-R4. Điều chỉnh giá trị lô về sau (giảm giá, chi phí mua đến muộn) giữ lịch sử ở `cst.valuation_adjustments` (05 §4.8).
+- **Giá nguyên liệu theo lô (GT-09)**: giá lô NVL = (thành tiền HĐ theo VND + chi phí mua phân bổ ± điều chỉnh về sau) / SL nhập — đúng giá trị dòng nhập trong sổ kho (§2.3), không tính riêng. Kiểm soát giá: so giá lô với lô gần nhất cùng mặt hàng (và cùng NCC), với giá trên đơn mua (MUA-01); vượt ngưỡng % cấu hình theo nhóm hàng thì cảnh báo khi ghi phiếu nhập và hiện trong báo cáo GT-R4. Điều chỉnh giá trị lô về sau (giảm giá, chi phí mua đến muộn) giữ lịch sử ở `cst.valuation_adjustments` (`KIEN-TRUC-VA-CSDL.md` §4.8).
 - **Giá vốn theo lô (GT-10)**: mỗi dòng xuất bán mang giá trị của **đúng lô** xuất (R1(c)); giá vốn hàng bán theo lô = Σ giá trị dòng `SALE` − dòng `RETURN_IN` của lô. Lô TP có đơn giá riêng (giá trị lô / SL lô), hai lô cùng sản phẩm có giá khác nhau.
 - **Cây cấu thành** của một lô TP: lô TP ← lệnh tạo ra nó (bảng giá thành lệnh §3.2: DDĐK, NVL, BTP, NC, SXC, phế liệu, hỏng ngoài định mức) ← các lô BTP/NVL lệnh đã xuất (phả hệ §2.6, chỉ các phiếu xuất của **chính lệnh đó**, ngày ≤ ngày nhập kho lô TP — sửa lỗi U1 của demo) ← lệnh tạo lô BTP ← … ← lô NVL (NCC, phiếu nhập, giá lô). Mỗi nút hiện SL dùng và giá trị chảy vào nút trên; tổng các nhánh = giá trị lô (bảo toàn, property test). Phần NC/SXC và phần một lô BTP cấp cho nhiều lệnh chia **theo tỷ lệ SL** (§4.5) — phải nói rõ với khách. Truy xuôi (lô NVL → lô TP → khách hàng) là cùng đồ thị đổi chiều.
-- Lưu trữ: cạnh giá trị dùng `cst.cost_flow_edges` của 05 §6 với nút `LOT` (lô tại kho) và `ORDER` (lệnh SX); không cần bảng mới. Truy vấn mẫu một tầng của cây (giá trị từng lô đầu vào mà lệnh tạo ra lô `$1` đã dùng):
+- Lưu trữ: cạnh giá trị dùng `cst.cost_flow_edges` của `KIEN-TRUC-VA-CSDL.md` §6 với nút `LOT` (lô tại kho) và `ORDER` (lệnh SX); không cần bảng mới. Truy vấn mẫu một tầng của cây (giá trị từng lô đầu vào mà lệnh tạo ra lô `$1` đã dùng):
 
 ```sql
 -- mẫu truy vấn: một tầng của cây cấu thành giá lô $1 (đệ quy theo §2.6 để ra cả cây)
@@ -673,9 +673,9 @@ SELECT g.input_lot_id, l.lot_no, l.lot_code, l.lot_kind, g.input_qty,
 
 ### 5.1 Dòng bút toán
 
-- `acc.journal_lines` (05) đã có `currency, amount_fc, fx_rate`; thêm CHECK đồng bộ (cả ba cùng NULL hoặc cùng có, tỷ giá > 0), thêm `bank_account_id`, `fx_open_item_id`, `loan_contract_id`, `cash_flow_code`.
+- `acc.journal_lines` (`KIEN-TRUC-VA-CSDL.md`) đã có `currency, amount_fc, fx_rate`; thêm CHECK đồng bộ (cả ba cùng NULL hoặc cùng có, tỷ giá > 0), thêm `bank_account_id`, `fx_open_item_id`, `loan_contract_id`, `cash_flow_code`.
 - VND của dòng = `round(amount_fc × fx_rate)` (R1(a)), **trừ** dòng ghi giảm khoản mục ngoại tệ khi tất toán: dòng đó mang **giá trị ghi sổ** của khoản mục, phần chênh lệch là dòng 515/635 riêng. Vì vậy không đặt CHECK "VND = round(nguyên tệ × tỷ giá)" ở DB.
-- Chứng từ cân Nợ = Có theo VND; nguyên tệ là thông tin phụ (01 I1).
+- Chứng từ cân Nợ = Có theo VND; nguyên tệ là thông tin phụ (`NGHIEP-VU-KE-TOAN.md` I1).
 
 ### 5.2 Tỷ giá và khoá theo ngày
 
@@ -694,7 +694,7 @@ Ví dụ (giả định): nhập khẩu NVL USD 10.000, tỷ giá bán ngày nh�
 
 - `acc.fx_revaluation_runs` (một lần/kỳ, trừ bản đã huỷ) + `acc.fx_revaluation_lines` (khoản mục mở có `is_monetary`, và số dư tiền ngoại tệ theo tài khoản NH). `new_base = round(balance_fc × rate)`; `diff` là cột sinh.
 - Bút toán: Nợ/Có TK khoản mục ↔ 413; sau đó kết chuyển số dư thuần 413 sang 515/635 (chứng từ hệ thống `FX_REVALUATION`). Cập nhật `remaining_base` của khoản mục mở = giá trị sau đánh giá lại, để lần tất toán sau tính chênh lệch từ đó.
-- Tần suất (tháng hay chỉ cuối năm), có đảo bút toán đầu kỳ sau hay không: **chưa xác minh với TT99/TT133**, chờ KTT (A5). Nếu chọn đảo thì không cập nhật `remaining_base` mà sinh bút toán đảo ngày đầu kỳ sau — engine hỗ trợ cả hai bằng cờ cấu hình.
+- Tần suất (tháng hay chỉ cuối năm), có đảo bút toán đầu kỳ sau hay không: **chưa xác minh với TT99/TT133**, chờ KTT (CH-09, XM-04). Nếu chọn đảo thì không cập nhật `remaining_base` mà sinh bút toán đảo ngày đầu kỳ sau — engine hỗ trợ cả hai bằng cờ cấu hình.
 
 ### 5.5 DDL
 
@@ -838,8 +838,8 @@ Bất biến thêm (property test + kiểm khi khoá sổ): với mỗi TK theo 
 - Một bảng `ast.assets` cho cả TSCĐ (`FA_TANGIBLE`, `FA_INTANGIBLE`) và CCDC (`TOOL`, theo số lượng). Khác nhau ở TK: TSCĐ có TK nguyên giá + TK hao mòn; CCDC có TK 242 và không có TK hao mòn (CHECK).
 - `ast.asset_usages`: bộ phận/khu, địa điểm, TK chi phí, đối tượng tập hợp chi phí, tỷ lệ — có hiệu lực theo ngày. **Điều chuyển** = đóng dòng cũ, mở dòng mới (không bút toán).
 - `ast.asset_events`: ghi tăng, điều chỉnh, điều chuyển, ghi giảm — mỗi sự kiện gắn một chứng từ `acc.documents` (loại `FA_INCREASE`, `FA_ADJUST`, `FA_TRANSFER`, `FA_DECREASE`, `TOOL_*`) để dùng chung số CT, khoá kỳ, nhật ký.
-- `ast.depreciation_runs` + `ast.depreciation_lines`: một lần/kỳ/loại. Khấu hao đường thẳng; mức tháng = round((nguyên giá − HMLK) / số tháng còn lại) (R1(a)), tháng cuối nhận toàn bộ phần còn lại; nếu tính theo ngày thì nhân số ngày sử dụng / số ngày của tháng (câu hỏi C1). Chia cho các `asset_usages` hiệu lực trong tháng theo R1(b) với trọng số `share_pct × days_in_use`. Bút toán: Nợ TK chi phí (627/641/642; TT133: 154/6421/6422) / Có 214 (TSCĐ) hoặc Có 242 (CCDC).
-- Ghi giảm: chạy khấu hao đến ngày ghi giảm rồi mới ghi giảm; bút toán theo `../YEU-CAU-KHACH-HANG.md` TSCD-06, CCDC-06.
+- `ast.depreciation_runs` + `ast.depreciation_lines`: một lần/kỳ/loại. Khấu hao đường thẳng; mức tháng = round((nguyên giá − HMLK) / số tháng còn lại) (R1(a)), tháng cuối nhận toàn bộ phần còn lại; nếu tính theo ngày thì nhân số ngày sử dụng / số ngày của tháng (CH-24). Chia cho các `asset_usages` hiệu lực trong tháng theo R1(b) với trọng số `share_pct × days_in_use`. Bút toán: Nợ TK chi phí (627/641/642; TT133: 154/6421/6422) / Có 214 (TSCĐ) hoặc Có 242 (CCDC).
+- Ghi giảm: chạy khấu hao đến ngày ghi giảm rồi mới ghi giảm; bút toán theo `YEU-CAU-KHACH-HANG.md` TSCD-06, CCDC-06.
 
 ```sql
 CREATE TABLE ast.assets (
@@ -1022,8 +1022,8 @@ CREATE TABLE fin.loan_transactions (        -- mọi biến động thực tế,
     LEFT JOIN acc.documents d ON d.tenant_id = dl.tenant_id AND d.id = dl.document_id AND d.status = 'POSTED'
    GROUP BY ol.id, ol.qty_base;
   ```
-- **Hạn mức dư nợ KH / hạn mức NCC**: thuộc danh mục đối tượng (05 chưa có DDL `md.partners`; thêm `credit_limit`, `payment_term_days`). Kiểm khi duyệt đơn bán và khi ghi sổ HĐ bán: dư nợ 131 hiện tại + giá trị chứng từ > hạn mức → cảnh báo hoặc bắt buộc yêu cầu duyệt `CREDIT_OVERRIDE` (cấu hình).
-- **Đề nghị thanh toán** (`cash.payment_requests`, `..._lines`, `..._settlements`): luồng trạng thái ở `../YEU-CAU-KHACH-HANG.md` §3.1.1, được trigger cưỡng chế. Một đề nghị chi nhiều lần, một phiếu chi trả nhiều đề nghị. Phiếu chi/UNC tham chiếu đề nghị đã `APPROVED`; khi Σ đã chi = Σ đề nghị thì chuyển `PAID`.
+- **Hạn mức dư nợ KH / hạn mức NCC**: thuộc danh mục đối tượng (kiến trúc nền chưa có DDL `md.partners`; thêm `credit_limit`, `payment_term_days`). Kiểm khi duyệt đơn bán và khi ghi sổ HĐ bán: dư nợ 131 hiện tại + giá trị chứng từ > hạn mức → cảnh báo hoặc bắt buộc yêu cầu duyệt `CREDIT_OVERRIDE` (cấu hình).
+- **Đề nghị thanh toán** (`cash.payment_requests`, `..._lines`, `..._settlements`): luồng trạng thái ở `YEU-CAU-KHACH-HANG.md` §3.1.1, được trigger cưỡng chế. Một đề nghị chi nhiều lần, một phiếu chi trả nhiều đề nghị. Phiếu chi/UNC tham chiếu đề nghị đã `APPROVED`; khi Σ đã chi = Σ đề nghị thì chuyển `PAID`.
 
 ```sql
 CREATE TABLE wf.approval_policies (
@@ -1384,7 +1384,7 @@ CREATE TRIGGER payment_settlements_guard BEFORE INSERT OR UPDATE OR DELETE ON ca
   ```
 - Ảnh hưởng tỷ giá: lấy từ dòng đánh giá lại tiền ngoại tệ (§5.4), không phải dòng tiền thật.
 
-**Gián tiếp**: báo cáo dạng công thức như mẫu BCTC của 05 §2.3 (`report_lines` theo chế độ). Các điều chỉnh cần dữ liệu có cấu trúc, không suy được chỉ từ số dư:
+**Gián tiếp**: báo cáo dạng công thức như mẫu BCTC của `KIEN-TRUC-VA-CSDL.md` §2.3 (`report_lines` theo chế độ). Các điều chỉnh cần dữ liệu có cấu trúc, không suy được chỉ từ số dư:
 - Khấu hao: PS Có 214 từ chứng từ `FA_DEPRECIATION`.
 - Lãi/lỗ chênh lệch tỷ giá **chưa thực hiện**: bút toán `source = 'REVALUATION'`.
 - Biến động phải trả **loại trừ** phải trả mua TSCĐ và lãi vay: dòng 331 của chứng từ ghi tăng TSCĐ được gắn nhóm "đầu tư"; 335 lãi vay theo `loan_contract_id`.
@@ -1605,7 +1605,7 @@ END $$;
 
 ## 11. RLS, quyền và kiểm thử
 
-Bản 0.2 dùng một khối `DO` liệt kê tay 10 schema, bỏ sót `core`, `cst`, `audit` (A2). Bản 0.3 gọi lại ba hàm chung của 05 (§2.1, §7.3), quét **mọi** schema nghiệp vụ, và khai báo các bảng của 07 cần quyền hẹp:
+Bản 0.2 dùng một khối `DO` liệt kê tay 10 schema, bỏ sót `core`, `cst`, `audit` (A2). Bản 0.3 gọi lại ba hàm chung của `KIEN-TRUC-VA-CSDL.md` (§2.1, §7.3), quét **mọi** schema nghiệp vụ, và khai báo các bảng của 07 cần quyền hẹp:
 
 ```sql
 INSERT INTO sys.table_privileges (table_name, privs, update_columns, reason) VALUES
@@ -1631,7 +1631,7 @@ REVOKE EXECUTE ON FUNCTION wf.act(uuid, text, text), wf.cancel(uuid) FROM PUBLIC
 GRANT EXECUTE ON FUNCTION wf.act(uuid, text, text), wf.cancel(uuid) TO app_user;
 ```
 
-Phép thử đã chạy (2026-10-07, PG16.15, sau khi dựng nguyên văn 05 + 07; 66/66 đạt). Ngoài dòng ghi rõ, mọi phép thử chạy bằng `app_user` với token phiên thật; dòng "chủ sở hữu" chạy bằng `app_owner` để chứng minh trigger chặn cả khi có quyền bảng.
+Phép thử đã chạy (2026-10-07, PG16.15, sau khi dựng nguyên văn `KIEN-TRUC-VA-CSDL.md` + tài liệu này; 66/66 đạt). Ngoài dòng ghi rõ, mọi phép thử chạy bằng `app_user` với token phiên thật; dòng "chủ sở hữu" chạy bằng `app_owner` để chứng minh trigger chặn cả khi có quyền bảng.
 
 | Mã | Tấn công / thao tác | Mong đợi | Kết quả |
 |---|---|---|---|
@@ -1677,14 +1677,14 @@ Cần thêm ở nền móng 1A (chưa làm): hai phiên đồng thời cho `guar
 
 | # | Điểm | Ảnh hưởng | Cách xử lý |
 |---|---|---|---|
-| 1 | BTP nhập kho ghi 155 hay giữ 154; xuất BTP cho giai đoạn sau qua 621 hay thẳng 154 | Định khoản 1B | Role cấu hình `SEMI_STOCK`, `WIP_SEMI`; KTT chọn (B4) |
-| 2 | Tỷ giá giao dịch / đánh giá lại theo TT99 (loại tỷ giá, tần suất, đảo hay không) | NT-02, NT-04 | Cờ cấu hình; KTT xác nhận (A5) |
+| 1 | BTP nhập kho ghi 155 hay giữ 154; xuất BTP cho giai đoạn sau qua 621 hay thẳng 154 | Định khoản 1B | Role cấu hình `SEMI_STOCK`, `WIP_SEMI`; KTT chọn (CH-11) |
+| 2 | Tỷ giá giao dịch / đánh giá lại theo TT99 (loại tỷ giá, tần suất, đảo hay không) | NT-02, NT-04 | Cờ cấu hình; KTT xác nhận (CH-09, XM-04) |
 | 3 | Mã chỉ tiêu LCTT, BCĐKT theo TT99 | BC-R3, BC-R4 | Dữ liệu `sys.*` có phiên bản; nạp khi có văn bản gốc |
-| 4 | Điều chỉnh giá trị lô không lan xuống lô BTP/TP đã tính giá (§2.3) | Sai số nhỏ dồn vào 632 | KTT xác nhận chấp nhận được |
-| 5 | Một lệnh ủ hoàn thành một lần; rút một phần bể = tách lệnh | Mô hình lệnh | Khách trả lời B1 |
-| 6 | Mọi hàng đích danh theo lô (kể cả bao bì) | Khối lượng nhập liệu; hiệu năng không đáng lo | FEFO tự gợi ý; nếu khách muốn BQ cho bao bì thì phải thêm engine BQ và bài toán hỗn hợp phương pháp (06b-A10) |
+| 4 | Điều chỉnh giá trị lô không lan xuống lô BTP/TP đã tính giá (§2.3) | Sai số nhỏ dồn vào 632 | KTT xác nhận chấp nhận được (CH-18) |
+| 5 | Một lệnh ủ hoàn thành một lần; rút một phần bể = tách lệnh | Mô hình lệnh | Khách trả lời CH-47 |
+| 6 | Mọi hàng đích danh theo lô (kể cả bao bì) — CH-16 | Khối lượng nhập liệu; hiệu năng không đáng lo | FEFO tự gợi ý; nếu khách muốn BQ cho bao bì thì phải thêm engine BQ và bài toán hỗn hợp phương pháp (`PHAN-BIEN-v2-KIEN-TRUC.md` A10) |
 | 7 | Guard dùng `EXECUTE format()` với tên bảng lấy từ tham số trigger | Chỉ người viết migration đặt được tham số; đã ép `regclass` | Không nhận tham số từ người dùng |
 | 8 | Trigger `guard_move_lot` đọc `md.items` mỗi dòng | Chi phí nhỏ với khối lượng DN vừa | Theo dõi trong benchmark |
-| 9 | **Bồn trộn nhiều lô / châm thêm (A8, suy luận)** | Nếu có mà vẫn ghi "nhiều lô trong một bồn" thì đích danh theo lô sai bản chất (lô xuất ra thực chất là hỗn hợp) | Hỏi khách (B12); nếu có: thao tác trộn là lệnh SX sinh **lô gộp** (`lot_kind = 'MERGED'`), giá trị = tổng các lô vào; trong khi chờ: cảnh báo khi nhập/chuyển lô vào bồn đang có lô khác |
+| 9 | **Bồn trộn nhiều lô / châm thêm (phản biện vòng 3 A8, suy luận)** | Nếu có mà vẫn ghi "nhiều lô trong một bồn" thì đích danh theo lô sai bản chất (lô xuất ra thực chất là hỗn hợp) | Hỏi khách (CH-31); nếu có: thao tác trộn là lệnh SX sinh **lô gộp** (`lot_kind = 'MERGED'`), giá trị = tổng các lô vào; trong khi chờ: cảnh báo khi nhập/chuyển lô vào bồn đang có lô khác |
 | 10 | Quyền theo cột (`GRANT UPDATE (cột)`) phải cập nhật khi thêm cột mới vào bảng được bảo vệ | Cột mới không sửa được bằng API cho tới khi khai | `sys.table_privileges` là nguồn duy nhất; test CI so cột của bảng với danh sách |
 | 11 | Hàm `SECURITY DEFINER` là đường vòng qua quyền | Lỗi trong hàm = lỗ hổng | Mọi hàm `SECURITY DEFINER` đặt `search_path`, lấy tenant từ `app.current_tenant()` (không nhận tenant từ tham số), kiểm vai trò ở đầu hàm; danh sách hàm được review như mã bảo mật |

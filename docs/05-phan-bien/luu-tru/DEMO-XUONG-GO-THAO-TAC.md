@@ -1,5 +1,7 @@
 # Giá Gốc – Bộ thao tác khách tự làm trong demo
 
+> **Lưu trữ — bản demo xưởng gỗ cũ, chỉ để lưu.** Phiên bản: 1.0 · Ngày: 2026-10-04 · Người phụ trách: phản biện viên demo · Trạng thái: Đã duyệt — lưu trữ. Tài liệu này rà bản demo v1–v2 (xưởng bàn ghế gỗ, trước khi chuyển sang nhà máy chế biến mắm ở demo v3). Số dòng, tên trang, dữ liệu và kết luận **không còn đúng** với demo hiện tại; chuyển từ thư mục `demo/` sang đây ngày 2026-10-07. Demo hiện tại: [demo/CHANGELOG.md](../../../demo/CHANGELOG.md). Nội dung giữ nguyên.
+
 > Phạm vi: `gia-goc-demo.html` (vanilla JS, kỳ 01/2026, xưởng nội thất mẫu). Mọi dữ liệu chỉ nằm trong trình duyệt. Tài liệu này chỉ là đề xuất, chưa sửa file HTML.
 > Nguyên tắc chung: **mọi thao tác đều tạo hoặc hủy một chứng từ trong `state`**, rồi gọi lại `renderAll()` → `compute()` → `valuate()` → `buildDocs()`. Không có số nào "vẽ cho đẹp": cái khách thấy là kết quả thật của engine.
 

@@ -1,8 +1,11 @@
-# 01 — Đặc tả nghiệp vụ & logic kế toán (Kho – Giá thành – Kế toán tổng hợp)
+# Đặc tả nghiệp vụ và logic kế toán (kho – giá thành – kế toán tổng hợp)
 
+> Phiên bản: 1.2 · Ngày: 2026-10-07 · Người phụ trách: BA dự án · Trạng thái: Chờ duyệt (KTT) · 1.0 lập 2026-10-04; 1.1 (2026-10-06) sửa theo phản biện vòng 2; 1.2 (2026-10-07) đổi tên file (cũ: `research/01-nghiep-vu-ke-toan.md`), R1 chuyển về [THUAT-NGU](../00-tong-quan/THUAT-NGU.md), cập nhật tham chiếu.
+> Vai trò: nền tảng nghiệp vụ (pháp lý, tài khoản, phương pháp giá, định khoản, bất biến). Không phải nguồn của phạm vi, quyết định hay câu hỏi — xem [KE-HOACH-DU-AN](../02-ke-hoach/KE-HOACH-DU-AN.md), [QUYET-DINH](../02-ke-hoach/QUYET-DINH.md), [CAU-HOI-MO](../01-yeu-cau/CAU-HOI-MO.md). Điểm cần xác minh ở §9 đã gom vào [CAU-HOI-MO](../01-yeu-cau/CAU-HOI-MO.md) §7 (XM-01..XM-12).
+> Viết tắt: theo [THUAT-NGU](../00-tong-quan/THUAT-NGU.md) §2. Ngoài ra: [XM] đã xác minh qua nguồn web khi lập; [KT] kiến thức chuyên môn, chưa đối chiếu nguyên văn; [CXM] chưa xác minh.
 > Phạm vi: phần mềm kế toán / quản lý kho / tính giá thành cho DN Việt Nam (tham chiếu hành vi MISA SME).
 > Ngày lập: 2026-10-04. Ký hiệu độ tin cậy: **[XM]** = đã xác minh qua nguồn web khi lập tài liệu; **[KT]** = kiến thức chuyên môn phổ biến, khớp TT200/TT133 nhưng chưa đối chiếu nguyên văn lần này; **[CXM]** = chưa xác minh / cần đối chiếu văn bản gốc trước khi code cứng.
-> Cập nhật 2026-10-06 (theo `06a`): thứ tự khóa sổ §6 (L2), ví dụ bán hàng §5.3 (L9), bất biến G1 (L10), cột TT133 bảng 911 §5.4 (L11), một mặc định giá nhập hàng bán trả lại (L13), đơn giá 4 số lẻ §3.4, luật làm tròn duy nhất R1 (§8.5), thêm §4.6 (đích danh theo lô + phân bước có tính giá BTP).
+> Cập nhật 2026-10-06 (theo `PHAN-BIEN-v2-NGHIEP-VU.md`): thứ tự khóa sổ §6 (L2), ví dụ bán hàng §5.3 (L9), bất biến G1 (L10), cột TT133 bảng 911 §5.4 (L11), một mặc định giá nhập hàng bán trả lại (L13), đơn giá 4 số lẻ §3.4, luật làm tròn duy nhất R1 (§8.5), thêm §4.6 (đích danh theo lô + phân bước có tính giá BTP).
 > Nguyên tắc thiết kế: **mọi quy định có thể thay đổi (số hiệu TK, mẫu báo cáo, thuế suất) phải là dữ liệu cấu hình theo "Chế độ kế toán" (TT200 / TT133 / TT99), không hard-code.**
 
 ---
@@ -237,7 +240,7 @@ Tính **theo từng khoản mục** (NVLTT / NCTT / MTC / SXC) để lập Thẻ
 | Phế liệu thu hồi | | Nợ 152 / Có 154 (giảm Z) | |
 
 **Ví dụ phân bổ 627** theo chi phí NCTT: 627 = 20.000.000; 622 của ĐH1 = 18.000.000, ĐH2 = 12.000.000.
-Hệ số = 20.000.000 / 30.000.000 = 2/3 → ĐH1 = 18.000.000 × 2/3 = **12.000.000**, ĐH2 = 12.000.000 × 2/3 = **8.000.000** (chia hết, không có phần dư). _(Đã sửa theo phản biện 06a-L1.)_
+Hệ số = 20.000.000 / 30.000.000 = 2/3 → ĐH1 = 18.000.000 × 2/3 = **12.000.000**, ĐH2 = 12.000.000 × 2/3 = **8.000.000** (chia hết, không có phần dư). _(Đã sửa theo phản biện `PHAN-BIEN-v2-NGHIEP-VU.md` L1.)_
 
 **Ca có phần dư thật (R1 (b), largest remainder):** 627 = 10.000.000 phân bổ cho 3 ĐH có NCTT bằng nhau. Mỗi phần chính xác 3.333.333,33 → phần nguyên 3 × 3.333.333 = 9.999.999, thiếu 1 đồng; ba phần lẻ bằng nhau (0,33) nên hòa, xét theo thứ tự ổn định (ngày, số CT, số dòng) → đồng còn thiếu cộng cho phần đứng đầu: **3.333.334 / 3.333.333 / 3.333.333** (Σ = 10.000.000).
 
@@ -453,7 +456,7 @@ Ví dụ: DT 5111 = 1.000tr; 5212 = 20tr; 632 = 700tr; 641 = 50tr; 642 = 80tr; 5
 
 ## 6. Quy trình khóa sổ cuối kỳ
 
-> **Cập nhật 2026-10-07 (phản biện v3 A9):** trình tự cuối kỳ và điều kiện khoá kỳ **của sản phẩm** chỉ có một nguồn: `05-kien-truc-de-xuat.md` §7.2. Sản phẩm luôn tính lại giá xuất, giá thành theo lệnh SX và giá vốn ngay khi có chứng từ, nên các bước 4–7 dưới đây không còn là thao tác của người dùng; khoá kỳ là một thao tác có kiểm tra. Bảng dưới giữ làm **nền lý thuyết về phụ thuộc dữ liệu** (phần mềm tính theo đúng thứ tự này khi tính lại), không phải quy trình thao tác.
+> **Cập nhật 2026-10-07 (phản biện v3 A9):** trình tự cuối kỳ và điều kiện khoá kỳ **của sản phẩm** chỉ có một nguồn: `KIEN-TRUC-VA-CSDL.md` §7.2. Sản phẩm luôn tính lại giá xuất, giá thành theo lệnh SX và giá vốn ngay khi có chứng từ, nên các bước 4–7 dưới đây không còn là thao tác của người dùng; khoá kỳ là một thao tác có kiểm tra. Bảng dưới giữ làm **nền lý thuyết về phụ thuộc dữ liệu** (phần mềm tính theo đúng thứ tự này khi tính lại), không phải quy trình thao tác.
 
 Thứ tự phụ thuộc dữ liệu (mũi tên = phụ thuộc):
 
@@ -474,7 +477,7 @@ Thứ tự phụ thuộc dữ liệu (mũi tên = phụ thuộc):
 | 12 | Lập BCTC (năm) / báo cáo quản trị (tháng) | 11 | | |
 | 13 | **Khóa sổ kỳ** (theo kỳ tháng) | 11 | Kỳ bị khóa; số dư cuối thành số dư đầu kỳ sau | Mở khóa cần quyền đặc biệt + ghi log + lý do |
 
-_(Bản trước đặt kiểm kê ở bước 8, sau tính giá; đã chuyển lên bước 3 theo 06a-L2.)_
+_(Bản trước đặt kiểm kê ở bước 8, sau tính giá; đã chuyển lên bước 3 theo `PHAN-BIEN-v2-NGHIEP-VU.md` L2.)_
 
 **Ràng buộc phụ thuộc:**
 - Bất kỳ chứng từ nào sửa ở bước ≤ k làm **mất hiệu lực** kết quả các bước > k → hệ thống đánh dấu `dirty` cho kỳ (và các kỳ sau nếu ảnh hưởng tồn đầu), yêu cầu chạy lại.
@@ -556,13 +559,10 @@ Thời hạn nộp BCTC năm (DN ngoài nhà nước): chậm nhất **90 ngày*
 | B7 | Kỳ có trạng thái `dirty` (tính giá/giá thành chưa chạy lại sau khi sửa) ⇒ không được khóa, BCTC in ra phải gắn cảnh báo |
 
 ### 8.5 Quy tắc kỹ thuật
-- Kiểu lưu số: **nguồn duy nhất là `05` §1.4** (A9). Tóm tắt: tiền VND lưu `numeric(20,2)` nhưng luôn làm tròn đến đồng trước khi ghi (tương đương số nguyên); SL `numeric(20,6)`, làm tròn theo số lẻ của ĐVT (mặc định 3); đơn giá chỉ để hiển thị. Không dùng float.
-- **Luật làm tròn duy nhất R1** (dùng nguyên văn ở mọi tài liệu, golden test và demo; các mục khác trong tài liệu này chỉ trích dẫn R1):
-  - (a) ROUND_HALF_UP đến đồng cho mọi số tiền. Đơn giá lưu 4 số lẻ chỉ để hiển thị/giải thích; giá trị luôn tính từ tổng giá trị, không nhân lại từ đơn giá đã làm tròn.
-  - (b) Phân bổ một số tiền T cho n phần theo trọng số w (SXC, chi phí mua, Z cho các phiếu nhập kho, trích theo lương…): **largest remainder** — mỗi phần lấy phần nguyên floor(T·wᵢ/W) đến đồng; số đồng còn thiếu cộng 1 đồng lần lượt cho các phần có phần lẻ lớn nhất; hòa thì theo thứ tự ổn định (ngày, số CT, số dòng).
-  - (c) Giá trị xuất kho = round(SL × giá trị tồn / SL tồn) theo nguồn giá (lô với đích danh/FIFO, cả kỳ với BQ cuối kỳ, thời điểm với BQ tức thời); phần dư nằm lại ở tồn; phiếu xuất làm tồn của nguồn đó về 0 nhận toàn bộ giá trị còn lại.
+- Kiểu lưu số: **nguồn duy nhất là [KIEN-TRUC-VA-CSDL](KIEN-TRUC-VA-CSDL.md) §1.4** (phản biện vòng 3, A9). Tóm tắt: tiền VND lưu `numeric(20,2)` nhưng luôn làm tròn đến đồng trước khi ghi (tương đương số nguyên); SL `numeric(20,6)`, làm tròn theo số lẻ của ĐVT (mặc định 3); đơn giá chỉ để hiển thị. Không dùng float.
+- **Luật làm tròn duy nhất R1**: nguyên văn ở [THUAT-NGU](../00-tong-quan/THUAT-NGU.md) §5 (nguồn duy nhất); các mục trong tài liệu này chỉ trích R1 (a), (b), (c).
   - Ví dụ: (b) §4.2 (10.000.000 chia 3 phần bằng nhau → 3.333.334 / 3.333.333 / 3.333.333), §4.6 (tách khoản mục BTP); (c) §3.4, §4.6. Thành tiền trên hóa đơn là gốc, không tính lại SL × ĐG.
-  - Ghi chú: MISA được cho là dùng "dòng cuối nhận phần dư" cho phân bổ (06a-L16, [CXM]); R1 (b) có thể lệch MISA 1 đồng/dòng ở các ca có phần dư — khi chạy song song phải đối chiếu theo R1, chênh lệch loại này được giải thích, không coi là lỗi.
+  - Ghi chú: MISA được cho là dùng "dòng cuối nhận phần dư" cho phân bổ (`PHAN-BIEN-v2-NGHIEP-VU.md` L16, [CXM]); R1 (b) có thể lệch MISA 1 đồng/dòng ở các ca có phần dư — khi chạy song song phải đối chiếu theo R1, chênh lệch loại này được giải thích, không coi là lỗi.
 - Thứ tự xử lý trong ngày: theo (ngày hạch toán, thứ tự loại chứng từ: nhập < chuyển < xuất, thời điểm ghi sổ, số chứng từ) — phải **xác định & ổn định** để tính lại cho cùng kết quả.
 - Mọi tác vụ cuối kỳ (tính giá, giá thành, kết chuyển) là **idempotent**: chạy lại xóa kết quả cũ của cùng tác vụ rồi sinh mới, trong một transaction.
 - Cấu hình theo chế độ kế toán & ngày hiệu lực: danh mục TK, mapping chỉ tiêu BCTC, thuế suất GTGT (giảm 8% theo thời kỳ), mẫu sổ.

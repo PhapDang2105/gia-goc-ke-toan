@@ -1,4 +1,6 @@
-# Phản biện độc lập dự án — vòng v3 (2026-10-07)
+# Phản biện độc lập vòng 3 (2026-10-07)
+
+> Phiên bản: 1.0 · Ngày: 2026-10-07 · Người phụ trách: 4 phản biện viên độc lập · Trạng thái: Đã duyệt — kết quả đã xử lý (bảng trạng thái ở §5). Nội dung §1–§4 giữ nguyên. Viết tắt: theo [THUAT-NGU](../00-tong-quan/THUAT-NGU.md) §2. Mã L, U, A trong tài liệu này là mã lỗi, không phải mã câu hỏi.
 
 Bốn phản biện viên độc lập rà bản chốt `d159ce3` (trước khi vẽ lại biểu đồ). Mọi lỗi dưới đây đã được tái hiện thật (Playwright trên demo; PostgreSQL 16 cho DDL) trừ chỗ ghi *suy luận*. Cột "Xử lý" ghi hướng đi đã chốt với người dùng.
 
@@ -70,7 +72,16 @@ Luồng đã chạy đạt: nhập mua VND/USD, sản xuất 2 giai đoạn, QC,
 | A7 | Cao | Đợt 1A không khóa sổ được theo chính quy tắc (TP giá tạm tới 1B) | Sắp lại đợt |
 | A8 | Cao (suy luận) | Đích danh theo lô sai bản chất nếu một bồn trộn nhiều lô | Hỏi khách; mô hình "gộp lô" sinh lô mới |
 | A9 | TB | 4 phiên bản trình tự khóa sổ; tính lại toàn bộ vs repost tăng dần; định dạng mã lô và phạm vi duy nhất lệch; công thức hỏng ngoài định mức lệch (958.790 vs 939.614); kiểu lưu số lệch | Thống nhất một nguồn |
-| A10 | TB | DDL 05 + 07 chạy nguyên văn lỗi (`inv.lots` tạo hai lần; thiếu `md.partners`, `core.users`) | Sửa |
+| A10 | TB | DDL `KIEN-TRUC-VA-CSDL.md` + `DIEU-CHINH-THEO-KHACH-HANG.md` chạy nguyên văn lỗi (`inv.lots` tạo hai lần; thiếu `md.partners`, `core.users`) | Sửa |
 | A11 | TB | Biến môi trường `app.tenant_id`, `app.engine` do app_user tự đặt được | Hàm SECURITY DEFINER / vai trò DB riêng |
 
 Câu hỏi pháp lý chưa chắc: đổi phương pháp tính giá hàng tồn kho / chế độ kế toán giữa niên độ.
+
+## 5. Trạng thái xử lý (cập nhật 2026-10-07)
+
+| Nhóm | Đã xử lý | Còn mở |
+|---|---|---|
+| Logic demo L1–L10 | Demo v4.0: L2, L3, L4, L6, L7, L9, L10 sửa; L1 hết do bỏ khóa sổ ([QD-09](../02-ke-hoach/QUYET-DINH.md#qd-09)), sửa danh mục vẫn tính lại ngay và ghi nhật ký; L5 hết do giá thành theo lệnh ([QD-05](../02-ke-hoach/QUYET-DINH.md#qd-05)) | L8: demo vẫn ghi hàng bán trả lại giảm thẳng 511 (chờ XM-01 về 5212) |
+| Thao tác demo U1–U16 | Demo v4.0: U1–U3, U5–U14, U16 sửa; U4 hết do bỏ khóa sổ; U15 mẫu in có đơn giá, thành tiền, tiêu đề phiếu chuyển kho đúng | U15 còn thiếu tên hàng cũ / mới, mã đơn hàng, SL đặt hàng ([YEU-CAU-KHACH-HANG](../01-yeu-cau/YEU-CAU-KHACH-HANG.md) §9.2) |
+| Truy vết yêu cầu §3 | Yêu cầu v1.2–v1.3: sửa hiểu sai `GoiYXuat`, mẫu in; thêm KHO-09..KHO-14, KHO-R7..KHO-R10; truy vết sang demo v4.0 ở [YEU-CAU-KHACH-HANG](../01-yeu-cau/YEU-CAU-KHACH-HANG.md) §11 | Demo chưa có cá bạc má, dưa gang chay; QC trên demo vẫn chỉ có trạng thái lô; `HỆ THỐNG.docx` có họ tên nhân sự ([CH-55](../01-yeu-cau/CAU-HOI-MO.md#ch-55)) |
+| Tài liệu, kiến trúc A1–A11 | A1–A5, A9–A11 sửa ở [KIEN-TRUC-VA-CSDL](../03-thiet-ke/KIEN-TRUC-VA-CSDL.md) 0.3 và [DIEU-CHINH-THEO-KHACH-HANG](../03-thiet-ke/DIEU-CHINH-THEO-KHACH-HANG.md) 0.3 (66 phép thử đạt); A6, A7 ở [KE-HOACH-DU-AN](../02-ke-hoach/KE-HOACH-DU-AN.md) v0.4 | A8 chờ khách ([CH-31](../01-yeu-cau/CAU-HOI-MO.md#ch-31)); câu hỏi pháp lý đổi phương pháp giá giữa niên độ ([XM-12](../01-yeu-cau/CAU-HOI-MO.md#xm-12)) |

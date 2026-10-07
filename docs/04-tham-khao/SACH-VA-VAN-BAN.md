@@ -1,4 +1,7 @@
-# 03 — Danh mục sách & tài liệu hỗ trợ
+# Danh mục sách, văn bản và tài liệu hỗ trợ
+
+> Phiên bản: 1.0 · Ngày: 2026-10-04 (đổi tên file 2026-10-07; cũ: `research/03-sach-tai-lieu.md`) · Người phụ trách: Nhóm nghiên cứu · Trạng thái: Đã duyệt (tài liệu tham khảo; mục ⚠ chưa xác minh, theo dõi ở [CAU-HOI-MO](../01-yeu-cau/CAU-HOI-MO.md) §7)
+> Viết tắt: theo [THUAT-NGU](../00-tong-quan/THUAT-NGU.md) §2.
 
 > Dự án: phần mềm kế toán / quản lý kho / tính giá vốn & giá thành (tương tự MISA SME) cho doanh nghiệp Việt Nam.
 > Ngày lập: 2026-10-04. Người lập: nhóm nghiên cứu (AI hỗ trợ).

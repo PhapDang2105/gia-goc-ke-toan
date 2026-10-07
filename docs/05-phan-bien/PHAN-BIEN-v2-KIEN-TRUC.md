@@ -1,11 +1,14 @@
-# 06b — Phản biện kiến trúc (05-kien-truc-de-xuat.md + KE-HOACH-DU-AN.md)
+# Phản biện vòng 2 — kiến trúc (kiến trúc 0.1 và kế hoạch v0.1)
 
-> **Ghi chú (2026-10-06):** con số "~20–24 người-tháng" ở §0 (dòng 21) lệch với bảng ước lượng §5 (dòng 112: ghi ~18–22, cộng đúng các khoảng trong bảng là 17,5–22 người-tháng). Tiến độ chính thức nằm ở `docs/KE-HOACH-DU-AN.md`, không lấy từ tài liệu này. Số dòng `05` trong tài liệu này là của bản 0.1; `05` bản 0.2 đã sửa theo phản biện (bảng "Đã sửa theo 06b" đầu file).
+> Phiên bản: 1.0 · Ngày: 2026-10-04 (đổi tên file 2026-10-07; cũ: `research/06b-phan-bien-kien-truc.md`) · Người phụ trách: Phản biện viên kiến trúc · Trạng thái: Đã duyệt — lưu trữ; các lỗi đã xử lý ở [KIEN-TRUC-VA-CSDL](../03-thiet-ke/KIEN-TRUC-VA-CSDL.md) 0.2 (bảng "Đã sửa theo PHAN-BIEN-v2-KIEN-TRUC" đầu file). Nội dung giữ nguyên, chỉ cập nhật tên tài liệu được trích.
+> Đọc tài liệu cũ: "05" = [KIEN-TRUC-VA-CSDL](../03-thiet-ke/KIEN-TRUC-VA-CSDL.md) bản 0.1 (số dòng là của bản đó), "KH:" = số dòng của kế hoạch v0.1. Mã lỗi D, A, U, M chỉ có nghĩa trong tài liệu này. Viết tắt: theo [THUAT-NGU](../00-tong-quan/THUAT-NGU.md) §2.
+
+> **Ghi chú (2026-10-06):** con số "~20–24 người-tháng" ở §0 (dòng 21) lệch với bảng ước lượng §5 (dòng 112: ghi ~18–22, cộng đúng các khoảng trong bảng là 17,5–22 người-tháng). Tiến độ chính thức nằm ở `KE-HOACH-DU-AN.md`, không lấy từ tài liệu này. Số dòng `KIEN-TRUC-VA-CSDL.md` trong tài liệu này là của bản 0.1; `KIEN-TRUC-VA-CSDL.md` bản 0.2 đã sửa theo phản biện (bảng "Đã sửa theo 06b" đầu file).
 
 > Ngày: 2026-10-04 · Người phản biện: kiến trúc sư PostgreSQL/TypeScript (độc lập)
-> Phạm vi: §4 DDL, §5 engine giá vốn, §7 audit, §8 lộ trình/kiểm thử của `05`; đối chiếu `KE-HOACH-DU-AN.md`.
+> Phạm vi: §4 DDL, §5 engine giá vốn, §7 audit, §8 lộ trình/kiểm thử của `KIEN-TRUC-VA-CSDL.md`; đối chiếu `KE-HOACH-DU-AN.md`.
 > Phương pháp: rà bằng mắt. Máy không có Docker/psql/Node nên **không chạy được DDL** (thử cài pglite thất bại vì không có `npm`). Mọi nhận định về cú pháp là suy luận theo tài liệu PostgreSQL 17/18 và cần xác nhận lại khi có Postgres 18 thật.
-> Số dòng là số dòng trong `05-kien-truc-de-xuat.md`, trừ khi ghi `KH:` (là `KE-HOACH-DU-AN.md`).
+> Số dòng là số dòng trong `KIEN-TRUC-VA-CSDL.md`, trừ khi ghi `KH:` (là `KE-HOACH-DU-AN.md`).
 
 ## 0. Tóm tắt
 
@@ -67,7 +70,7 @@ Về tiến độ: **MVP 3–4 tháng với 2–4 dev là không khả thi** cho
 | A9 | TB | 977–978 | Điều kiện hội tụ Gauss–Seidel ghi "chéo trội theo hàng: Q_k > Σ_j a_kj" là **sai khi có sản xuất**: hệ số NVL tính theo đơn vị NVL (kg) còn Q_k theo đơn vị SP (cái), nên có thể a_kj ≫ Q_k. Điều kiện đúng là theo **cột có trọng số**: Σ_k a_kj ≤ lượng xuất của j ≤ Q_j (không xuất quá tồn), hội tụ chặt khi mỗi SCC có "rò" ra ngoài (bán hoặc tồn cuối > 0). Âm kho phá điều kiện này. | Ghi đúng điều kiện. Kiểm trước khi lặp: SCC có tồn âm thì báo lỗi nghiệp vụ. Với n ≤ 200 luôn dùng Gauss (đủ cho DN vừa). Gauss–Seidel chỉ là dự phòng, có giới hạn vòng lặp. |
 | A10 | TB | 954–966, 926–928 | Hệ tuyến tính giả định **mọi key trong SCC là BQ cuối kỳ**. SCC lẫn key BQ tức thời/FIFO (vd NVL tính BQ tức thời cấp cho TP BQ cuối kỳ có vòng BTP) không có một ẩn `c_k` duy nhất. Nhập TP ở trạng thái PENDING (giá 0) khiến xuất bán TP BQ tức thời trong kỳ mang giá sai, rồi lan truyền repost hàng loạt sau khi tính giá thành. | Ràng buộc cấu hình: mọi item thuộc chuỗi sản xuất trong một company phải cùng phương pháp (MVP: BQ cuối kỳ). Nếu lẫn thì giải bằng lặp điểm cố định qua repost, có giới hạn. Ghi rõ trong Phụ lục B. |
 | A11 | TB | 948 | Lập luận "lan truyền luôn đi tới tương lai nên hội tụ" đúng về thời gian, nhưng chu trình A→B→A **cùng ngày, cùng rank** dựa vào seq. Làm tròn có thể dao động ±1 đồng giữa hai key ⇒ lặp tới `maxPropagationDepth`. | Điều kiện dừng là "không đổi sau làm tròn", kèm phát hiện chu kỳ (hash trạng thái key). Với BQ cuối kỳ thì vòng do §5.6 giải, không qua lan truyền. |
-| A12 | TB | 1372 | **Golden test BQ tức thời sai số.** Theo §5.2 (dùng value/qty, không dùng rate làm tròn): sau X1 còn 50 SL / 533.333; N2 ⇒ 150 / 1.733.333; X2 = round(100×1.733.333/150) = round(1.155.555,33) = **1.155.555**, tồn cuối **577.778**. Bộ kỳ vọng ghi 1.155.556 / 577.777, tức là tính theo đơn giá đã làm tròn 11.555,56, mâu thuẫn chính §5.2 (852). Các số BQ cuối kỳ và FIFO đã kiểm và đúng. | Sửa kỳ vọng thành `X2: "1155555"`, `closing.value: "577778"`, hoặc chốt quy tắc dùng rate làm tròn (không khuyến nghị). Rà lại 01 §3.2 cùng ví dụ. |
+| A12 | TB | 1372 | **Golden test BQ tức thời sai số.** Theo §5.2 (dùng value/qty, không dùng rate làm tròn): sau X1 còn 50 SL / 533.333; N2 ⇒ 150 / 1.733.333; X2 = round(100×1.733.333/150) = round(1.155.555,33) = **1.155.555**, tồn cuối **577.778**. Bộ kỳ vọng ghi 1.155.556 / 577.777, tức là tính theo đơn giá đã làm tròn 11.555,56, mâu thuẫn chính §5.2 (852). Các số BQ cuối kỳ và FIFO đã kiểm và đúng. | Sửa kỳ vọng thành `X2: "1155555"`, `closing.value: "577778"`, hoặc chốt quy tắc dùng rate làm tròn (không khuyến nghị). Rà lại `NGHIEP-VU-KE-TOAN.md` §3.2 cùng ví dụ. |
 | A13 | TB | 93, 862, 1015, 1381 | **Ba quy tắc phần dư làm tròn khác nhau**: §1.4 "dồn vào dòng có trọng số lớn nhất"; §5.8 `largestRemainder` (Hamilton: chia theo phần lẻ lớn nhất); §5.3 và golden "dòng cuối nhận dư". Kết quả khác nhau ⇒ không khớp MISA trong chạy song song. | Chốt **một** quy tắc cho từng ngữ cảnh (phân bổ: Hamilton; giá xuất BQ cuối kỳ: dòng xuất cuối kỳ nhận dư như MISA) và đặt tên hàm đúng. |
 | A14 | TB | 830, 1005 | "Repost không sửa dòng ≤ locked_through(COSTING)", nhưng landed cost hoặc hoá đơn NCC về muộn cho phiếu nhập **trong kỳ đã khoá** thì engine "repost từ ts dòng nhập" sẽ lỗi. Chưa có luồng thay thế. | Điều chỉnh rơi vào kỳ mở: tạo dòng `ADJUST` (SL=0) tại ngày đầu kỳ mở, phân bổ phần đã xuất vào 632. |
 | A15 | Thấp | 997 | `persistValuation` "1 transaction/SCC" ở cuối vòng lặp: lỗi giữa chừng để lại kỳ nửa chốt. | Chấp nhận được nếu idempotent, nhưng cần đánh dấu costing_run `PARTIAL` và chặn khoá sổ. |
@@ -85,18 +88,18 @@ Về tiến độ: **MVP 3–4 tháng với 2–4 dev là không khả thi** cho
 | U6 | TB | 1268, 610 | Audit trigger generic trên `stock_ledger` sẽ ghi **mỗi dòng repost cập nhật** (hàng trăm nghìn dòng mỗi lần) ⇒ phình `change_log`, chậm repost. | Bảng dẫn xuất: audit ở mức "valuation run" (request id, phạm vi, tổng chênh) thay vì từng dòng. Danh sách bảng loại trừ phải có trong test CI. |
 | U7 | Thấp | 1266 | Chỉ REVOKE UPDATE/DELETE; cần cả `TRUNCATE`. Partition audit cũng cần RLS (D2). `jsonb` đưa vào hash phải chuẩn hoá (numeric `1.0` vs `1.00`). | REVOKE TRUNCATE. Hash trên `jsonb::text` sau chuẩn hoá numeric. |
 
-## 4. Mâu thuẫn giữa 05 và KE-HOACH-DU-AN.md (và nội bộ 05)
+## 4. Mâu thuẫn giữa `KIEN-TRUC-VA-CSDL.md` và KE-HOACH-DU-AN.md (và nội bộ `KIEN-TRUC-VA-CSDL.md`)
 
 | # | Mức | Vị trí | Mâu thuẫn | Đề xuất |
 |---|---|---|---|---|
-| M1 | TB | KH:55 vs KH:37 / 05:1319 | Tiêu chí xong MVP là "chạy song song MISA 2–3 tháng", trong khi khung MVP chỉ 3–4 tháng ⇒ thực tế ≥ 5–7 tháng, chưa tính phát triển. | Tách "MVP code-complete" và "nghiệm thu song song". |
-| M2 | TB | KH:58 vs 05:1381, 1004 | KH đưa **trả lại hàng** vào P2, nhưng 05 dùng golden 01 §3.8 (trả lại, giảm giá hàng mua) cho bộ ban đầu và engine LINKED cho trả lại ở P1. | Chốt: P1 có trả lại hàng bán/mua cơ bản (DN thật nào cũng có), hoặc bỏ khỏi golden P1. |
-| M3 | TB | KH:47, 05:1323 vs Phụ lục B / KH §5 Q2 | FIFO "cuối P1 nếu kịp", trong khi 04 xếp FIFO vào MVP. Nếu công ty nội bộ dùng FIFO thì MVP không chạy song song được. | Chỉ làm **phương pháp công ty đang dùng** trong MVP (trả lời Q2 trước khi chốt phạm vi). |
-| M4 | TB | KH:70 vs 05:552 | KH nói repost "song song theo (vật tư, kho)", còn 05 cost key có thể là phạm vi company. | Dùng thống nhất thuật ngữ "cost key". |
-| M5 | Thấp | 05:1315 vs KH:35 | 05 Phase 0 có "audit trigger" (và §7.3 có hash chain), KH Phase 0 không nói hash chain. Riêng 05 §8.1 P3 lại ghi "kiểm toán hash-chain" ⇒ hash chain ở P0 hay P3? | Hash chain sang P3 (xem U2). P0 chỉ có change_log. |
-| M6 | Thấp | 05:812 | §4.11 nói partition LIST theo `fiscal_year` cho `audit.change_log`, nhưng DDL 1265 là RANGE theo tháng. | Sửa câu chữ. |
-| M7 | Thấp | 05:116 vs 05:1246 | jobId cố định chống trùng (116) mâu thuẫn với nhu cầu chạy lại idempotent nhiều lần (1246); xem A3. | Như A3. |
-| M8 | Thấp | KH:52 vs 05:1327 | KH có "công nợ", "bảng tính giá thành", "nhật ký truy cập" ở P1; 05 P1 không liệt kê ⇒ phạm vi 05 nhỏ hơn KH. | Đồng bộ một danh sách backlog duy nhất. |
+| M1 | TB | KH:55 vs KH:37 / `KIEN-TRUC-VA-CSDL.md`:1319 | Tiêu chí xong MVP là "chạy song song MISA 2–3 tháng", trong khi khung MVP chỉ 3–4 tháng ⇒ thực tế ≥ 5–7 tháng, chưa tính phát triển. | Tách "MVP code-complete" và "nghiệm thu song song". |
+| M2 | TB | KH:58 vs `KIEN-TRUC-VA-CSDL.md`:1381, 1004 | KH đưa **trả lại hàng** vào P2, nhưng 05 dùng golden `NGHIEP-VU-KE-TOAN.md` §3.8 (trả lại, giảm giá hàng mua) cho bộ ban đầu và engine LINKED cho trả lại ở P1. | Chốt: P1 có trả lại hàng bán/mua cơ bản (DN thật nào cũng có), hoặc bỏ khỏi golden P1. |
+| M3 | TB | KH:47, `KIEN-TRUC-VA-CSDL.md`:1323 vs Phụ lục B / KH §5 Q2 | FIFO "cuối P1 nếu kịp", trong khi 04 xếp FIFO vào MVP. Nếu công ty nội bộ dùng FIFO thì MVP không chạy song song được. | Chỉ làm **phương pháp công ty đang dùng** trong MVP (trả lời Q2 trước khi chốt phạm vi). |
+| M4 | TB | KH:70 vs `KIEN-TRUC-VA-CSDL.md`:552 | KH nói repost "song song theo (vật tư, kho)", còn 05 cost key có thể là phạm vi company. | Dùng thống nhất thuật ngữ "cost key". |
+| M5 | Thấp | `KIEN-TRUC-VA-CSDL.md`:1315 vs KH:35 | 05 Phase 0 có "audit trigger" (và §7.3 có hash chain), KH Phase 0 không nói hash chain. Riêng `KIEN-TRUC-VA-CSDL.md` §8.1 P3 lại ghi "kiểm toán hash-chain" ⇒ hash chain ở P0 hay P3? | Hash chain sang P3 (xem U2). P0 chỉ có change_log. |
+| M6 | Thấp | `KIEN-TRUC-VA-CSDL.md`:812 | §4.11 nói partition LIST theo `fiscal_year` cho `audit.change_log`, nhưng DDL 1265 là RANGE theo tháng. | Sửa câu chữ. |
+| M7 | Thấp | `KIEN-TRUC-VA-CSDL.md`:116 vs `KIEN-TRUC-VA-CSDL.md`:1246 | jobId cố định chống trùng (116) mâu thuẫn với nhu cầu chạy lại idempotent nhiều lần (1246); xem A3. | Như A3. |
+| M8 | Thấp | KH:52 vs `KIEN-TRUC-VA-CSDL.md`:1327 | KH có "công nợ", "bảng tính giá thành", "nhật ký truy cập" ở P1; `KIEN-TRUC-VA-CSDL.md` P1 không liệt kê ⇒ phạm vi 05 nhỏ hơn KH. | Đồng bộ một danh sách backlog duy nhất. |
 
 ## 5. Đánh giá tiến độ và đề xuất cắt giảm
 
@@ -126,7 +129,7 @@ Về tiến độ: **MVP 3–4 tháng với 2–4 dev là không khả thi** cho
 6. **Giá thành**: chỉ giản đơn + phân bổ 627 theo 1–2 tiêu thức; dở dang theo NVL trực tiếp. SXC dưới công suất giữ lại (ít code).
 7. **Close orchestrator**: checklist có kiểm điều kiện, chưa cần lan truyền DIRTY tự động.
 8. **Báo cáo**: CĐPS, Sổ cái, sổ chi tiết, N-X-T, thẻ kho, công nợ, B01/B02. Drill-down 1 cấp. Excel xuất bằng cách dùng chung một component.
-9. Chặn đường găng: **tìm kế toán trưởng duyệt 01 + golden test trong 2 tuần đầu**, song song với Phase 0.
+9. Chặn đường găng: **tìm kế toán trưởng duyệt `NGHIEP-VU-KE-TOAN.md` + golden test trong 2 tuần đầu**, song song với Phase 0.
 
 ## 6. Việc cần làm ngay (trước khi viết migration)
 

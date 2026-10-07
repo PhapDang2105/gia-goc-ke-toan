@@ -1,34 +1,35 @@
-# 05 — Kiến trúc đề xuất: Kế toán + Kho + Giá vốn + Giá thành (Web SaaS multi-tenant)
+# Kiến trúc và cơ sở dữ liệu: kế toán, kho, giá vốn, giá thành (Web SaaS nhiều công ty thuê bao)
 
-> Phiên bản: **0.3** (2026-10-07; 0.2 ngày 2026-10-06; 0.1 ngày 2026-10-04) · Trạng thái: đề xuất để review
+> Phiên bản: 0.3.1 · Ngày: 2026-10-07 · Người phụ trách: Trưởng kỹ thuật · Trạng thái: Chờ duyệt (review kỹ thuật) · 0.1: 2026-10-04; 0.2: 2026-10-06; 0.3: 2026-10-07; 0.3.1: đổi tên file (cũ: `research/05-kien-truc-de-xuat.md`), R1 chuyển về [THUAT-NGU](../00-tong-quan/THUAT-NGU.md), mã câu hỏi theo [CAU-HOI-MO](../01-yeu-cau/CAU-HOI-MO.md), không đổi DDL.
+> Nguồn duy nhất cho: kiểu lưu số (§1.4), trình tự cuối kỳ và điều kiện khóa kỳ (§7.2), DDL nền. Phần thay đổi theo khách: [DIEU-CHINH-THEO-KHACH-HANG](DIEU-CHINH-THEO-KHACH-HANG.md). Viết tắt: theo [THUAT-NGU](../00-tong-quan/THUAT-NGU.md) §2.
 > Phạm vi: phần mềm kế toán kiểu MISA cho doanh nghiệp Việt Nam (sản xuất + thương mại), Web SaaS multi-tenant, trước mắt dùng nội bộ.
 > Stack đã chốt: **TypeScript + PostgreSQL**.
-> Liên quan: `01..04` (nghiệp vụ, repo tham khảo, sách, phân tích MISA), `06b-phan-bien-kien-truc.md` (phản biện bản 0.1), `../PHAN-BIEN-v3.md` (phản biện bản 0.2). Bản này đã tích hợp kết luận của `02-repo-tham-khao.md` và `04-phan-tich-misa.md` (xem §0.1); các chỗ đánh dấu **[ĐỐI CHIẾU 01/03]** cần rà lại với ví dụ số/quy định chi tiết.
-> **Phạm vi & tiến độ: xem `docs/KE-HOACH-DU-AN.md` v0.4 (nguồn duy nhất).** Tài liệu này chỉ mô tả kỹ thuật, không đặt mốc thời gian.
+> Liên quan: `NGHIEP-VU-KE-TOAN.md`, `REPO-MA-NGUON-MO.md`, `SACH-VA-VAN-BAN.md`, `PHAN-TICH-MISA.md` (nghiệp vụ, repo tham khảo, sách, phân tích MISA), `PHAN-BIEN-v2-KIEN-TRUC.md` (phản biện bản 0.1), `PHAN-BIEN-v3.md` (phản biện bản 0.2). Bản này đã tích hợp kết luận của `REPO-MA-NGUON-MO.md` và `PHAN-TICH-MISA.md` (xem §0.1); các chỗ đánh dấu **[ĐỐI CHIẾU `NGHIEP-VU-KE-TOAN.md`, `SACH-VA-VAN-BAN.md`]** cần rà lại với ví dụ số/quy định chi tiết.
+> **Phạm vi & tiến độ: xem [KE-HOACH-DU-AN](../02-ke-hoach/KE-HOACH-DU-AN.md) (nguồn duy nhất).** Tài liệu này chỉ mô tả kỹ thuật, không đặt mốc thời gian.
 
 ### Đã sửa theo phản biện v3 (bản 0.3)
 
-Quy ước khối SQL (để chạy nguyên văn được, A10): mọi khối ```` ```sql ```` của tài liệu này và của `07` là **DDL chạy theo đúng thứ tự xuất hiện**, 05 trước rồi 07. Khối có dòng đầu `-- mẫu truy vấn` là truy vấn có tham số `$n`, không chạy khi dựng lược đồ; chúng được kiểm cú pháp và tên cột bằng `PREPARE` sau khi dựng xong. Người chạy là vai trò sở hữu lược đồ `app_owner` (không phải superuser, không `BYPASSRLS`, có `CREATEROLE`).
+Quy ước khối SQL (để chạy nguyên văn được, A10): mọi khối ```` ```sql ```` của tài liệu này và của `DIEU-CHINH-THEO-KHACH-HANG.md` là **DDL chạy theo đúng thứ tự xuất hiện**, tài liệu này trước rồi `DIEU-CHINH-THEO-KHACH-HANG.md`. Khối có dòng đầu `-- mẫu truy vấn` là truy vấn có tham số `$n`, không chạy khi dựng lược đồ; chúng được kiểm cú pháp và tên cột bằng `PREPARE` sau khi dựng xong. Người chạy là vai trò sở hữu lược đồ `app_owner` (không phải superuser, không `BYPASSRLS`, có `CREATEROLE`).
 
-**Kết quả chạy thử (2026-10-07, PostgreSQL 16.15):** 05 rồi 07 chạy nguyên văn, mọi khối DDL không lỗi; mọi truy vấn mẫu qua `PREPARE`; `app.check_rls_coverage()` trả 0 dòng. Chỉ thêm một hàm ngoài tài liệu là `public.uuidv7()` → `gen_random_uuid()` vì PG16 chưa có `uuidv7()`. Các phép thử tấn công của A1–A5, A11 chạy bằng vai trò `app_user` đều bị chặn (bảng ở `07` §11). **Chưa** chạy trên PG18, **chưa** thử hai phiên đồng thời cho các guard mới.
+**Kết quả chạy thử (2026-10-07, PostgreSQL 16.15):** tài liệu này rồi `DIEU-CHINH-THEO-KHACH-HANG.md` chạy nguyên văn, mọi khối DDL không lỗi; mọi truy vấn mẫu qua `PREPARE`; `app.check_rls_coverage()` trả 0 dòng. Chỉ thêm một hàm ngoài tài liệu là `public.uuidv7()` → `gen_random_uuid()` vì PG16 chưa có `uuidv7()`. Các phép thử tấn công của A1–A5, A11 chạy bằng vai trò `app_user` đều bị chặn (bảng ở `DIEU-CHINH-THEO-KHACH-HANG.md` §11). **Chưa** chạy trên PG18, **chưa** thử hai phiên đồng thời cho các guard mới.
 
 | Mã | Lỗi (PHAN-BIEN-v3 §4) | Cách sửa | Mục |
 |---|---|---|---|
 | A1 | Dòng bút toán sửa/xoá được sau ghi sổ và sau khoá kỳ; `journal_lines` không FK | FK kép `journal_lines → journal_entries → documents`; guard: chỉ thêm dòng vào bút toán do **chính giao dịch đang chạy** tạo (`created_xid`), UPDATE chỉ `is_active` true→false, cấm DELETE; dòng kiểm khoá kỳ qua `acc.assert_period_open` | §4.5, §7.1, §7.2 |
 | A2 | RLS bỏ sót `core`, `cst`, `audit` | Một hàm `app.apply_tenant_rls()` quét **mọi** schema nghiệp vụ; `app.check_rls_coverage()` là phép thử theo danh sách loại trừ (`core.tenants`, `core.sessions`, `sys.*`); `audit.change_log` chỉ ghi qua trigger `SECURITY DEFINER`, `app_user` chỉ đọc | §2.1, §7.3, §7.7 |
-| A3 (phần 05) | `move_kind` tự do | CHECK danh sách `move_kind` + CHECK chiều nhập/xuất theo loại; dòng kho chỉ đổi `status` ACTIVE→CANCELLED (không đổi lô) | §4.7, §7.1 |
-| A9 | Bốn phiên bản trình tự khoá sổ; tính lại toàn bộ vs repost tăng dần; kiểu lưu số | **Một** bảng trình tự khoá kỳ ở §7.2 (01 §6, 07 §4.7, kế hoạch chỉ trích); GĐ1 **tính lại toàn bộ** cost key từ kỳ khoá gần nhất, repost tăng dần có checkpoint là GĐ2 (§5.5); bảng kiểu lưu số §1.4 là nguồn duy nhất | §1.4, §5.5, §7.2 |
-| A10 | DDL 05 + 07 chạy nguyên văn lỗi | Khối nền móng tạo extension, schema, vai trò (§2.1); thêm `core.users`, `core.user_roles`, `core.sessions`, `md.partners`, `md.expense_items`; `inv.lots` chỉ tạo ở 05, 07 dùng `ALTER`; truy vấn mẫu tách khỏi DDL | §2.1, §4.1, §4.6 |
+| A3 (phần tài liệu này) | `move_kind` tự do | CHECK danh sách `move_kind` + CHECK chiều nhập/xuất theo loại; dòng kho chỉ đổi `status` ACTIVE→CANCELLED (không đổi lô) | §4.7, §7.1 |
+| A9 | Bốn phiên bản trình tự khoá sổ; tính lại toàn bộ vs repost tăng dần; kiểu lưu số | **Một** bảng trình tự khoá kỳ ở §7.2 (`NGHIEP-VU-KE-TOAN.md` §6, `DIEU-CHINH-THEO-KHACH-HANG.md` §4.7, kế hoạch chỉ trích); GĐ1 **tính lại toàn bộ** cost key từ kỳ khoá gần nhất, repost tăng dần có checkpoint là GĐ2 (§5.5); bảng kiểu lưu số §1.4 là nguồn duy nhất | §1.4, §5.5, §7.2 |
+| A10 | DDL tài liệu này + `DIEU-CHINH-THEO-KHACH-HANG.md` chạy nguyên văn lỗi | Khối nền móng tạo extension, schema, vai trò (§2.1); thêm `core.users`, `core.user_roles`, `core.sessions`, `md.partners`, `md.expense_items`; `inv.lots` chỉ tạo ở tài liệu này, 07 dùng `ALTER`; truy vấn mẫu tách khỏi DDL | §2.1, §4.1, §4.6 |
 | A11 | `app.tenant_id`, `app.engine` do `app_user` tự đặt | Ứng dụng chỉ đặt `app.session_token`; tenant và người dùng tra từ `core.sessions` (app_user không đọc được) bằng hàm `SECURITY DEFINER`; cột giá trị của sổ kho chỉ ghi qua `inv.set_valuation` mà chỉ vai trò `engine_user` được gọi; khoá/mở kỳ qua hàm kiểm vai trò KTT | §2.1, §4.7, §7.2 |
-| — | `acc.period_locks`, `md.fx_rate_day_locks` sửa được bằng DML thường (lỗ hổng phát hiện khi sửa A1) | `app_user` chỉ đọc `period_locks`, chỉ thêm `fx_rate_day_locks`; quyền theo bảng `sys.table_privileges` | §7.7, 07 §11 |
+| — | `acc.period_locks`, `md.fx_rate_day_locks` sửa được bằng DML thường (lỗ hổng phát hiện khi sửa A1) | `app_user` chỉ đọc `period_locks`, chỉ thêm `fx_rate_day_locks`; quyền theo bảng `sys.table_privileges` | §7.7, `DIEU-CHINH-THEO-KHACH-HANG.md` §11 |
 
-A4, A5, phần còn lại của A3 nằm trong `07` (§1, §2.7, §8, §10).
+A4, A5, phần còn lại của A3 nằm trong `DIEU-CHINH-THEO-KHACH-HANG.md` (§1, §2.7, §8, §10).
 
-### Đã sửa theo 06b (bản 0.2)
+### Đã sửa theo `PHAN-BIEN-v2-KIEN-TRUC.md` (bản 0.2)
 
 Mọi khối SQL của tài liệu đã được chạy thử trên **PostgreSQL 16** có sẵn trong máy (thay `uuidv7()` bằng `gen_random_uuid()`): tạo bảng/hàm/trigger không lỗi; đã thử hành vi của guard chứng từ/dòng, khoá kỳ (cả hai phiên đồng thời), cấp số CT theo năm, upsert gộp repost, truy vấn kiểm âm, domain `cost_element`, CHECK `costing_method`, `md.regime_at`. **Chưa chạy thử trên PostgreSQL 18**; chưa thử phần partition (§4.11) vì Giai đoạn 1 không dùng. Pseudo-code TS chưa chạy.
 
-Mã D/A/U lấy từ `06b`; mã S/N/C là mã của đợt rà soát chéo sau `06b` (số liệu, đặt tên, nhất quán giữa các tài liệu).
+Mã D/A/U lấy từ `PHAN-BIEN-v2-KIEN-TRUC.md`; mã S/N/C là mã của đợt rà soát chéo sau `PHAN-BIEN-v2-KIEN-TRUC.md` (số liệu, đặt tên, nhất quán giữa các tài liệu).
 
 | Mã | Lỗi | Cách sửa trong bản này | Mục |
 |---|---|---|---|
@@ -55,7 +56,7 @@ Mã D/A/U lấy từ `06b`; mã S/N/C là mã của đợt rà soát chéo sau `
 | C4 | Khoá theo ngày hay theo kỳ chưa chốt | Khoá sổ theo **kỳ tháng** (`locked_through` = ngày cuối một kỳ); khoá theo ngày có thể thêm về sau | §4.3, §7.2 |
 
 Xử lý kèm: A16 (cấp số CT cuối transaction, cùng A1), U4 (cấp số bằng `ON CONFLICT`, cùng D1), U5 một phần (chứng từ đã có số không xoá được, không đổi năm), U7 một phần (REVOKE thêm TRUNCATE). A12 (golden BQ tức thời 1.155.555/577.778) đã đúng từ trước.
-Chưa xử lý trong bản này (vẫn mở theo 06b): D5–D10, D11 (chỉ ghi chú), D12–D23, A7, A8, A10, A11, A14, A15, U6, M1–M8 (phần tiến độ/phạm vi nay thuộc `KE-HOACH-DU-AN.md`).
+Chưa xử lý trong bản này (vẫn mở theo `PHAN-BIEN-v2-KIEN-TRUC.md`): D5–D10, D11 (chỉ ghi chú), D12–D23, A7, A8, A10, A11, A14, A15, U6, M1–M8 (phần tiến độ/phạm vi nay thuộc `KE-HOACH-DU-AN.md`).
 
 ## 0. Tóm tắt quyết định (TL;DR)
 
@@ -77,24 +78,24 @@ Chưa xử lý trong bản này (vẫn mở theo 06b): D5–D10, D11 (chỉ ghi 
 
 Phiên bản (kiểm tra 10/2026): PostgreSQL 18 (GA 25/09/2025, có `uuidv7()`); Drizzle v1 vẫn ở RC (rc.1 tháng 4/2026) — một lý do nữa chọn Kysely ổn định. **Pin chính xác version khi `pnpm init`.**
 
-## 0.1 Kết luận từ nghiên cứu 02/04 đã đưa vào kiến trúc
+## 0.1 Kết luận từ nghiên cứu `REPO-MA-NGUON-MO.md`, `PHAN-TICH-MISA.md` đã đưa vào kiến trúc
 
 | Phát hiện | Nguồn | Quyết định kiến trúc | Mục |
 |---|---|---|---|
-| TT99/2025/TT-BTC thay TT200 từ 01/01/2026 | 01, 04 | Template mặc định **TT99 + TT133**; TT200 chỉ để nhập dữ liệu lịch sử/chuyển đổi; hệ thống TK **có version theo ngày hiệu lực** | §2.3 |
-| ERPNext: sổ kho append-only; **GL suy ra từ `stock_value_difference`** từng dòng sổ kho; repost nền có checkpoint/resume | 02 | Bút toán 15x/632/154/155 được *compose* từ `value_change` của `stock_ledger` ⇒ kho luôn khớp sổ cái; repost có checkpoint | §4.7, §5.5 |
-| ERPNext lưu FIFO queue JSON trong từng dòng → phình dữ liệu | 02 | **Bảng FIFO layers riêng** (`cst.cost_layers` + `layer_consumptions`) + snapshot định kỳ để replay nhanh | §4.8, §5.4 |
-| Odoo 19 bỏ `stock.valuation.layer`; giá trị nằm trên `stock.move`, `product.value` lưu lịch sử điều chỉnh; hỗ trợ periodic & perpetual | 02 | Giá trị nằm trên dòng sổ kho; **bảng `cst.valuation_adjustments`** lưu lịch sử điều chỉnh thủ công (old/new, user, lý do); hai chế độ periodic/perpetual | §4.8, §5.3 |
-| MISA: chạy lô cuối kỳ ghi đè giá phiếu xuất/nhập TP; chậm; tồn âm giá trị giữa kỳ; BOM 1 cấp; phân bước thủ công | 04 | **Giá tạm tức thời + chốt cuối kỳ** với `valuation_status` rõ ràng (PROVISIONAL/FINAL); repost tăng dần theo cost key; **cảnh báo tồn âm**; **BOM đa cấp**; **phân bước tự động** qua đồ thị/topo | §4.7, §5.3, §5.6, §5.8 |
-| Không repo nào có tập hợp/phân bổ 621/622/627 → 154 kiểu VN | 02 | Tự thiết kế, dựa trên **cost element** (iDempiere): ánh xạ TK → yếu tố chi phí, pool, quy tắc phân bổ, kết chuyển | §5.9 |
-| TT99 bỏ TK 611/631 (kê khai định kỳ) | 01 | **Giai đoạn 1 chỉ hỗ trợ kê khai thường xuyên (KKTX)**; KKĐK không có trong mô hình dữ liệu Giai đoạn 1 | §2.3 |
-| TT99 cho DN tự đổi tên/số hiệu/kết cấu TK | 01 | Số hiệu TK, mẫu báo cáo, thuế suất = **dữ liệu cấu hình theo chế độ + ngày hiệu lực**; logic định khoản chỉ dùng **account role**; báo cáo map qua **mã TK chuẩn** (`standard_code`) chứ không qua `code` do DN đặt | §2.3 |
-| TT99 yêu cầu phần mềm ngăn sửa trái phép, **lưu vết sửa đổi** | 01 | Audit log là **bắt buộc**, không tắt được | §7.3 |
-| TT133 vẫn hiệu lực song song | 01 | Mô hình dữ liệu hỗ trợ cả hai chế độ (TT133: chi phí ghi thẳng 154); chế độ áp dụng do `md.regime_at` theo ngày | §2.3, §5.9 |
-| SXC cố định dưới công suất bình thường → 632 (VAS 02) | 01 | Pool 627 tách **cố định/biến đổi**; đối tượng có **công suất bình thường**; phần dưới công suất kết chuyển 632 | §5.9 |
-| Quy trình khoá sổ 13 bước có phụ thuộc, cờ `dirty` | 01 §6 | Bản 0.3: hệ thống **luôn tính lại ngay** giá xuất, giá thành, giá vốn; khoá kỳ là **một thao tác** có kiểm tra (trình tự duy nhất ở §7.2), không có close orchestrator nhiều bước | §7.2 |
-| Thứ tự trong ngày: nhập < chuyển < xuất, rồi thời điểm ghi sổ, số CT | 01 §8.5 | Khoá sắp xếp chuẩn của engine dùng `kind_rank` | §5.1 |
-| ~30 bất biến I1–I7, K1–K9, G1–G5, B1–B7 | 01 §8 | Mỗi bất biến ánh xạ vào constraint DB / kiểm tra khoá sổ / property test | §8.3 |
+| TT99/2025/TT-BTC thay TT200 từ 01/01/2026 | `NGHIEP-VU-KE-TOAN.md`, `PHAN-TICH-MISA.md` | Template mặc định **TT99 + TT133**; TT200 chỉ để nhập dữ liệu lịch sử/chuyển đổi; hệ thống TK **có version theo ngày hiệu lực** | §2.3 |
+| ERPNext: sổ kho append-only; **GL suy ra từ `stock_value_difference`** từng dòng sổ kho; repost nền có checkpoint/resume | `REPO-MA-NGUON-MO.md` | Bút toán 15x/632/154/155 được *compose* từ `value_change` của `stock_ledger` ⇒ kho luôn khớp sổ cái; repost có checkpoint | §4.7, §5.5 |
+| ERPNext lưu FIFO queue JSON trong từng dòng → phình dữ liệu | `REPO-MA-NGUON-MO.md` | **Bảng FIFO layers riêng** (`cst.cost_layers` + `layer_consumptions`) + snapshot định kỳ để replay nhanh | §4.8, §5.4 |
+| Odoo 19 bỏ `stock.valuation.layer`; giá trị nằm trên `stock.move`, `product.value` lưu lịch sử điều chỉnh; hỗ trợ periodic & perpetual | `REPO-MA-NGUON-MO.md` | Giá trị nằm trên dòng sổ kho; **bảng `cst.valuation_adjustments`** lưu lịch sử điều chỉnh thủ công (old/new, user, lý do); hai chế độ periodic/perpetual | §4.8, §5.3 |
+| MISA: chạy lô cuối kỳ ghi đè giá phiếu xuất/nhập TP; chậm; tồn âm giá trị giữa kỳ; BOM 1 cấp; phân bước thủ công | `PHAN-TICH-MISA.md` | **Giá tạm tức thời + chốt cuối kỳ** với `valuation_status` rõ ràng (PROVISIONAL/FINAL); repost tăng dần theo cost key; **cảnh báo tồn âm**; **BOM đa cấp**; **phân bước tự động** qua đồ thị/topo | §4.7, §5.3, §5.6, §5.8 |
+| Không repo nào có tập hợp/phân bổ 621/622/627 → 154 kiểu VN | `REPO-MA-NGUON-MO.md` | Tự thiết kế, dựa trên **cost element** (iDempiere): ánh xạ TK → yếu tố chi phí, pool, quy tắc phân bổ, kết chuyển | §5.9 |
+| TT99 bỏ TK 611/631 (kê khai định kỳ) | `NGHIEP-VU-KE-TOAN.md` | **Giai đoạn 1 chỉ hỗ trợ kê khai thường xuyên (KKTX)**; KKĐK không có trong mô hình dữ liệu Giai đoạn 1 | §2.3 |
+| TT99 cho DN tự đổi tên/số hiệu/kết cấu TK | `NGHIEP-VU-KE-TOAN.md` | Số hiệu TK, mẫu báo cáo, thuế suất = **dữ liệu cấu hình theo chế độ + ngày hiệu lực**; logic định khoản chỉ dùng **account role**; báo cáo map qua **mã TK chuẩn** (`standard_code`) chứ không qua `code` do DN đặt | §2.3 |
+| TT99 yêu cầu phần mềm ngăn sửa trái phép, **lưu vết sửa đổi** | `NGHIEP-VU-KE-TOAN.md` | Audit log là **bắt buộc**, không tắt được | §7.3 |
+| TT133 vẫn hiệu lực song song | `NGHIEP-VU-KE-TOAN.md` | Mô hình dữ liệu hỗ trợ cả hai chế độ (TT133: chi phí ghi thẳng 154); chế độ áp dụng do `md.regime_at` theo ngày | §2.3, §5.9 |
+| SXC cố định dưới công suất bình thường → 632 (VAS 02) | `NGHIEP-VU-KE-TOAN.md` | Pool 627 tách **cố định/biến đổi**; đối tượng có **công suất bình thường**; phần dưới công suất kết chuyển 632 | §5.9 |
+| Quy trình khoá sổ 13 bước có phụ thuộc, cờ `dirty` | `NGHIEP-VU-KE-TOAN.md` §6 | Bản 0.3: hệ thống **luôn tính lại ngay** giá xuất, giá thành, giá vốn; khoá kỳ là **một thao tác** có kiểm tra (trình tự duy nhất ở §7.2), không có close orchestrator nhiều bước | §7.2 |
+| Thứ tự trong ngày: nhập < chuyển < xuất, rồi thời điểm ghi sổ, số CT | `NGHIEP-VU-KE-TOAN.md` §8.5 | Khoá sắp xếp chuẩn của engine dùng `kind_rank` | §5.1 |
+| ~30 bất biến I1–I7, K1–K9, G1–G5, B1–B7 | `NGHIEP-VU-KE-TOAN.md` §8 | Mỗi bất biến ánh xạ vào constraint DB / kiểm tra khoá sổ / property test | §8.3 |
 
 ---
 
@@ -130,12 +131,12 @@ Quyết định: **Kysely** cho mọi truy cập DB; schema là nguồn chân l�
 
 ### 1.4 Kiểu số — quy tắc bất di bất dịch
 
-Bảng dưới là **nguồn duy nhất** về kiểu lưu số (A9). `01` §8.5, `07`, demo và golden test trích bảng này; chỗ nào ghi khác (vd "lưu số nguyên VND", "SL 3 số lẻ") là cách **hiển thị/làm tròn**, không phải kiểu lưu.
+Bảng dưới là **nguồn duy nhất** về kiểu lưu số (A9). `NGHIEP-VU-KE-TOAN.md` §8.5, `DIEU-CHINH-THEO-KHACH-HANG.md`, demo và golden test trích bảng này; chỗ nào ghi khác (vd "lưu số nguyên VND", "SL 3 số lẻ") là cách **hiển thị/làm tròn**, không phải kiểu lưu.
 
 | Đại lượng | Kiểu Postgres | Làm tròn khi ghi | Ghi chú |
 |---|---|---|---|
 | Số tiền hạch toán (VND) | **`numeric(20,2)`** | Đến `amount_scale` của công ty (mặc định 0 ⇒ tương đương số nguyên đồng), R1(a) | Để 2 số lẻ chỉ để chứa ngoại tệ quy đổi trung gian |
-| Số tiền nguyên tệ | `numeric(20,2)` | Đến `minor_units` của đồng tiền (`sys.currencies`, 07 §5.5) | |
+| Số tiền nguyên tệ | `numeric(20,2)` | Đến `minor_units` của đồng tiền (`sys.currencies`, `DIEU-CHINH-THEO-KHACH-HANG.md` §5.5) | |
 | Tỷ giá | `numeric(18,6)` | Như nhập | |
 | Số lượng | `numeric(20,6)` | Đến số lẻ của ĐVT (`md.uoms.qty_scale`, mặc định 3; ĐVT "chỉ số nguyên" = 0) ở **mỗi** dòng nhập và mỗi phép cộng trừ; kiểm âm so trên số đã làm tròn | Tránh dư `1,42e-14` như file Excel của khách |
 | Đơn giá, giá vốn đơn vị | `numeric(24,8)` | Chỉ để hiển thị/giải thích (4 số lẻ), không dùng để tính lại giá trị (R1(a)) | |
@@ -144,11 +145,8 @@ Bảng dưới là **nguồn duy nhất** về kiểu lưu số (A9). `01` §8.5
 
 - Domain type `Money`/`Qty` bọc `Decimal` (decimal.js, `precision: 40`, `rounding: ROUND_HALF_UP`). Driver `pg`: `types.setTypeParser(1700, s => s)` (giữ string) rồi map sang Decimal ở repository.
 - ESLint rule cấm `parseFloat`, `Number(` trên field tiền; JSON API truyền số tiền dưới dạng **string**.
-- 01 §8.5 đề xuất lưu tiền VND dạng số nguyên; ta giữ `numeric(20,2)` để chứa ngoại tệ nhưng **giá trị VND luôn được làm tròn về `amount_scale` của công ty (mặc định 0)** trước khi ghi sổ ⇒ tương đương số nguyên với VND.
-- **Luật làm tròn duy nhất R1** (nguyên văn, dùng chung với `01` §8.5, golden test và demo):
-  - (a) ROUND_HALF_UP đến đồng cho mọi số tiền. Đơn giá lưu 4 số lẻ chỉ để hiển thị/giải thích; giá trị luôn tính từ tổng giá trị, không nhân lại từ đơn giá đã làm tròn.
-  - (b) Phân bổ một số tiền T cho n phần theo trọng số w (SXC, chi phí mua, Z cho các phiếu nhập kho, trích theo lương…): **largest remainder** — mỗi phần lấy phần nguyên floor(T·wᵢ/W) đến đồng; số đồng còn thiếu cộng 1 đồng lần lượt cho các phần có phần lẻ lớn nhất; hòa thì theo thứ tự ổn định (ngày, số CT, số dòng).
-  - (c) Giá trị xuất kho = round(SL × giá trị tồn / SL tồn) theo nguồn giá (lô với đích danh/FIFO, cả kỳ với BQ cuối kỳ, thời điểm với BQ tức thời); phần dư nằm lại ở tồn; phiếu xuất làm tồn của nguồn đó về 0 nhận toàn bộ giá trị còn lại.
+- `NGHIEP-VU-KE-TOAN.md` §8.5 đề xuất lưu tiền VND dạng số nguyên; ta giữ `numeric(20,2)` để chứa ngoại tệ nhưng **giá trị VND luôn được làm tròn về `amount_scale` của công ty (mặc định 0)** trước khi ghi sổ ⇒ tương đương số nguyên với VND.
+- **Luật làm tròn duy nhất R1**: nguyên văn ở [THUAT-NGU](../00-tong-quan/THUAT-NGU.md) §5 (nguồn duy nhất); golden test và demo dùng đúng luật này.
 - Cột `numeric(24,8)` của đơn giá chỉ là chỗ chứa; không phép tính giá trị nào được đọc lại đơn giá đã lưu để nhân với SL (R1 (a)). Với ngoại tệ, "đến đồng" thay bằng `amount_scale` của đồng tiền đó.
 - Hàm duy nhất trong `domain-core` cho R1 (b) (property test: Σ = T; mỗi phần ≥ 0 khi T ≥ 0 và w ≥ 0; hoán vị đầu vào không đổi kết quả):
 
@@ -377,7 +375,7 @@ export async function withTenantTx<T>(ctx: RequestCtx, fn: (tx: Tx) => Promise<T
 }
 ```
 
-Kiểm thử bắt buộc: (1) `SELECT * FROM app.check_rls_coverage()` trả 0 dòng — quét mọi schema nghiệp vụ (`app.app_schemas()`, kể cả `core`, `cst`, `audit`, schema mới của 07, và partition con nếu sau này có), danh sách loại trừ nằm ở `app.rls_exempt()` và `sys.*`; (2) test "tenant leak" — tạo 2 tenant, chạy toàn bộ API của tenant A, assert không đọc/ghi được dòng nào của B; (3) đặt `app.tenant_id`/`app.user_id` bằng `set_config` không đổi được tenant (A11). Bảng mới không có `tenant_id` mà không nằm trong danh sách loại trừ ⇒ (1) fail; thêm vào danh sách phải qua review.
+Kiểm thử bắt buộc: (1) `SELECT * FROM app.check_rls_coverage()` trả 0 dòng — quét mọi schema nghiệp vụ (`app.app_schemas()`, kể cả `core`, `cst`, `audit`, schema mới của `DIEU-CHINH-THEO-KHACH-HANG.md`, và partition con nếu sau này có), danh sách loại trừ nằm ở `app.rls_exempt()` và `sys.*`; (2) test "tenant leak" — tạo 2 tenant, chạy toàn bộ API của tenant A, assert không đọc/ghi được dòng nào của B; (3) đặt `app.tenant_id`/`app.user_id` bằng `set_config` không đổi được tenant (A11). Bảng mới không có `tenant_id` mà không nằm trong danh sách loại trừ ⇒ (1) fail; thêm vào danh sách phải qua review.
 
 Hiệu năng RLS: luôn đặt `tenant_id` là **cột đầu tiên** của PK/index; policy viết `(SELECT app.current_tenant())` nên hàm chạy một lần mỗi câu lệnh (một lần tra `core.sessions` theo khoá chính).
 
@@ -391,12 +389,12 @@ tenant (khách hàng SaaS / công ty mẹ)
          └─ warehouse
 ```
 
-- Mọi chứng từ/bút toán/stock move mang `company_id` + `branch_id`. Báo cáo lọc “toàn công ty” hoặc “từng chi nhánh”, giống tuỳ chọn *“Lấy số liệu chi nhánh phụ thuộc”* của MISA. **[ĐỐI CHIẾU 04]**
+- Mọi chứng từ/bút toán/stock move mang `company_id` + `branch_id`. Báo cáo lọc “toàn công ty” hoặc “từng chi nhánh”, giống tuỳ chọn *“Lấy số liệu chi nhánh phụ thuộc”* của MISA. **[ĐỐI CHIẾU `PHAN-TICH-MISA.md`]**
 - Giao dịch nội bộ giữa chi nhánh (TK 136/336) sinh cặp bút toán đối ứng; báo cáo hợp nhất loại trừ theo `intercompany_ref`.
 
 ### 2.3 Đa chế độ kế toán (TT200, TT133, TT99/2025) — hệ thống tài khoản cấu hình được
 
-Bối cảnh (đã xác minh ở 01/04): **TT99/2025/TT-BTC** thay thế TT200 cho kỳ kế toán từ 01/01/2026; TT133 vẫn cho DN nhỏ và vừa. Do đó **template mặc định khi tạo công ty mới chỉ có TT99 và TT133**; TT200 chỉ tồn tại như template “lịch sử” để nhập số liệu các năm ≤ 2025 (chuyển đổi từ MISA) và để map sang TT99. Phần mềm phải: (a) chạy dữ liệu lịch sử theo TT200, (b) chuyển đổi số dư sang TT99, (c) không hard-code số hiệu TK trong code, (d) chịu được các thông tư sửa đổi sau này (versioning). **[ĐỐI CHIẾU 01: danh mục TK & khác biệt TT99]**
+Bối cảnh (đã xác minh ở `NGHIEP-VU-KE-TOAN.md`, `PHAN-TICH-MISA.md`): **TT99/2025/TT-BTC** thay thế TT200 cho kỳ kế toán từ 01/01/2026; TT133 vẫn cho DN nhỏ và vừa. Do đó **template mặc định khi tạo công ty mới chỉ có TT99 và TT133**; TT200 chỉ tồn tại như template “lịch sử” để nhập số liệu các năm ≤ 2025 (chuyển đổi từ MISA) và để map sang TT99. Phần mềm phải: (a) chạy dữ liệu lịch sử theo TT200, (b) chuyển đổi số dư sang TT99, (c) không hard-code số hiệu TK trong code, (d) chịu được các thông tư sửa đổi sau này (versioning). **[ĐỐI CHIẾU `NGHIEP-VU-KE-TOAN.md`: danh mục TK & khác biệt TT99]**
 
 Thiết kế:
 
@@ -623,7 +621,7 @@ CREATE TABLE acc.fiscal_periods (
                       daterange(start_date, end_date, '[]') WITH &&)  -- không chồng kỳ (btree_gist)
 );
 
--- Khoá sổ THEO KỲ THÁNG (01 §6; giá BQ cuối kỳ đòi khoá theo kỳ), có thể theo module.
+-- Khoá sổ THEO KỲ THÁNG (NGHIEP-VU-KE-TOAN §6; giá BQ cuối kỳ đòi khoá theo kỳ), có thể theo module.
 -- locked_through luôn là ngày cuối một kỳ (end_date của acc.fiscal_periods) hoặc '-infinity'.
 -- Khoá theo ngày giữa kỳ (kiểu MISA "khoá sổ đến ngày") có thể bổ sung về sau bằng cách nới điều kiện này.
 CREATE TABLE acc.period_locks (
@@ -636,7 +634,7 @@ CREATE TABLE acc.period_locks (
 );
 -- GĐ1 khoá/mở bằng scope 'ALL' qua acc.lock_period / acc.unlock_period (§7.2); app_user chỉ SELECT bảng này.
 -- Khi tạo company: tạo sẵn ĐỦ 5 dòng (mỗi scope) với '-infinity', để giao dịch ghi sổ luôn có dòng
--- mà khoá FOR SHARE, và thao tác khoá kỳ luôn là UPDATE (khoá xung đột) — xem §7.2 (06b-U1).
+-- mà khoá FOR SHARE, và thao tác khoá kỳ luôn là UPDATE (khoá xung đột) — xem §7.2 (PHAN-BIEN-v2-KIEN-TRUC U1).
 ```
 
 ### 4.4 Chứng từ & dòng chứng từ
@@ -668,7 +666,7 @@ CREATE TABLE acc.documents (
   PRIMARY KEY (tenant_id, id),
   FOREIGN KEY (tenant_id, company_id) REFERENCES core.companies(tenant_id, id)
 );
--- Số CT duy nhất theo loại × NĂM (06b-D1): sang năm mới đánh lại từ 1 không trùng năm trước
+-- Số CT duy nhất theo loại × NĂM (PHAN-BIEN-v2-KIEN-TRUC D1): sang năm mới đánh lại từ 1 không trùng năm trước
 CREATE UNIQUE INDEX documents_no_uq ON acc.documents (tenant_id, company_id, doc_type, fiscal_year, doc_no)
   WHERE doc_no IS NOT NULL;
 CREATE INDEX ON acc.documents (tenant_id, company_id, posting_date, doc_type);
@@ -690,7 +688,7 @@ CREATE TABLE acc.document_lines (
   PRIMARY KEY (tenant_id, id),
   UNIQUE (tenant_id, document_id, line_no),
   FOREIGN KEY (tenant_id, document_id) REFERENCES acc.documents(tenant_id, id) ON DELETE RESTRICT
-  -- KHÔNG CASCADE (06b-D3): cascade chạy sau khi header đã bị xoá nên guard dòng không còn thấy trạng thái.
+  -- KHÔNG CASCADE (PHAN-BIEN-v2-KIEN-TRUC D3): cascade chạy sau khi header đã bị xoá nên guard dòng không còn thấy trạng thái.
   -- Xoá chứng từ DRAFT = xoá dòng trước rồi xoá header, trong cùng transaction (guard ở §7.1).
 );
 ```
@@ -708,7 +706,7 @@ CREATE TABLE acc.journal_entries (
   posting_date date NOT NULL,
   fiscal_year smallint NOT NULL,
   lock_scope text NOT NULL DEFAULT 'ALL',    -- scope khoá kỳ: theo doc_type/source (vd COSTING cho source='COSTING',
-                                             -- CASH cho phiếu thu/chi) — trigger §7.2 đọc cột này (06b-U3)
+                                             -- CASH cho phiếu thu/chi) — trigger §7.2 đọc cột này (PHAN-BIEN-v2-KIEN-TRUC U3)
   is_active boolean NOT NULL DEFAULT true,   -- false khi bị thay bằng phiên bản mới (repost/bỏ ghi)
   superseded_by uuid, valuation_version int, -- cho bút toán do Costing sinh
   created_xid xid8 NOT NULL DEFAULT pg_current_xact_id(),
@@ -737,7 +735,7 @@ CREATE TABLE acc.journal_lines (
   FOREIGN KEY (tenant_id, entry_id)   REFERENCES acc.journal_entries (tenant_id, id) ON DELETE RESTRICT,   -- A1
   FOREIGN KEY (tenant_id, account_id) REFERENCES md.accounts (tenant_id, id)
 );
--- Giai đoạn 1: KHÔNG partition (06b-D2). Điều kiện và yêu cầu khi partition: §4.11.
+-- Giai đoạn 1: KHÔNG partition (PHAN-BIEN-v2-KIEN-TRUC D2). Điều kiện và yêu cầu khi partition: §4.11.
 CREATE INDEX ON acc.journal_lines (tenant_id, company_id, account_id, posting_date) WHERE is_active;
 CREATE INDEX ON acc.journal_lines (tenant_id, entry_id);
 CREATE INDEX ON acc.journal_lines (tenant_id, partner_id, account_id, posting_date) WHERE partner_id IS NOT NULL AND is_active;
@@ -796,7 +794,7 @@ CREATE TABLE md.partners (
   is_customer boolean NOT NULL DEFAULT false, is_supplier boolean NOT NULL DEFAULT false,
   is_employee boolean NOT NULL DEFAULT false, is_bank boolean NOT NULL DEFAULT false,
   tax_code text,
-  credit_limit numeric(20,2) CHECK (credit_limit >= 0),      -- hạn mức dư nợ KH / hạn mức NCC cấp (07 §8)
+  credit_limit numeric(20,2) CHECK (credit_limit >= 0),      -- hạn mức dư nợ KH / hạn mức NCC cấp (DIEU-CHINH-THEO-KHACH-HANG §8)
   payment_term_days smallint CHECK (payment_term_days >= 0),
   PRIMARY KEY (tenant_id, id), UNIQUE (tenant_id, company_id, code),
   FOREIGN KEY (tenant_id, company_id) REFERENCES core.companies (tenant_id, id)
@@ -838,12 +836,12 @@ CREATE TABLE md.warehouses (tenant_id uuid NOT NULL, id uuid NOT NULL DEFAULT uu
   costing_scope text NOT NULL DEFAULT 'WAREHOUSE' CHECK (costing_scope IN ('WAREHOUSE','COMPANY')),
   PRIMARY KEY (tenant_id, id), UNIQUE (tenant_id, company_id, code));
 
--- Lô: CHỈ tạo ở đây; 07 §2.7 bổ sung cột bằng ALTER (A10). Mã lô duy nhất theo (công ty, mặt hàng) — 07 §2.1.
+-- Lô: CHỈ tạo ở đây; DIEU-CHINH-THEO-KHACH-HANG §2.7 bổ sung cột bằng ALTER (A10). Mã lô duy nhất theo (công ty, mặt hàng) — DIEU-CHINH-THEO-KHACH-HANG §2.1.
 CREATE TABLE inv.lots (tenant_id uuid NOT NULL, id uuid NOT NULL DEFAULT uuidv7(),
   company_id uuid NOT NULL, item_id uuid NOT NULL,
   lot_no text NOT NULL CHECK (lot_no ~ '^[0-9A-Za-z.-]{3,20}$'),   -- lưu chuỗi: không mất số 0 đầu
   mfg_date date, expiry_date date,
-  production_order_id uuid,            -- lô do lệnh SX nào tạo → truy xuất giá thành (FK thêm ở 07 §2.7)
+  production_order_id uuid,            -- lô do lệnh SX nào tạo → truy xuất giá thành (FK thêm ở DIEU-CHINH-THEO-KHACH-HANG §2.7)
   PRIMARY KEY (tenant_id, id),
   CONSTRAINT lots_no_uq UNIQUE (tenant_id, company_id, item_id, lot_no),
   FOREIGN KEY (tenant_id, company_id) REFERENCES core.companies (tenant_id, id),
@@ -895,7 +893,7 @@ CREATE TABLE inv.stock_ledger (
   stock_move_id uuid NOT NULL,
   posting_date date NOT NULL, posting_time time NOT NULL,
   kind_rank smallint NOT NULL CHECK (kind_rank IN (1,2,3)),
-                                         -- thứ tự loại trong ngày (01 §8.5), suy ra từ move_kind:
+                                         -- thứ tự loại trong ngày (NGHIEP-VU-KE-TOAN §8.5), suy ra từ move_kind:
                                          -- 1 = nhập (PURCHASE, PROD_RECEIPT, RETURN_IN, OPENING, ADJUST tăng)
                                          -- 2 = chuyển (TRANSFER_OUT, TRANSFER_IN)
                                          -- 3 = xuất (SALE, PROD_ISSUE, CONSUME, SCRAP, RETURN_OUT, ADJUST giảm)
@@ -929,7 +927,7 @@ CREATE INDEX sle_not_final ON inv.stock_ledger (tenant_id, company_id, posting_d
   WHERE valuation_status <> 'FINAL' AND NOT is_cancelled;   -- "còn gì chưa chốt giá?" khi khoá sổ
 CREATE INDEX ON inv.stock_ledger (tenant_id, stock_move_id);
 CREATE INDEX ON inv.stock_ledger (tenant_id, lot_id) WHERE lot_id IS NOT NULL;
--- Kiểm âm theo cấp kiểm soát vật lý (item, warehouse, lot) — 06b-A4
+-- Kiểm âm theo cấp kiểm soát vật lý (item, warehouse, lot) — PHAN-BIEN-v2-KIEN-TRUC A4
 CREATE INDEX sle_phys_time ON inv.stock_ledger
   (tenant_id, item_id, warehouse_id, lot_id, posting_date, posting_time, kind_rank, seq) WHERE NOT is_cancelled;
 ```
@@ -978,11 +976,11 @@ GRANT EXECUTE ON FUNCTION inv.set_valuation(bigint, numeric, numeric, text, nume
 - Với BQ cuối kỳ, khi ghi sổ phiếu xuất, engine gán ngay **giá tạm = BQ tức thời** tại thời điểm đó (`valuation_status='PROVISIONAL'`) ⇒ báo cáo giữa kỳ có số hợp lý, không âm giá trị.
 - “Tính giá xuất kho cuối kỳ” chuyển các dòng của kỳ sang `FINAL` (giá BQ kỳ), sinh lại bút toán; UI/báo cáo luôn hiển thị nhãn **Tạm tính / Đã chốt** và tổng chênh lệch tạm→chốt.
 - Phiếu nhập TP chưa có giá thành ⇒ `PENDING` (giá trị = 0 hoặc giá kế hoạch nếu cấu hình), chuyển `FINAL` khi tính giá thành.
-- **Khách hàng đầu tiên (đích danh theo lô + giá thành theo lệnh SX, 07 §4)**: không có BQ cuối kỳ. Giá lô BTP/TP được tính **ngay** khi lệnh hoàn thành và tính lại mỗi khi chi phí của kỳ đổi (SXC phân bổ theo khối lượng × số ngày phụ thuộc tổng SXC cả tháng), không chờ thao tác "tính giá thành" cuối kỳ. Dòng mang `PROVISIONAL` cho đến khi khoá kỳ thì thành `FINAL`. Màn hình không gắn nhãn "tạm tính" (yêu cầu giao diện tối giản, YEU-CAU NFR-01); trạng thái chỉ hiện trong chi tiết lô và trong điều kiện khoá kỳ.
-- **Kiểm/cảnh báo tồn âm theo `(item, warehouse, lot)`** (đúng cấp K3, không theo cost key — 06b-A4): khi ghi sổ một dòng xuất SL q tại khoá thứ tự T (kể cả backdated), **sau khi đã lấy khoá A1** (Phụ lục A), tính lũy kế vật lý trực tiếp từ `stock_ledger` (không đọc `qty_after`, vì `qty_after` theo cost key và được repost cập nhật bất đồng bộ):
+- **Khách hàng đầu tiên (đích danh theo lô + giá thành theo lệnh SX, `DIEU-CHINH-THEO-KHACH-HANG.md` §4)**: không có BQ cuối kỳ. Giá lô BTP/TP được tính **ngay** khi lệnh hoàn thành và tính lại mỗi khi chi phí của kỳ đổi (SXC phân bổ theo khối lượng × số ngày phụ thuộc tổng SXC cả tháng), không chờ thao tác "tính giá thành" cuối kỳ. Dòng mang `PROVISIONAL` cho đến khi khoá kỳ thì thành `FINAL`. Màn hình không gắn nhãn "tạm tính" (yêu cầu giao diện tối giản, YEU-CAU NFR-01); trạng thái chỉ hiện trong chi tiết lô và trong điều kiện khoá kỳ.
+- **Kiểm/cảnh báo tồn âm theo `(item, warehouse, lot)`** (đúng cấp K3, không theo cost key — `PHAN-BIEN-v2-KIEN-TRUC.md` A4): khi ghi sổ một dòng xuất SL q tại khoá thứ tự T (kể cả backdated), **sau khi đã lấy khoá A1** (Phụ lục A), tính lũy kế vật lý trực tiếp từ `stock_ledger` (không đọc `qty_after`, vì `qty_after` theo cost key và được repost cập nhật bất đồng bộ):
 
   ```sql
-  -- mẫu truy vấn: tồn khả dụng tại T (kiểm âm). Với vị trí chứa (07 §2.8) thêm điều kiện location_id.
+  -- mẫu truy vấn: tồn khả dụng tại T (kiểm âm). Với vị trí chứa (DIEU-CHINH-THEO-KHACH-HANG §2.8) thêm điều kiện location_id.
   -- $1 tenant, $2 item, $3 warehouse, $4 lot (NULL nếu không theo lô), ($5,$6,$7,$8) = khoá thứ tự T của dòng mới
   WITH s AS (
     SELECT posting_date d, posting_time t, kind_rank k, seq,
@@ -999,7 +997,7 @@ GRANT EXECUTE ON FUNCTION inv.set_valuation(bigint, numeric, numeric, text, nume
   ) AS available;   -- cấm âm ⇒ yêu cầu available ≥ q
   ```
   Đã chạy thử trên PG16 (`'Infinity'::numeric` cần PG ≥ 14). Khối lượng dữ liệu một DN vừa thì quét cả lịch sử của một `(item, kho, lô)` là chấp nhận được; khi lớn thì bắt đầu từ số dư chốt cuối kỳ khoá gần nhất.
-  Tồn âm (khi được phép) ⇒ dòng `PROVISIONAL` + cảnh báo trên màn hình + báo cáo “VTHH tồn âm”; **không cho khoá kỳ** khi còn tồn âm hoặc còn dòng ≠ FINAL trong kỳ (01 §3.8, K3).
+  Tồn âm (khi được phép) ⇒ dòng `PROVISIONAL` + cảnh báo trên màn hình + báo cáo “VTHH tồn âm”; **không cho khoá kỳ** khi còn tồn âm hoặc còn dòng ≠ FINAL trong kỳ (`NGHIEP-VU-KE-TOAN.md` §3.8, K3).
 
 Bảng tồn hiện thời (cache để đọc nhanh; **không** phải cơ chế chống âm kho — việc đó do khoá A1 + truy vấn trên):
 
@@ -1198,7 +1196,7 @@ CREATE TABLE mfg.product_cost_sheets (
 
 ### 4.11 Index & partition — nguyên tắc
 
-- **Giai đoạn 1 không partition bảng nào** (06b-D2): một DN với 3 kho, vài nghìn mã hàng thì `journal_lines`, `stock_ledger`, `audit.change_log`, `cst.cost_flow_edges` ước chừng không quá vài triệu dòng/năm (ước lượng, chưa đo trên dữ liệu khách), index thường là đủ. Cột `fiscal_year` vẫn giữ trên các bảng này để partition về sau không phải đổi dữ liệu.
+- **Giai đoạn 1 không partition bảng nào** (`PHAN-BIEN-v2-KIEN-TRUC.md` D2): một DN với 3 kho, vài nghìn mã hàng thì `journal_lines`, `stock_ledger`, `audit.change_log`, `cst.cost_flow_edges` ước chừng không quá vài triệu dòng/năm (ước lượng, chưa đo trên dữ liệu khách), index thường là đủ. Cột `fiscal_year` vẫn giữ trên các bảng này để partition về sau không phải đổi dữ liệu.
 - **Khi nào partition**: khi đo được nhu cầu thật — truy vấn báo cáo năm chậm dù đã có index, vacuum/bloat của bảng lớn thành vấn đề, hoặc cần tách dữ liệu năm cũ (lưu trữ 10 năm) — chứ không làm trước. Dự kiến: `journal_lines`, `stock_ledger`, `cst.cost_flow_edges` LIST theo `fiscal_year`; `audit.change_log` RANGE theo tháng.
 - **Yêu cầu bắt buộc khi partition** (chưa chạy thử trên PG18):
   1. PK/unique phải chứa cột partition ⇒ PK đổi thành `(tenant_id, fiscal_year, id)`; FK đang trỏ vào `(tenant_id, id)` của bảng đó phải thêm `fiscal_year` (hoặc bỏ FK, thay bằng job kiểm toàn vẹn — ghi rõ từng chỗ).
@@ -1210,7 +1208,7 @@ CREATE TABLE mfg.product_cost_sheets (
 - Index partial `WHERE is_active` / `WHERE NOT is_cancelled` / `WHERE qty_remaining > 0`.
 - BRIN trên `posting_date` cho bảng append theo thời gian.
 - Không dùng FK từ bảng partitioned lớn sang bảng lớn khác nếu ảnh hưởng ghi (journal_lines → document_lines chỉ giữ id, kiểm bằng test toàn vẹn định kỳ); FK tới danh mục giữ lại.
-- `autovacuum` tinh chỉnh cho `stock_ledger` (UPDATE dẫn xuất khi repost tạo bloat); `fillfactor=80` đặt được vì Giai đoạn 1 không partition. Lưu ý: HOT update chỉ xảy ra khi cột bị cập nhật không nằm trong index nào — hiện `sle_key_time` INCLUDE `qty_after, value_after, valuation_rate` nên chưa đạt (06b-D11, chưa xử lý trong bản này).
+- `autovacuum` tinh chỉnh cho `stock_ledger` (UPDATE dẫn xuất khi repost tạo bloat); `fillfactor=80` đặt được vì Giai đoạn 1 không partition. Lưu ý: HOT update chỉ xảy ra khi cột bị cập nhật không nằm trong index nào — hiện `sle_key_time` INCLUDE `qty_after, value_after, valuation_rate` nên chưa đạt (`PHAN-BIEN-v2-KIEN-TRUC.md` D11, chưa xử lý trong bản này).
 
 ---
 
@@ -1220,7 +1218,7 @@ CREATE TABLE mfg.product_cost_sheets (
 
 1. **Thuần (pure core)**: thuật toán tính giá trong `packages/costing/core` là hàm thuần nhận chuỗi giao dịch đã sắp xếp + trạng thái đầu → trả giá trị từng dòng + trạng thái cuối. Không IO ⇒ golden test & property test dễ.
 2. **Đơn vị xử lý = cost key** `(company, item, scope)`. Các cost key độc lập được chạy **song song**; phụ thuộc giữa các key (chuyển kho, sản xuất, trả lại) được xử lý qua **đồ thị phụ thuộc** (§5.5–5.6).
-3. **Thứ tự chuẩn** của giao dịch: `(posting_date, posting_time, kind_rank, seq)` — trong cùng ngày **nhập < chuyển < xuất**, sau đó theo thứ tự ghi sổ (01 §8.5). `kind_rank`: 1 = nhập, 2 = chuyển, 3 = xuất (định nghĩa đầy đủ ở cột `inv.stock_ledger.kind_rank`, §4.7). `seq` cấp từ sequence **sau khi** đã lấy khoá cost key (Phụ lục A) ⇒ xác định, ổn định và đơn điệu theo key. (Mặc định `posting_time = 00:00` như MISA, nên `kind_rank` thực sự quyết định.) Một hàm duy nhất dùng cho cả SQL `ORDER BY` và TS, có test so khớp hai phía:
+3. **Thứ tự chuẩn** của giao dịch: `(posting_date, posting_time, kind_rank, seq)` — trong cùng ngày **nhập < chuyển < xuất**, sau đó theo thứ tự ghi sổ (`NGHIEP-VU-KE-TOAN.md` §8.5). `kind_rank`: 1 = nhập, 2 = chuyển, 3 = xuất (định nghĩa đầy đủ ở cột `inv.stock_ledger.kind_rank`, §4.7). `seq` cấp từ sequence **sau khi** đã lấy khoá cost key (Phụ lục A) ⇒ xác định, ổn định và đơn điệu theo key. (Mặc định `posting_time = 00:00` như MISA, nên `kind_rank` thực sự quyết định.) Một hàm duy nhất dùng cho cả SQL `ORDER BY` và TS, có test so khớp hai phía:
    ```ts
    type SortKey = { date: string; time: string; kindRank: 1 | 2 | 3; seq: bigint };
    const compareKey = (a: SortKey, b: SortKey) =>
@@ -1228,7 +1226,7 @@ CREATE TABLE mfg.product_cost_sheets (
    // SQL tương ứng: ORDER BY posting_date, posting_time, kind_rank, seq
    ```
 4. **Idempotent**: chạy lại engine với cùng dữ liệu vào cho cùng kết quả; mỗi lần ghi kết quả tăng `valuation_version`, chỉ ghi khi giá trị khác (so sánh trước khi UPDATE ⇒ giảm bloat & sự kiện thừa).
-5. **Khoá (06b-A1)**: mọi giao dịch đọc/ghi tồn hoặc giá của một cost key — **cả ghi sổ chứng từ lẫn worker repost** — lấy `pg_advisory_xact_lock(hashtextextended('ck:'||tenant||':'||item||':'||scope||':'||coalesce(lot,''), 0))`; ghi sổ thêm khoá vật lý `'pk:'||tenant||item||warehouse||lot` cho kiểm âm (§4.7). Giao dịch cần nhiều khoá thì lấy **theo thứ tự tăng dần của giá trị băm** ⇒ không deadlock. Worker repost chỉ giữ một khoá cost key tại một thời điểm.
+5. **Khoá (`PHAN-BIEN-v2-KIEN-TRUC.md` A1)**: mọi giao dịch đọc/ghi tồn hoặc giá của một cost key — **cả ghi sổ chứng từ lẫn worker repost** — lấy `pg_advisory_xact_lock(hashtextextended('ck:'||tenant||':'||item||':'||scope||':'||coalesce(lot,''), 0))`; ghi sổ thêm khoá vật lý `'pk:'||tenant||item||warehouse||lot` cho kiểm âm (§4.7). Giao dịch cần nhiều khoá thì lấy **theo thứ tự tăng dần của giá trị băm** ⇒ không deadlock. Worker repost chỉ giữ một khoá cost key tại một thời điểm.
 6. **Không vượt kỳ đã khoá**: repost không bao giờ sửa dòng có `posting_date <= locked_through(COSTING)` (đọc `period_locks … FOR SHARE`, §7.2); nếu cần ⇒ lỗi nghiệp vụ, yêu cầu mở khoá.
 7. **Làm tròn**: theo R1 (§1.4) ở mọi phương pháp.
 
@@ -1257,7 +1255,7 @@ for sle in ledger(key) where sortKey(sle) >= T order by posting_date, posting_ti
   write(sle, value_change = valueChange, qty_after = state.qty, value_after = state.value, valuation_rate = rate)
 ```
 
-Điểm quan trọng: dùng `value/qty` tại thời điểm xuất (không dùng rate đã làm tròn) và quy tắc “xuất hết thì lấy hết giá trị” ⇒ không bao giờ có tồn 0 mà giá trị ≠ 0. Ví dụ 01 §3.4: X2 = round(100 × 1.733.333 / 150) = 1.155.555; tồn 577.778.
+Điểm quan trọng: dùng `value/qty` tại thời điểm xuất (không dùng rate đã làm tròn) và quy tắc “xuất hết thì lấy hết giá trị” ⇒ không bao giờ có tồn 0 mà giá trị ≠ 0. Ví dụ `NGHIEP-VU-KE-TOAN.md` §3.4: X2 = round(100 × 1.733.333 / 150) = 1.155.555; tồn 577.778.
 
 ### 5.3 Bình quân gia quyền cuối kỳ (periodic average) — mặc định của nhiều DN VN
 
@@ -1266,7 +1264,7 @@ Trong kỳ, dòng xuất mang **giá tạm** = BQ tức thời tại thời đi�
 ```
 unit_cost(key, period) = (opening_value + Σ inbound_value) / (opening_qty + Σ inbound_qty)
 ```
-– inbound gồm mua, nhập TP (từ giá thành), nhập chuyển kho (= giá xuất của kho nguồn), điều chỉnh giá trị nhập (SL = 0). Nhập hàng bán trả lại — **một mặc định duy nhất** (01 §3.3): giá vốn lúc xuất bán của chính dòng hoá đơn gốc (LINKED); dòng gốc cùng kỳ ⇒ loại khỏi mẫu số, nhận giá sau khi chốt `unit_cost`; dòng gốc thuộc kỳ trước ⇒ giá đã chốt, tham gia bình quân.
+– inbound gồm mua, nhập TP (từ giá thành), nhập chuyển kho (= giá xuất của kho nguồn), điều chỉnh giá trị nhập (SL = 0). Nhập hàng bán trả lại — **một mặc định duy nhất** (`NGHIEP-VU-KE-TOAN.md` §3.3): giá vốn lúc xuất bán của chính dòng hoá đơn gốc (LINKED); dòng gốc cùng kỳ ⇒ loại khỏi mẫu số, nhận giá sau khi chốt `unit_cost`; dòng gốc thuộc kỳ trước ⇒ giá đã chốt, tham gia bình quân.
 – Sau khi có tổng `(V, Q)` của kỳ (V = opening_value + Σ inbound_value, Q = opening_qty + Σ inbound_qty): mỗi dòng xuất = `round(q × V / Q)` (R1 (c), không nhân từ `unit_cost` đã làm tròn); phần dư nằm lại ở tồn cuối, `closing_value = V − Σ out`; nếu tồn cuối kỳ SL = 0 thì dòng xuất làm tồn về 0 (dòng cuối theo `compareKey`) nhận toàn bộ giá trị còn lại ⇒ `closing_qty = 0 ⇒ closing_value = 0`.
 
 Vì nhập chuyển kho / nhập TP phụ thuộc giá của key khác ⇒ đây là **hệ phương trình tuyến tính**, giải ở §5.6.
@@ -1291,12 +1289,12 @@ FIFO, repost từ T cho key K:
                  FIFO: tạo layer mới; đích danh: cộng trả lại vào đúng lô gốc
   4. Cập nhật qty_after/value_after cho từng sle.
 Đích danh (SPECIFIC) = cùng thuật toán nhưng dòng xuất BẮT BUỘC chỉ định lot (hoặc serial) và chỉ tiêu hao
-layer của lô đó; cost key gồm lot ⇒ mỗi lô là một nguồn giá. Ví dụ đầy đủ (NVL → BTP nhiều giai đoạn → TP): 01 §4.6.
+layer của lô đó; cost key gồm lot ⇒ mỗi lô là một nguồn giá. Ví dụ đầy đủ (NVL → BTP nhiều giai đoạn → TP): NGHIEP-VU-KE-TOAN §4.6.
 ```
 
 ### 5.5 Repost khi có chứng từ backdated (học từ ERPNext *Repost Item Valuation* & Odoo 19 `_correct_inventory_valuation(from_date)`)
 
-Ghi chú nguồn (02): ERPNext repost bất đồng bộ có checkpoint/resume, khử trùng lặp, chặn trước kỳ khoá — ta lấy nguyên các ý này. Odoo 17/18 (SVL) **không** hỗ trợ backdate; Odoo 19 bỏ SVL, giá trị nằm trên `stock.move` và có replay từ ngày sớm nhất bị ảnh hưởng — trùng hướng thiết kế ở đây. Khác ERPNext: không lưu FIFO queue JSON trên từng dòng mà dùng `cost_layers` + `valuation_snapshots` (§4.8).
+Ghi chú nguồn (`REPO-MA-NGUON-MO.md`): ERPNext repost bất đồng bộ có checkpoint/resume, khử trùng lặp, chặn trước kỳ khoá — ta lấy nguyên các ý này. Odoo 17/18 (SVL) **không** hỗ trợ backdate; Odoo 19 bỏ SVL, giá trị nằm trên `stock.move` và có replay từ ngày sớm nhất bị ảnh hưởng — trùng hướng thiết kế ở đây. Khác ERPNext: không lưu FIFO queue JSON trên từng dòng mà dùng `cost_layers` + `valuation_snapshots` (§4.8).
 
 **Phạm vi theo giai đoạn (chốt, A9 — mọi tài liệu trích mục này):**
 - **GĐ1: tính lại toàn bộ.** Mỗi yêu cầu tính lại một cost key được xử lý bằng cách **phát lại toàn bộ** các dòng của key đó từ mốc kỳ khoá gần nhất (số dư cuối kỳ khoá là điểm bắt đầu), trong **một** transaction ngắn dưới khoá cost key. Với đích danh theo lô, một cost key là một lô ở một kho nên chuỗi dòng ngắn (vài chục dòng). Vẫn dùng `cst.repost_requests` làm hàng đợi (gộp yêu cầu, lan truyền lô NVL → lệnh → lô BTP/TP → giá vốn), nhưng **không** checkpoint, không chia lô 5.000 dòng, không `valuation_snapshots`.
@@ -1306,12 +1304,12 @@ Ghi chú nguồn (02): ERPNext repost bất đồng bộ có checkpoint/resume, 
 Sự kiện gây repost: ghi sổ/bỏ ghi chứng từ kho có `posting_ts` < ts dòng cuối của key; sửa giá nhập (chi phí mua phân bổ về sau, hoá đơn NCC đến muộn ⇒ landed cost); thay đổi giá thành TP; chuyển kho từ key đã thay đổi.
 
 ```sql
-CREATE TABLE cst.repost_requests (       -- NGUỒN SỰ THẬT của việc cần tính lại (06b-A3), không phải BullMQ
+CREATE TABLE cst.repost_requests (       -- NGUỒN SỰ THẬT của việc cần tính lại (PHAN-BIEN-v2-KIEN-TRUC A3), không phải BullMQ
   tenant_id uuid NOT NULL, id uuid NOT NULL DEFAULT uuidv7(),
   company_id uuid NOT NULL, item_id uuid NOT NULL, cost_key_scope uuid NOT NULL,
   lot_id uuid,                            -- chỉ khi cost key theo lô (SPECIFIC)
   from_date date NOT NULL, from_time time NOT NULL,
-  from_kind_rank smallint NOT NULL, from_seq bigint NOT NULL,   -- đủ 4 thành phần của compareKey (06b-A6)
+  from_kind_rank smallint NOT NULL, from_seq bigint NOT NULL,   -- đủ 4 thành phần của compareKey (PHAN-BIEN-v2-KIEN-TRUC A6)
   status text NOT NULL DEFAULT 'QUEUED' CHECK (status IN ('QUEUED','RUNNING','DONE','FAILED')),
   lease_until timestamptz,                -- RUNNING quá hạn lease ⇒ cron trả về QUEUED (worker chết)
   checkpoint_key jsonb, checkpoint_state jsonb,   -- SortKey + {qty, value | layers} sau lô đã commit
@@ -1326,7 +1324,7 @@ CREATE UNIQUE INDEX repost_one_queued ON cst.repost_requests
 ```
 
 ```sql
--- mẫu truy vấn: upsert gộp (trong transaction ghi sổ, dưới khoá cost key). So sánh đủ (ngày, giờ, kind_rank, seq) — 06b-A6.
+-- mẫu truy vấn: upsert gộp (trong transaction ghi sổ, dưới khoá cost key). So sánh đủ (ngày, giờ, kind_rank, seq) — PHAN-BIEN-v2-KIEN-TRUC A6.
 -- Đã chạy thử trên PG16 (tham chiếu EXCLUDED và bảng đích trong subquery của SET hợp lệ).
 INSERT INTO cst.repost_requests AS r
   (tenant_id, company_id, item_id, cost_key_scope, lot_id, from_date, from_time, from_kind_rank, from_seq, cause)
@@ -1340,7 +1338,7 @@ DO UPDATE SET (from_date, from_time, from_kind_rank, from_seq) =
 RETURNING id;          -- id này là jobId của tín hiệu BullMQ (qua outbox)
 ```
 
-Worker **GĐ2** (pseudo-code TS) — **không giữ transaction dài** (06b-A2). Worker GĐ1 là trường hợp riêng: một lô duy nhất (toàn bộ key), không checkpoint:
+Worker **GĐ2** (pseudo-code TS) — **không giữ transaction dài** (`PHAN-BIEN-v2-KIEN-TRUC.md` A2). Worker GĐ1 là trường hợp riêng: một lô duy nhất (toàn bộ key), không checkpoint:
 
 ```ts
 const BATCH = 5_000;
@@ -1398,7 +1396,7 @@ Giữa hai lô, giao dịch ghi sổ khác được chen vào cùng key (khoá c
 
 ### 5.6 Phụ thuộc giữa các key & vòng lặp sản xuất (BQ cuối kỳ + giá thành)
 
-> Mục này chỉ dùng cho phương pháp BQ cuối kỳ (khách hàng khác, GĐ2). Khách hàng đầu tiên dùng đích danh theo lô + giá thành theo lệnh SX: chuỗi lô là đồ thị có hướng theo thời gian, không có hệ phương trình (07 §0 dòng 5).
+> Mục này chỉ dùng cho phương pháp BQ cuối kỳ (khách hàng khác, GĐ2). Khách hàng đầu tiên dùng đích danh theo lô + giá thành theo lệnh SX: chuỗi lô là đồ thị có hướng theo thời gian, không có hệ phương trình (`DIEU-CHINH-THEO-KHACH-HANG.md` §0 dòng 5).
 
 Cuối kỳ, với BQ cuối kỳ, đặt ẩn `c_k` = giá đơn vị của key k trong kỳ.
 
@@ -1424,7 +1422,7 @@ Thuật toán:
 3. Với SCC nhiều nút (chuyển kho qua lại; TP quay lại làm NVL – vd. tái chế phế phẩm, BTP dùng chéo):
    - Mặc định (n ≤ 200, đủ cho DN vừa): giải đúng bằng khử Gauss với Decimal (độ chính xác 40) → c.
    - Dự phòng khi n lớn: lặp Gauss–Seidel trên GIÁ TRỊ y_k = Q_k·c_k (không trên đơn giá, vì đơn vị
-     SL của NVL (kg) và SP (cái) khác nhau nên so a_kj với Q_k là vô nghĩa — 06b-A9):
+     SL của NVL (kg) và SP (cái) khác nhau nên so a_kj với Q_k là vô nghĩa — PHAN-BIEN-v2-KIEN-TRUC A9):
        y_k ← V_k^0 + P_k + Σ_j b_kj · y_j        với b_kj = (phần SL của j chảy vào k) / Q_j
        (P_k gồm cả NC, SXC hằng số của sản xuất; phần giá trị NVL giữ lại ở dở dang làm b_kj nhỏ đi)
      Điều kiện hội tụ đúng: tổng theo CỘT Σ_k b_kj ≤ 1 với mọi j (không key nào chuyển đi quá giá trị nó có —
@@ -1463,7 +1461,7 @@ async function periodClose(companyId, period) {
 ### 5.7 Âm kho, trả lại, chi phí mua về sau
 
 - **Âm kho**: cấu hình tenant `allow_negative_stock`. Nếu cho phép: dòng xuất khi tồn ≤ 0 lấy giá = giá gần nhất (last valuation rate) ⇒ khi có nhập sau, sinh **dòng điều chỉnh chênh lệch** (giống Odoo “negative stock correction”) gắn vào dòng nhập. Nếu không cho phép: chặn tại ghi sổ, **dưới khoá vật lý `(item, warehouse, lot)` của A1**, bằng truy vấn lũy kế vật lý ở §4.7 (tồn ngay trước T và tồn thấp nhất sau T đều phải ≥ q). Không dùng `qty_after` (theo cost key, cập nhật bất đồng bộ) và không dùng `stock_balances` (chỉ là cache).
-- **Hàng bán trả lại**: nhập lại theo giá vốn lúc xuất bán của chính dòng hoá đơn gốc (LINKED, mặc định duy nhất — 01 §3.3) — repost dòng bán gốc ⇒ lan truyền.
+- **Hàng bán trả lại**: nhập lại theo giá vốn lúc xuất bán của chính dòng hoá đơn gốc (LINKED, mặc định duy nhất — `NGHIEP-VU-KE-TOAN.md` §3.3) — repost dòng bán gốc ⇒ lan truyền.
 - **Chi phí mua / hoá đơn đến sau** (landed cost, giảm giá hàng mua): tăng/giảm giá trị dòng nhập gốc nếu hàng còn tồn; phần đã xuất phân bổ vào 632 (cấu hình) — engine xử lý tự nhiên qua repost từ ts dòng nhập.
 
 ### 5.8 Tính giá thành (manufacturing costing run)
@@ -1491,9 +1489,9 @@ Input kỳ: chi phí tập hợp (journal_lines TK 621/622/627 hoặc 154 chi ti
                    cost_objects có parent/step_no + BOM đa cấp ⇒ engine sắp thứ tự theo low_level_code,
                    tính bước 1 → cập nhật giá nhập BTP → giá xuất BTP sang bước 2 → … trong cùng vòng lặp §5.6.
                    BTP chuyển một phần sang bước sau: GT = round(SL chuyển × Z_BTP còn lại / SL BTP còn lại) (R1 c),
-                   phần còn lại ở 154 của bước trước; tách GT chuyển theo khoản mục bằng R1 (b) (ví dụ số: 01 §4.6).
+                   phần còn lại ở 154 của bước trước; tách GT chuyển theo khoản mục bằng R1 (b) (ví dụ số: NGHIEP-VU-KE-TOAN §4.6).
      JOB_ORDER   : tổng theo lệnh SX; DD = toàn bộ CP lệnh chưa xong — PHƯƠNG PHÁP ĐÃ CHỐT cho khách hàng đầu tiên:
-                   mỗi lệnh SX công đoạn là một đối tượng tập hợp chi phí, kể cả lệnh ủ qua nhiều kỳ (07 §4)
+                   mỗi lệnh SX công đoạn là một đối tượng tập hợp chi phí, kể cả lệnh ủ qua nhiều kỳ (DIEU-CHINH-THEO-KHACH-HANG §4)
 6. Ghi product_cost_sheets; Z của đối tượng chia cho các phiếu nhập TP/BTP (nhiều lô, nhiều phiếu) bằng R1 (b)
    (trọng số = SL, hoặc SL × hệ số / giá định mức); cập nhật giá trị nhập cho stock moves PROD_RECEIPT
    (valuation_source='ENGINE'; unit cost 4 số lẻ chỉ để hiển thị);
@@ -1502,11 +1500,11 @@ Input kỳ: chi phí tập hợp (journal_lines TK 621/622/627 hoặc 154 chi ti
 
 **BOM đa cấp** (MISA chỉ 1 cấp): `bom_lines.component_id` có thể là BTP có BOM riêng; `md.items.low_level_code` tính lại mỗi khi BOM đổi (BFS từ TP xuống, LLC = độ sâu lớn nhất); phát hiện BOM vòng ⇒ chặn lưu trừ khi dòng được đánh dấu `is_recycle` (tái chế/thu hồi) — trường hợp đó được giải bằng SCC ở §5.6. **Mô hình dữ liệu và engine đa cấp ngay từ đầu** (khách hàng có quy trình nhiều giai đoạn); phạm vi giao diện theo `KE-HOACH-DU-AN.md` v0.4.
 
-Tất cả công thức nằm trong core thuần; số liệu kiểm bằng ví dụ giáo trình (§8.3). **[ĐỐI CHIẾU 01 §4, 03: ví dụ số các phương pháp]**
+Tất cả công thức nằm trong core thuần; số liệu kiểm bằng ví dụ giáo trình (§8.3). **[ĐỐI CHIẾU `NGHIEP-VU-KE-TOAN.md` §4, `SACH-VA-VAN-BAN.md`: ví dụ số các phương pháp]**
 
 ### 5.9 Tập hợp & phân bổ 621/622/627 → 154 (tự thiết kế, theo mô hình cost element)
 
-Không repo tham khảo nào có sẵn (02). Mô hình lấy ý tưởng *cost element* của iDempiere (Material/Labor/Overhead) và ánh xạ sang kế toán VN:
+Không repo tham khảo nào có sẵn (`REPO-MA-NGUON-MO.md`). Mô hình lấy ý tưởng *cost element* của iDempiere (Material/Labor/Overhead) và ánh xạ sang kế toán VN:
 
 ```sql
 -- Ánh xạ TK chi phí (theo standard_code/role) → yếu tố chi phí; cấu hình theo chế độ
@@ -1528,7 +1526,7 @@ CREATE TABLE mfg.normal_capacity (
 );
 ```
 
-Thuật toán (bước 5 của quy trình khoá sổ 01 §6):
+Thuật toán (bước 5 của quy trình khoá sổ `NGHIEP-VU-KE-TOAN.md` §6):
 
 ```
 1. Thu thập: với mỗi journal_line active trong kỳ có TK thuộc cost_element_map:
@@ -1540,14 +1538,14 @@ Thuật toán (bước 5 của quy trình khoá sổ 01 §6):
        absorbed = round(pool × util) ; unabsorbed = pool − absorbed
        unabsorbed → bút toán Nợ 632 / Có 627x (source='ALLOCATION'), cạnh trace pool → 'COGS_UNABSORBED'
      MOH-VARIABLE phân bổ hết theo thực tế.
-     (VD 01 §4.2: 627 cố định 10tr, công suất 1.000, thực tế 800 → 8tr vào Z, 2tr → 632)
+     (VD NGHIEP-VU-KE-TOAN §4.2: 627 cố định 10tr, công suất 1.000, thực tế 800 → 8tr vào Z, 2tr → 632)
 3. Phân bổ pool chung theo allocation_rules (§5.8 bước 2) → mfg.allocations (R1 (b); G3).
 4. Kết chuyển (TT99/TT200): Nợ 154 (cost_object, cost_element) / Có 621, 622, 623, 627 — 1 chứng từ
      'COST_TRANSFER' / kỳ / company, idempotent: chạy lại = void bản cũ + sinh bản mới.
    TT133: chi phí đã ở 154 ⇒ chỉ ghi lại phân bổ giữa các đối tượng (Nợ 154-đối tượng / Có 154-chung).
 5. Đánh giá dở dang, tính giá thành, Nợ 155/Có 154 (§5.8); NVL thừa nhập lại (Nợ 152/Có 621), phế liệu thu hồi
    (Nợ 152/Có 154) là "giảm giá thành" — cột byproduct_deduction.
-6. Kiểm tra G1–G5 (01 §8.3): số dư 621/622/623/627 = 0 sau kết chuyển và PS Nợ 627 = Σ phân bổ vào 154 + Σ chuyển 632;
+6. Kiểm tra G1–G5 (NGHIEP-VU-KE-TOAN §8.3): số dư 621/622/623/627 = 0 sau kết chuyển và PS Nợ 627 = Σ phân bổ vào 154 + Σ chuyển 632;
    Σ DDCK theo đối tượng = số dư 154; Σ phân bổ = Σ pool; GT phiếu nhập TP = Z.
 ```
 
@@ -1646,7 +1644,7 @@ Invariant: `Σ product_cost_trace.amount (theo sheet) = product_cost_sheets.tota
 
 ## 7. Audit & tuân thủ
 
-Căn cứ: TT99/2025 (phần mềm phải lưu vết sửa đổi), Luật Kế toán 2015 (lưu trữ chứng từ dùng ghi sổ & BCTC tối thiểu 10 năm), NĐ 174/2016 (lưu trữ tài liệu kế toán, có thể lưu bản điện tử), NĐ 123/2020 + NĐ 70/2025 (hoá đơn), TT 99/2025 & TT133 (chế độ kế toán). **[ĐỐI CHIẾU 01]**
+Căn cứ: TT99/2025 (phần mềm phải lưu vết sửa đổi), Luật Kế toán 2015 (lưu trữ chứng từ dùng ghi sổ & BCTC tối thiểu 10 năm), NĐ 174/2016 (lưu trữ tài liệu kế toán, có thể lưu bản điện tử), NĐ 123/2020 + NĐ 70/2025 (hoá đơn), TT 99/2025 & TT133 (chế độ kế toán). **[ĐỐI CHIẾU `NGHIEP-VU-KE-TOAN.md`]**
 
 ### 7.1 Vòng đời chứng từ & bất biến
 
@@ -1661,7 +1659,7 @@ Kỳ đã khoá: không bỏ ghi/huỷ; chỉ lập chứng từ điều chỉnh
 - **Bỏ ghi** không xoá: snapshot đầy đủ phiên bản đã ghi sổ vào `acc.document_versions(document_id, version, payload jsonb, row_hash)`; journal entries cũ `is_active=false`; stock ledger `is_cancelled=true`; sinh repost. Khi ghi sổ lại ⇒ version mới, bút toán mới. Báo cáo chỉ đọc `is_active`, nhưng *Nhật ký truy vết* xem được mọi phiên bản.
 - Chế độ nghiêm ngặt (tuỳ chọn tenant/kiểm toán): cấm bỏ ghi, sửa = chứng từ đảo (reversal) + lập lại.
 
-Guard trên **header** `acc.documents` (06b-D3) — đã chạy thử trên PG16:
+Guard trên **header** `acc.documents` (`PHAN-BIEN-v2-KIEN-TRUC.md` D3) — đã chạy thử trên PG16:
 
 ```sql
 CREATE FUNCTION acc.guard_documents() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -1671,7 +1669,7 @@ DECLARE
   c_void   text[] := ARRAY['status','voided_at','voided_by','void_reason'];
 BEGIN
   IF TG_OP = 'DELETE' THEN
-    -- Chỉ xoá được nháp CHƯA TỪNG có số (06b-U5: chứng từ đã có số thì chỉ VOIDED, không xoá)
+    -- Chỉ xoá được nháp CHƯA TỪNG có số (PHAN-BIEN-v2-KIEN-TRUC U5: chứng từ đã có số thì chỉ VOIDED, không xoá)
     IF OLD.status <> 'DRAFT' OR OLD.doc_no IS NOT NULL THEN
       RAISE EXCEPTION 'Không được xoá chứng từ % (trạng thái %, số %)', OLD.id, OLD.status, OLD.doc_no
         USING ERRCODE = '55000';
@@ -1719,7 +1717,7 @@ END $$;
 CREATE TRIGGER documents_guard BEFORE UPDATE OR DELETE ON acc.documents
   FOR EACH ROW EXECUTE FUNCTION acc.guard_documents();
 
--- Người lập lấy từ phiên, không nhận từ ứng dụng (phân tách nhiệm vụ ở 07 §8 dựa vào cột này)
+-- Người lập lấy từ phiên, không nhận từ ứng dụng (phân tách nhiệm vụ ở DIEU-CHINH-THEO-KHACH-HANG §8 dựa vào cột này)
 CREATE FUNCTION acc.stamp_documents() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   NEW.created_by := app.current_user_id();
@@ -1730,7 +1728,7 @@ CREATE TRIGGER documents_stamp BEFORE INSERT ON acc.documents
 ```
 (Kỳ đã khoá: bỏ ghi/huỷ bị chặn bởi trigger khoá kỳ gắn trên `acc.documents`, §7.2.)
 
-Guard trên **dòng** `acc.document_lines` (06b-D4: chặn cả INSERT; dòng đổi `document_id` thì kiểm cả chứng từ cũ và mới) — đã chạy thử trên PG16:
+Guard trên **dòng** `acc.document_lines` (`PHAN-BIEN-v2-KIEN-TRUC.md` D4: chặn cả INSERT; dòng đổi `document_id` thì kiểm cả chứng từ cũ và mới) — đã chạy thử trên PG16:
 
 ```sql
 CREATE FUNCTION acc.guard_posted_lines() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -1835,20 +1833,20 @@ CREATE TRIGGER stock_moves_guard BEFORE INSERT OR UPDATE OR DELETE ON inv.stock_
 
 Bản 0.3 (quyết định người dùng 2026-10-07): hệ thống **luôn tính lại ngay** giá xuất kho, giá thành lệnh SX và giá vốn khi có chứng từ (§5.5 GĐ1); không còn quy trình khoá sổ nhiều bước (close orchestrator 13 bước của bản 0.2, quy trình 12 bước của demo). Khoá kỳ vẫn **bắt buộc** vì luật: TT99 yêu cầu phần mềm ngăn sửa dữ liệu trái phép và lưu vết sửa đổi; Luật Kế toán chỉ cho sửa sổ đã khoá bằng ghi bổ sung/ghi đỏ. Khoá kỳ là **một thao tác** của KTT: hệ thống chạy các kiểm tra cân đối, đạt thì khoá, không đạt thì báo đúng chỗ sai.
 
-**Trình tự cuối kỳ — nguồn duy nhất** (A9; `01` §6, `07` §4.7, `KE-HOACH-DU-AN.md` và `YEU-CAU-KHACH-HANG.md` TH-03 chỉ trích bảng này):
+**Trình tự cuối kỳ — nguồn duy nhất** (A9; `NGHIEP-VU-KE-TOAN.md` §6, `DIEU-CHINH-THEO-KHACH-HANG.md` §4.7, `KE-HOACH-DU-AN.md` và `YEU-CAU-KHACH-HANG.md` TH-03 chỉ trích bảng này):
 
 | # | Việc | Ai | Ghi chú |
 |---|---|---|---|
 | 1 | Chứng từ của kỳ đã ghi sổ; phiếu QC và quyết định xử lý hàng không đạt đã chốt | Các bộ phận | Chứng từ nháp ngày trong kỳ: cảnh báo, không chặn (sau khi khoá sẽ không ghi sổ được) |
 | 2 | Kiểm kê theo lô + vị trí, ghi phiếu điều chỉnh chênh lệch | Thủ kho, KT kho | Giá trị tính lại ngay khi ghi phiếu |
 | 3 | Chứng từ định kỳ: khấu hao, phân bổ CCDC, trích lãi vay (1C), lương (chứng từ tổng hợp) | KT tổng hợp | Trước 1C nhập bằng chứng từ tổng hợp. SXC mới ⇒ giá thành lệnh của kỳ tự tính lại |
-| 4 | Đánh giá lại ngoại tệ (nếu KTT chọn làm hằng tháng — A5) | KTT | Chứng từ hệ thống, chạy lại được |
-| 5 | **Kết chuyển lãi/lỗ** (TH-02): giảm trừ DT, DT thuần, DT tài chính, thu nhập khác, giá vốn, chi phí, thuế TNDN → 911 → 4212, theo bảng của chế độ (`01` §5.4) | KTT/KT tổng hợp | Chứng từ hệ thống; chạy lại = huỷ bản cũ, sinh bản mới; tự đánh dấu "cần chạy lại" khi có chứng từ mới trong kỳ |
-| 6 | **Khoá kỳ** = `acc.lock_period` (một thao tác) | KTT | Tự kiểm, lỗi thì không khoá: kỳ trước đã khoá; không còn yêu cầu tính lại đang chờ có ngày ≤ cuối kỳ; mọi dòng kho ≤ cuối kỳ có giá; Σ Nợ = Σ Có toàn kỳ (I3); không tồn âm (K3); kết chuyển (bước 5) không cần chạy lại; dòng tiền có mã (07 §9) |
+| 4 | Đánh giá lại ngoại tệ (nếu KTT chọn làm hằng tháng — CH-09) | KTT | Chứng từ hệ thống, chạy lại được |
+| 5 | **Kết chuyển lãi/lỗ** (TH-02): giảm trừ DT, DT thuần, DT tài chính, thu nhập khác, giá vốn, chi phí, thuế TNDN → 911 → 4212, theo bảng của chế độ (`NGHIEP-VU-KE-TOAN.md` §5.4) | KTT/KT tổng hợp | Chứng từ hệ thống; chạy lại = huỷ bản cũ, sinh bản mới; tự đánh dấu "cần chạy lại" khi có chứng từ mới trong kỳ |
+| 6 | **Khoá kỳ** = `acc.lock_period` (một thao tác) | KTT | Tự kiểm, lỗi thì không khoá: kỳ trước đã khoá; không còn yêu cầu tính lại đang chờ có ngày ≤ cuối kỳ; mọi dòng kho ≤ cuối kỳ có giá; Σ Nợ = Σ Có toàn kỳ (I3); không tồn âm (K3); kết chuyển (bước 5) không cần chạy lại; dòng tiền có mã (`DIEU-CHINH-THEO-KHACH-HANG.md` §9) |
 
 Không có bước "tính giá xuất kho", "tính giá thành", "cập nhật giá nhập TP": các việc đó xảy ra ngay khi ghi chứng từ. Mở khoá: chỉ KTT, bắt buộc lý do, mở luôn các kỳ sau (một giá trị `locked_through`), ghi nhật ký qua trigger audit (§7.3).
 
-Chống race giữa "đang ghi sổ" và "đang khoá kỳ" (06b-U1): giao dịch ghi sổ đọc `period_locks … FOR SHARE`; thao tác khoá kỳ `UPDATE` cùng dòng ⇒ phải chờ mọi giao dịch ghi sổ đang chạy, và giao dịch đến sau đọc được `locked_through` mới. Đã chạy thử trên PG16 ở bản 0.2 (hai phiên đồng thời); bản 0.3 chuyển phần đọc vào hàm `SECURITY DEFINER` vì `app_user` không còn quyền UPDATE trên `period_locks` (mà `FOR SHARE` đòi quyền đó) — hai phiên đồng thời **chưa** thử lại.
+Chống race giữa "đang ghi sổ" và "đang khoá kỳ" (`PHAN-BIEN-v2-KIEN-TRUC.md` U1): giao dịch ghi sổ đọc `period_locks … FOR SHARE`; thao tác khoá kỳ `UPDATE` cùng dòng ⇒ phải chờ mọi giao dịch ghi sổ đang chạy, và giao dịch đến sau đọc được `locked_through` mới. Đã chạy thử trên PG16 ở bản 0.2 (hai phiên đồng thời); bản 0.3 chuyển phần đọc vào hàm `SECURITY DEFINER` vì `app_user` không còn quyền UPDATE trên `period_locks` (mà `FOR SHARE` đòi quyền đó) — hai phiên đồng thời **chưa** thử lại.
 
 ```sql
 -- Kiểm một ngày có thuộc kỳ đã khoá không (scope ALL + scope riêng). SECURITY DEFINER: app_user chỉ có SELECT
@@ -1868,7 +1866,7 @@ BEGIN
   END LOOP;
 END $$;
 
--- Scope lấy từ trigger argument, hoặc 'ROW' = đọc cột lock_scope của chính dòng (journal_entries, documents) — 06b-U3
+-- Scope lấy từ trigger argument, hoặc 'ROW' = đọc cột lock_scope của chính dòng (journal_entries, documents) — PHAN-BIEN-v2-KIEN-TRUC U3
 CREATE FUNCTION acc.guard_period_lock() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE v_row jsonb; v_scope text;
 BEGIN
@@ -1924,7 +1922,7 @@ BEGIN
   SELECT coalesce(sum(debit) - sum(credit), 0) INTO v_diff FROM acc.journal_lines
    WHERE tenant_id = v_tenant AND company_id = p_company AND is_active AND posting_date BETWEEN v_start AND v_end;
   IF v_diff <> 0 THEN RAISE EXCEPTION 'Sổ cái kỳ lệch Nợ/Có %', v_diff USING ERRCODE = '23514'; END IF;
-  -- Kiểm tra của từng phân hệ gọi thêm ở đây: tồn âm (K3), kết chuyển 911 không cần chạy lại, mã dòng tiền (07 §9).
+  -- Kiểm tra của từng phân hệ gọi thêm ở đây: tồn âm (K3), kết chuyển 911 không cần chạy lại, mã dòng tiền (DIEU-CHINH-THEO-KHACH-HANG §9).
   UPDATE inv.stock_ledger SET valuation_status = 'FINAL'          -- trước khi dời locked_through
    WHERE tenant_id = v_tenant AND company_id = p_company AND posting_date <= v_end
      AND valuation_status = 'PROVISIONAL' AND NOT is_cancelled;
@@ -2016,9 +2014,9 @@ BEGIN
   END LOOP;
 END $$;
 ```
-- **Bắt buộc, không tắt được**: TT99 yêu cầu phần mềm kế toán ngăn sửa dữ liệu trái phép và lưu vết sửa đổi (01 §1.1). `app.apply_audit_triggers()` gắn trigger cho mọi bảng nghiệp vụ và danh mục (kể cả sửa định mức, loại vật tư — phản biện v3 L1); test CI: mọi bảng có `tenant_id` ngoài `audit.*` có trigger `zz_audit`.
+- **Bắt buộc, không tắt được**: TT99 yêu cầu phần mềm kế toán ngăn sửa dữ liệu trái phép và lưu vết sửa đổi (`NGHIEP-VU-KE-TOAN.md` §1.1). `app.apply_audit_triggers()` gắn trigger cho mọi bảng nghiệp vụ và danh mục (kể cả sửa định mức, loại vật tư — phản biện v3 L1); test CI: mọi bảng có `tenant_id` ngoài `audit.*` có trigger `zz_audit`.
 - Không ai ngoài trigger ghi được log: `app_user` chỉ có `SELECT` (bảng quyền §7.7); hàm chạy bằng quyền `app_owner` và vẫn bị RLS (WITH CHECK `tenant_id` = tenant của phiên) nên không ghi log sang tenant khác. `user_id` lấy từ phiên (§2.1), không lấy biến `app.user_id` do ứng dụng đặt như bản 0.2.
-- **Hash chain: không làm trong Giai đoạn 1** (bản 0.1 gọi là P3; 06b-U2). Đường ghi sổ **không** lấy bất kỳ advisory lock nào theo tenant (khoá đó tuần tự hoá toàn tenant và gây deadlock với khoá cost key). Khi làm: hash **bất đồng bộ** — trigger chỉ INSERT log; job niêm phong theo tenant định kỳ nối chuỗi các dòng có `xid < pg_snapshot_xmin(pg_current_snapshot())` (chắc chắn đã kết thúc), theo thứ tự `id`, ghi `hash = sha256(prev_hash || jsonb chuẩn hoá của dòng)` vào bảng `audit.chain` riêng; neo hash cuối ngày ra object storage Object Lock. Trong Giai đoạn 1, chống sửa trái phép dựa vào: quyền (log chỉ ghi qua trigger), chứng từ bất biến (§7.1), `row_hash` trên chứng từ đã ghi sổ.
+- **Hash chain: không làm trong Giai đoạn 1** (bản 0.1 gọi là P3; `PHAN-BIEN-v2-KIEN-TRUC.md` U2). Đường ghi sổ **không** lấy bất kỳ advisory lock nào theo tenant (khoá đó tuần tự hoá toàn tenant và gây deadlock với khoá cost key). Khi làm: hash **bất đồng bộ** — trigger chỉ INSERT log; job niêm phong theo tenant định kỳ nối chuỗi các dòng có `xid < pg_snapshot_xmin(pg_current_snapshot())` (chắc chắn đã kết thúc), theo thứ tự `id`, ghi `hash = sha256(prev_hash || jsonb chuẩn hoá của dòng)` vào bảng `audit.chain` riêng; neo hash cuối ngày ra object storage Object Lock. Trong Giai đoạn 1, chống sửa trái phép dựa vào: quyền (log chỉ ghi qua trigger), chứng từ bất biến (§7.1), `row_hash` trên chứng từ đã ghi sổ.
 - Nhật ký truy cập (đăng nhập, xuất báo cáo, in chứng từ) ghi riêng `audit.access_log`.
 
 ### 7.4 Số chứng từ liên tục (không nhảy số)
@@ -2026,7 +2024,7 @@ END $$;
 - Số chỉ cấp **khi ghi sổ**, trong cùng transaction; nếu rollback ⇒ số không bị “đốt”.
 - Không dùng `SEQUENCE` (có lỗ hổng khi rollback). Dùng bảng đếm + khoá dòng:
 
-Đánh số **theo năm tài chính** (06b-D1, U4) — đã chạy thử trên PG16:
+Đánh số **theo năm tài chính** (`PHAN-BIEN-v2-KIEN-TRUC.md` D1, U4) — đã chạy thử trên PG16:
 
 ```sql
 CREATE TABLE acc.document_sequences (
@@ -2051,7 +2049,7 @@ RETURNING replace(s.prefix_template, '{YY}', lpad((s.fiscal_year % 100)::text, 2
           || lpad((s.next_no - 1)::text, s.pad, '0') AS doc_no;
 ```
 Unique `documents_no_uq` có `fiscal_year` (§4.4) nên kể cả khi tenant chọn tiền tố không chứa năm (`'PN'`), sang năm mới đánh lại từ 1 không trùng.
-- Cấp số ở **bước cuối** của giao dịch ghi sổ (Phụ lục A, 06b-A16) ⇒ khoá dòng đếm chỉ giữ trong khoảng ngắn trước commit. Người dùng muốn số “ngay khi lập” (như MISA hiển thị số đề xuất) ⇒ hiển thị **số dự kiến**, số chính thức cấp lúc ghi sổ; cho phép người dùng nhập tay số (kiểm trùng), cấu hình được.
+- Cấp số ở **bước cuối** của giao dịch ghi sổ (Phụ lục A, `PHAN-BIEN-v2-KIEN-TRUC.md` A16) ⇒ khoá dòng đếm chỉ giữ trong khoảng ngắn trước commit. Người dùng muốn số “ngay khi lập” (như MISA hiển thị số đề xuất) ⇒ hiển thị **số dự kiến**, số chính thức cấp lúc ghi sổ; cho phép người dùng nhập tay số (kiểm trùng), cấu hình được.
 - Chứng từ VOIDED giữ số. Báo cáo “kiểm tra số chứng từ bị nhảy/trùng” là tính năng.
 - Số hoá đơn điện tử do hệ thống HĐĐT/nhà cung cấp cấp, lưu riêng (`einvoice.invoices.invoice_no`, ký hiệu mẫu số).
 
@@ -2066,13 +2064,13 @@ Unique `documents_no_uq` có `fiscal_year` (§4.4) nên kể cả khi tenant ch�
 
 - Anti-corruption layer `EInvoiceProvider` (interface: `issue`, `adjust`, `replace`, `cancel`, `getStatus`, `downloadXml`) với adapter MISA meInvoice / Viettel / VNPT / BKAV… — chọn 1 nhà cung cấp cho bản dùng nội bộ.
 - Luồng: chứng từ bán hàng POSTED → tạo `einvoice.invoices(DRAFT)` → job `einvoice.publish` (BullMQ, retry, idempotency key = invoice id) → lưu mã CQT, XML. Điều chỉnh/thay thế hoá đơn theo NĐ 123 + NĐ 70/2025 là nghiệp vụ riêng, không sửa chứng từ đã ghi sổ.
-- Tờ khai thuế GTGT/TNDN: sinh XML theo định dạng HTKK/eTax từ view báo cáo; phiên bản mẫu tờ khai là dữ liệu cấu hình. **[ĐỐI CHIẾU 01, 04]**
+- Tờ khai thuế GTGT/TNDN: sinh XML theo định dạng HTKK/eTax từ view báo cáo; phiên bản mẫu tờ khai là dữ liệu cấu hình. **[ĐỐI CHIẾU `NGHIEP-VU-KE-TOAN.md`, `PHAN-TICH-MISA.md`]**
 
 ---
 
 ### 7.7 Hoàn tất lược đồ: quyền, RLS, audit
 
-Chạy cuối 05; `07` §11 chạy lại cùng ba hàm sau khi thêm bảng. Bảng nào cần quyền hẹp hơn mặc định thì có dòng trong `sys.table_privileges` kèm lý do.
+Chạy cuối tài liệu này; `DIEU-CHINH-THEO-KHACH-HANG.md` §11 chạy lại cùng ba hàm sau khi thêm bảng. Bảng nào cần quyền hẹp hơn mặc định thì có dòng trong `sys.table_privileges` kèm lý do.
 
 ```sql
 INSERT INTO sys.table_privileges (table_name, privs, update_columns, reason) VALUES
@@ -2085,7 +2083,7 @@ INSERT INTO sys.table_privileges (table_name, privs, update_columns, reason) VAL
   ('acc.journal_lines',   '{SELECT,INSERT}',       '{is_active}',               'A1: chỉ vô hiệu hoá'),
   ('inv.stock_moves',     '{SELECT,INSERT}',       '{status}',                  'chỉ huỷ dòng'),
   ('inv.stock_ledger',    '{SELECT,INSERT}',       '{is_cancelled}',            'giá trị qua inv.set_valuation (A11)'),
-  ('inv.lots',            '{SELECT,INSERT,DELETE}','{mfg_date,expiry_date}',    'lô; 07 §11 mở rộng danh sách cột');
+  ('inv.lots',            '{SELECT,INSERT,DELETE}','{mfg_date,expiry_date}',    'lô; DIEU-CHINH-THEO-KHACH-HANG §11 mở rộng danh sách cột');
 
 SELECT app.apply_tenant_rls();
 SELECT app.apply_grants();
@@ -2097,13 +2095,13 @@ GRANT EXECUTE ON FUNCTION app.current_tenant(), app.current_user_id(), app.has_r
 
 ### 8.1 Thứ tự phụ thuộc kỹ thuật (không phải tiến độ)
 
-**Phạm vi & tiến độ: xem `docs/KE-HOACH-DU-AN.md` v0.4 (nguồn duy nhất).** Bản 0.1 của tài liệu này có lộ trình Phase 0–3 kèm số tuần/tháng; phần đó đã bỏ (lỗi C2/C3) vì lệch kế hoạch. Mục này chỉ ghi khối kỹ thuật nào phải có trước khối nào, để kế hoạch xếp đợt phát hành:
+**Phạm vi & tiến độ: xem [KE-HOACH-DU-AN](../02-ke-hoach/KE-HOACH-DU-AN.md) (nguồn duy nhất).** Bản 0.1 của tài liệu này có lộ trình Phase 0–3 kèm số tuần/tháng; phần đó đã bỏ (lỗi C2/C3) vì lệch kế hoạch. Mục này chỉ ghi khối kỹ thuật nào phải có trước khối nào, để kế hoạch xếp đợt phát hành:
 
-1. **Nền móng**: monorepo, CI (lint, typecheck, Vitest, Testcontainers), dbmate, kysely-codegen; vai trò CSDL + phiên + `app.apply_tenant_rls/apply_grants/apply_audit_triggers` + `app.check_rls_coverage()` (§2.1, §7.7); test tenant-leak; audit `change_log` chỉ ghi qua trigger (không hash chain); chạy nguyên văn DDL 05 + 07 và bộ phép thử tấn công của 07 §11 trong CI; outbox + worker khung; xác thực, RBAC cơ bản; `domain-core` (Money/Qty/Decimal, **R1** và `largestRemainder` §1.4, Period); golden-test harness đọc YAML có khối `rounding` (§8.3).
+1. **Nền móng**: monorepo, CI (lint, typecheck, Vitest, Testcontainers), dbmate, kysely-codegen; vai trò CSDL + phiên + `app.apply_tenant_rls/apply_grants/apply_audit_triggers` + `app.check_rls_coverage()` (§2.1, §7.7); test tenant-leak; audit `change_log` chỉ ghi qua trigger (không hash chain); chạy nguyên văn DDL tài liệu này + `DIEU-CHINH-THEO-KHACH-HANG.md` và bộ phép thử tấn công của `DIEU-CHINH-THEO-KHACH-HANG.md` §11 trong CI; outbox + worker khung; xác thực, RBAC cơ bản; `domain-core` (Money/Qty/Decimal, **R1** và `largestRemainder` §1.4, Period); golden-test harness đọc YAML có khối `rounding` (§8.3).
 2. **Danh mục & chế độ kế toán**: template TK (TT99, TT133, TT200 lịch sử), `company_chart_assignments` + `md.regime_at` (§2.3), account roles, VTHH (có `costing_method`, lô), ĐVT quy đổi, kho, đối tượng. Phụ thuộc 1.
 3. **Chứng từ + posting engine**: guard trạng thái/dòng (§7.1), khoá kỳ (§7.2), số CT theo năm (§7.4), constraint trigger Nợ = Có (§4.5), bỏ ghi/version. Phụ thuộc 2.
-4. **Sổ kho + engine giá**: stock ledger, khoá cost key (§5.1, Phụ lục A), kiểm âm theo `(item, kho, lô, vị trí)` (§4.7, 07 §2.8), GL compose từ `value_change`, đích danh theo lô (phương pháp khách hàng dùng), **tính lại toàn bộ cost key** (§5.5 GĐ1; repost tăng dần có checkpoint là GĐ2). Phụ thuộc 3.
-5. **Giá thành theo lệnh SX**: cost element (§4.10), tập hợp/phân bổ (§5.9), dở dang = chi phí luỹ kế lệnh, BTP có lô (07 §4), giá vốn theo lô + cây cấu thành (07 §4.8, §6). SCC/hệ tuyến tính (§5.6) chỉ cho BQ (GĐ2). Phụ thuộc 4.
+4. **Sổ kho + engine giá**: stock ledger, khoá cost key (§5.1, Phụ lục A), kiểm âm theo `(item, kho, lô, vị trí)` (§4.7, `DIEU-CHINH-THEO-KHACH-HANG.md` §2.8), GL compose từ `value_change`, đích danh theo lô (phương pháp khách hàng dùng), **tính lại toàn bộ cost key** (§5.5 GĐ1; repost tăng dần có checkpoint là GĐ2). Phụ thuộc 3.
+5. **Giá thành theo lệnh SX**: cost element (§4.10), tập hợp/phân bổ (§5.9), dở dang = chi phí luỹ kế lệnh, BTP có lô (`DIEU-CHINH-THEO-KHACH-HANG.md` §4), giá vốn theo lô + cây cấu thành (`DIEU-CHINH-THEO-KHACH-HANG.md` §4.8, §6). SCC/hệ tuyến tính (§5.6) chỉ cho BQ (GĐ2). Phụ thuộc 4.
 6. **Khoá kỳ**: `acc.lock_period` một thao tác + kiểm tra (§7.2), kết chuyển 911 theo chế độ. Khoá kỳ cơ bản (không cần giá thành) làm được ngay khi có 3 + 4; điều kiện "mọi dòng kho có giá" chỉ chặn khi có lô TP chưa có giá thành. Phụ thuộc 3, 4 (5 cho điều kiện giá thành).
 7. **Báo cáo**: sổ sách, N-X-T, thẻ kho, thẻ giá thành, BCTC theo chế độ, drill-down. Phụ thuộc 3–6.
 8. **Sau Giai đoạn 1 (định hướng kỹ thuật, không cam kết)**: partition (§4.11), hash chain bất đồng bộ (§7.3), repost tăng dần tối ưu, SaaS hoá (onboarding, billing, cell/cluster, read replica), report designer, lưu trữ lạnh tự động.
@@ -2118,17 +2116,17 @@ GRANT EXECUTE ON FUNCTION app.current_tenant(), app.current_user_id(), app.has_r
 | 4 | **Toàn vẹn kế toán bị phá** (chứng từ có thẻ kho nhưng không có bút toán, Nợ≠Có) | Sai sổ | Posting đồng bộ trong 1 transaction; constraint trigger; job đối chiếu hàng đêm (kho 15x vs sổ cái, document vs journal), cảnh báo |
 | 5 | **Thay đổi chế độ/quy định** (TT99 thay TT200, NĐ 70/2025, mẫu tờ khai) | Phải sửa code liên tục | Account roles, báo cáo dạng công thức cấu hình, mẫu tờ khai là dữ liệu có version |
 | 6 | **Số học Decimal sai** do lẫn `number` | Lệch xu | ESLint rule, API dùng string, branded types `Money`, property test |
-| 7 | **Phạm vi phình** (muốn bằng MISA ngay) | Trễ | Phạm vi chốt ở `KE-HOACH-DU-AN.md` v0.4; mỗi phân hệ có “definition of done” bằng báo cáo đối chiếu |
-| 9 | **Quy định chưa ổn định** (TT99 mới áp dụng; dự thảo thay TT133; số hiệu mẫu sổ TT99 chưa xác minh — 01 §9) | Sửa mẫu/biểu nhiều lần | Mọi thứ phụ thuộc văn bản là dữ liệu có version; theo dõi văn bản như một backlog riêng |
+| 7 | **Phạm vi phình** (muốn bằng MISA ngay) | Trễ | Phạm vi chốt ở `KE-HOACH-DU-AN.md`; mỗi phân hệ có “definition of done” bằng báo cáo đối chiếu |
+| 9 | **Quy định chưa ổn định** (TT99 mới áp dụng; dự thảo thay TT133; số hiệu mẫu sổ TT99 chưa xác minh — `NGHIEP-VU-KE-TOAN.md` §9) | Sửa mẫu/biểu nhiều lần | Mọi thứ phụ thuộc văn bản là dữ liệu có version; theo dõi văn bản như một backlog riêng |
 | 8 | **Kysely/SQL nặng → khó bảo trì** | Chậm phát triển | Báo cáo phức tạp viết thành SQL function có test riêng (pgTAP hoặc Vitest gọi function), tài liệu hoá |
 
 ### 8.3 Chiến lược kiểm thử
 
 **Kim tự tháp**
 1. **Unit (core thuần, Vitest)** — engine giá, phân bổ, dở dang, posting rules, làm tròn. Nhanh, chiếm phần lớn.
-2. **Golden tests** — ví dụ số từ giáo trình (Kế toán tài chính / Kế toán chi phí, NEU/UEH/HV Tài chính, sách tham khảo trong `03`) và từ tài liệu hướng dẫn MISA. Định dạng YAML:
+2. **Golden tests** — ví dụ số từ giáo trình (Kế toán tài chính / Kế toán chi phí, NEU/UEH/HV Tài chính, sách tham khảo trong `SACH-VA-VAN-BAN.md`) và từ tài liệu hướng dẫn MISA. Định dạng YAML:
    ```yaml
-   # Ví dụ dùng chung 01 §3.2 – Vật tư A, kho K1, tháng 01; 1 bộ dữ liệu, 4 phương pháp, 4 kỳ vọng
+   # Ví dụ dùng chung NGHIEP-VU-KE-TOAN §3.2 – Vật tư A, kho K1, tháng 01; 1 bộ dữ liệu, 4 phương pháp, 4 kỳ vọng
    name: "VTA-K1-T01"
    rounding:       # BẮT BUỘC ở mọi ca (rà soát S4) — R1, §1.4; harness từ chối ca thiếu khối này
      mode: HALF_UP
@@ -2147,7 +2145,7 @@ GRANT EXECUTE ON FUNCTION app.current_tenant(), app.current_user_id(), app.has_r
      PERIODIC_AVG: { unit_cost: "11000.0000", out: { X1: "2750000", X2: "1100000" }, closing: { qty: 50, value: "550000" } }
      MOVING_AVG:   { out: { X1: "2666667", X2: "1155555" }, closing: { qty: 50, value: "577778" } }
      FIFO:         { out: { X1: "2650000", X2: "1150000" }, closing: { qty: 50, value: "600000" } }
-     SPECIFIC:     # đích danh theo lô (phương pháp khách hàng dùng); 01 §3.6
+     SPECIFIC:     # đích danh theo lô (phương pháp khách hàng dùng); NGHIEP-VU-KE-TOAN §3.6
        pick: { X1: [ { lot: OPEN, qty: 100 }, { lot: N1, qty: 150 } ], X2: [ { lot: N2, qty: 100 } ] }
        out: { X1: "2650000", X2: "1200000" }
        closing: { qty: 50, value: "550000", lots: { N1: { qty: 50, value: "550000" } } }
@@ -2170,7 +2168,7 @@ GRANT EXECUTE ON FUNCTION app.current_tenant(), app.current_user_id(), app.has_r
      - { pool: "10000000", basis: { DH1: "1", DH2: "1", DH3: "1" },    # hoà phần lẻ ⇒ theo thứ tự ổn định
          expect: { DH1: "3333334", DH2: "3333333", DH3: "3333333" } }
    ```
-   Bộ golden ban đầu lấy từ `01-nghiep-vu-ke-toan.md`: §3.2–3.7 (4 phương pháp giá xuất, kể cả đích danh), §3.8 (trả lại theo giá vốn dòng hoá đơn gốc; điều chỉnh giá nhập sau: giảm giá 1tr cho lô 200 kg đã xuất 150 → Có 152: 250.000, Có 632/154: 750.000; phân bổ CP mua 600.000 theo giá trị → A 400.000 / B 200.000), §4.2 (phân bổ 627 theo NCTT: **12.000.000 / 8.000.000**; ca có dư 10.000.000 chia 3 → 3.333.334 / 3.333.333 / 3.333.333 theo R1 (b); SXC dưới công suất 8tr/2tr → 632), §4.3–4.4 (dở dang, giản đơn/hệ số/tỷ lệ/phân bước/đơn hàng), **§4.6 (đích danh theo lô + phân bước có tính giá BTP, Z_TP 34.699.589, Nợ = Có 168.156.106)**; bổ sung từ giáo trình trong `03`; BCTC B01/B02 từ bộ số dư mẫu. Golden test chạy cả ở mức core và mức tích hợp (DB thật) ⇒ bảo đảm SQL và TS cho cùng kết quả.
+   Bộ golden ban đầu lấy từ `NGHIEP-VU-KE-TOAN.md`: §3.2–3.7 (4 phương pháp giá xuất, kể cả đích danh), §3.8 (trả lại theo giá vốn dòng hoá đơn gốc; điều chỉnh giá nhập sau: giảm giá 1tr cho lô 200 kg đã xuất 150 → Có 152: 250.000, Có 632/154: 750.000; phân bổ CP mua 600.000 theo giá trị → A 400.000 / B 200.000), §4.2 (phân bổ 627 theo NCTT: **12.000.000 / 8.000.000**; ca có dư 10.000.000 chia 3 → 3.333.334 / 3.333.333 / 3.333.333 theo R1 (b); SXC dưới công suất 8tr/2tr → 632), §4.3–4.4 (dở dang, giản đơn/hệ số/tỷ lệ/phân bước/đơn hàng), **§4.6 (đích danh theo lô + phân bước có tính giá BTP, Z_TP 34.699.589, Nợ = Có 168.156.106)**; bổ sung từ giáo trình trong `SACH-VA-VAN-BAN.md`; BCTC B01/B02 từ bộ số dư mẫu. Golden test chạy cả ở mức core và mức tích hợp (DB thật) ⇒ bảo đảm SQL và TS cho cùng kết quả.
 3. **Property-based (fast-check)** — sinh ngẫu nhiên chuỗi giao dịch (kể cả backdated, huỷ, chuyển kho, trả lại):
    - *Cân bằng*: mọi journal entry Σ Nợ = Σ Có; tổng toàn sổ Σ Nợ = Σ Có.
    - *Kho khớp sổ cái*: với mỗi TK kho (152/153/155/156) và kỳ: `Σ value_after cuối kỳ theo cost key thuộc TK = số dư TK trên sổ cái`.
@@ -2180,7 +2178,7 @@ GRANT EXECUTE ON FUNCTION app.current_tenant(), app.current_user_id(), app.has_r
    - *Phân bổ*: Σ phần phân bổ = tổng pool; mỗi phần ≥ 0 khi basis ≥ 0.
    - *Truy vết*: Σ product_cost_trace theo sheet = total_cost; bảo toàn tại mọi nút trung gian của đồ thị.
    - *FIFO*: Σ consumption theo layer ≤ qty_in; không tiêu hao layer sinh sau thời điểm xuất.
-   - **Ánh xạ bất biến 01 §8 → nơi kiểm** (mỗi bất biến có ≥ 1 test, và được kiểm lại trong checklist khoá sổ):
+   - **Ánh xạ bất biến `NGHIEP-VU-KE-TOAN.md` §8 → nơi kiểm** (mỗi bất biến có ≥ 1 test, và được kiểm lại trong checklist khoá sổ):
 
      | Bất biến | Cơ chế cưỡng chế | Test |
      |---|---|---|
@@ -2219,7 +2217,7 @@ async function postDocument(ctx, docId) {
     await assertPeriodOpenForShare(tx, doc);                     // period_locks … FOR SHARE (§7.2); trigger cũng chặn
     const moves = stockEffects(doc);                             // nhập/xuất/chuyển (đã quy đổi ĐVT chính)
 
-    // 06b-A1: khoá MỌI cost key và khoá tồn vật lý của chứng từ, theo thứ tự tăng dần ⇒ không deadlock.
+    // PHAN-BIEN-v2-KIEN-TRUC A1: khoá MỌI cost key và khoá tồn vật lý của chứng từ, theo thứ tự tăng dần ⇒ không deadlock.
     //   cost key  = 'ck:' tenant:item:scope[:lot nếu SPECIFIC]   (scope = warehouse hoặc company, §4.6)
     //   khoá vật lý = 'pk:' tenant:item:warehouse:lot            (cấp kiểm âm K3)
     const lockIds = uniq(moves.flatMap(m => [costKeyLockId(ctx.tenantId, m), physKeyLockId(ctx.tenantId, m)]))
@@ -2237,7 +2235,7 @@ async function postDocument(ctx, docId) {
         await enqueueRepost(tx, keyOf(sle), sortKeyOf(sle));     // upsert gộp §5.5 + outbox (jobId = request id)
       else await valueInline(tx, sle);                           // moving avg/đích danh, không backdated: tính ngay
     }
-    // 06b-A16: cấp số ở bước CUỐI ⇒ khoá dòng document_sequences chỉ giữ rất ngắn trước commit
+    // PHAN-BIEN-v2-KIEN-TRUC A16: cấp số ở bước CUỐI ⇒ khoá dòng document_sequences chỉ giữ rất ngắn trước commit
     doc.docNo ??= await nextDocNo(tx, doc);                      // §7.4, theo fiscal_year
     await markPosted(tx, doc, hashOf(doc, lines, moves));        // DRAFT→POSTED (guard §7.1 yêu cầu có doc_no)
     await outbox(tx, 'DocumentPosted', { docId, type: doc.docType });
@@ -2248,8 +2246,10 @@ Ghi chú: thứ tự khoá trong một giao dịch ghi sổ là header chứng t
 
 ## Phụ lục B — Câu hỏi mở cần chốt với nghiệp vụ
 
+> Đã chuyển sang [CAU-HOI-MO](../01-yeu-cau/CAU-HOI-MO.md): mục 1 → CH-16; 2 → CH-20; 3 → CH-11, CH-47; 4 → CH-29; 5 → CH-21; 6 → CH-28; 7 → CH-05, CH-07. Danh sách dưới giữ để đọc lịch sử.
+
 1. ~~Phương pháp tính giá mặc định~~ — **đã có câu trả lời**: thực tế đích danh theo lô (mã lót). Còn hỏi: có mặt hàng nào (vd phụ gia, bao bì nhỏ lẻ) dùng phương pháp khác không? Tính theo từng kho hay toàn công ty (3 kho: Nhà máy Bà Ba Thạo, Bình Tây, 97 Nguyễn Thái Học)?
-2. Có cho phép xuất âm kho không? (Giá nhập hàng bán trả lại đã chốt mặc định: giá vốn dòng hoá đơn gốc — 01 §3.3.)
+2. Có cho phép xuất âm kho không? (Giá nhập hàng bán trả lại đã chốt mặc định: giá vốn dòng hoá đơn gốc — `NGHIEP-VU-KE-TOAN.md` §3.3.)
 3. Sản xuất: **đã có câu trả lời** phân bước nhiều giai đoạn có tính giá BTP. Còn hỏi: BTP có nhập kho giữa các giai đoạn không? Đánh giá dở dang (công đoạn ủ nhiều kỳ) theo cách nào? Có BTP/tái chế tạo vòng không?
 4. Cần sổ quản trị song song sổ tài chính ngay từ Giai đoạn 1 không?
 5. Chính sách “bỏ ghi” (MISA cho phép) hay bắt buộc chứng từ đảo?
