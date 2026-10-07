@@ -101,6 +101,8 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 .view[hidden]{display:none!important}
 .grid{display:grid;gap:12px}
 .kpis{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr))}
+.tabs{align-self:flex-start}
+.tabs .cnt{font-size:12px;opacity:.75}
 .duo{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(480px,calc((100% - 12px) / 2))),1fr))}
 .split{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) minmax(380px,36%)}
 .split.wide-side{grid-template-columns:minmax(0,1fr) minmax(420px,42%)}
@@ -144,6 +146,7 @@ td.pick .icon-btn{display:inline-grid;width:26px;height:26px;vertical-align:midd
 #matDetail h2,#lotTree h2{font-size:14px;font-weight:600;margin:4px 0 0}
 #postTbl td:nth-child(2),.prev td:nth-child(2){white-space:normal;min-width:130px}
 #recon td:nth-child(2){white-space:normal;min-width:0}
+#lsxCost td:nth-child(2){min-width:170px}
 #whTbl td,#staffTbl td{white-space:normal;min-width:90px}
 tr:last-child td{border-bottom:0}
 .tbl-wrap tbody tr:hover td{background:var(--hover)}
@@ -510,7 +513,7 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
           <div class="panel-head"><h2>Đối chiếu kho với sổ cái</h2><div class="spacer"></div><span id="reconPill"></span></div>
           <div class="tbl-wrap"><table id="recon"></table></div>
         </div>
-        <div class="panel">
+        <div class="panel" id="csPanel">
           <div class="panel-head"><h2>Cơ cấu giá thành đơn vị</h2><div class="spacer"></div>
             <div class="seg" role="group" aria-label="Cách xem cơ cấu giá thành"><button type="button" data-vt="cs" data-v="chart">Biểu đồ</button><button type="button" data-vt="cs" data-v="table">Bảng</button></div></div>
           <div class="legend" id="csLegend"><span><i style="background:var(--c-btp)"></i>Bán thành phẩm giai đoạn trước</span><span><i style="background:var(--c-nvl)"></i>Nguyên vật liệu trực tiếp</span><span><i style="background:var(--c-nc)"></i>Nhân công trực tiếp</span><span><i style="background:var(--c-sxc)"></i>Sản xuất chung</span></div>
@@ -584,28 +587,27 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
 
     <!-- DANH MỤC -->
     <section class="view" id="v-items" hidden>
-      <div class="panel">
+      <div class="seg tabs" id="itemsTabs" role="tablist" aria-label="Danh mục"></div>
+      <div class="panel" data-ipanel="item">
         <div class="panel-head"><h2>Danh mục vật tư</h2><div class="spacer"></div><button class="btn primary sm" type="button" data-new="ITEM">+ Thêm vật tư</button>
           <button class="btn sm xl" type="button" data-csv="itemTbl" data-name="danh-muc-vat-tu" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button></div>
         <div class="tbl-wrap"><table id="itemTbl"></table></div>
       </div>
-        <div class="panel">
+      <div class="panel" data-ipanel="lsx">
         <div class="panel-head"><h2>Lệnh sản xuất</h2><div class="spacer"></div><button class="btn primary sm" type="button" data-new="LSX">+ Lệnh sản xuất</button>
           <button class="btn sm xl" type="button" data-csv="lsxTbl" data-name="lenh-san-xuat" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button></div>
         <div class="tbl-wrap"><table id="lsxTbl"></table></div>
       </div>
-      <div class="duo">
-        <div class="panel">
+        <div class="panel" data-ipanel="staff">
           <div class="panel-head"><h2>Nhân sự vận hành</h2><div class="spacer"></div>
             <button class="btn sm xl" type="button" data-csv="staffTbl" data-name="nhan-su-van-hanh" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button></div>
           <div class="tbl-wrap"><table id="staffTbl"></table></div>
         </div>
-        <div class="panel">
+        <div class="panel" data-ipanel="loc">
           <div class="panel-head"><h2>Vị trí chứa</h2><span class="note" id="locCount"></span><div class="spacer"></div><button class="btn primary sm" type="button" data-new="LOC">+ Vị trí chứa</button>
             <button class="btn sm xl" type="button" data-csv="locTbl" data-name="vi-tri-chua" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button></div>
           <div class="tbl-wrap"><table id="locTbl"></table></div>
         </div>
-      </div>
     </section>
 
     <!-- GIÁ NGUYÊN LIỆU -->
@@ -628,9 +630,9 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
           <span class="note" id="normalNote"></span><button class="btn sm xl" type="button" data-csv="lsxCost" data-name="gia-thanh-theo-lenh" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button></div>
         <div class="tbl-wrap"><table id="lsxCost"></table></div>
       </div>
-      <div class="panel">
-        <div class="panel-head"><h2>Phân bổ nhân công và sản xuất chung</h2><span class="note" id="allocBasis"></span><div class="spacer"></div><button class="btn sm xl" type="button" data-csv="alloc" data-name="phan-bo-nc-sxc" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button></div>
-        <div class="tbl-wrap"><table id="alloc"></table></div>
+      <div class="panel" id="allocPanel">
+        <div class="panel-head"><h2>Phân bổ nhân công và sản xuất chung</h2><span class="note" id="allocBasis"></span><div class="spacer"></div><button class="btn sm" type="button" data-act="toggleAlloc" id="allocTog" aria-expanded="false" aria-controls="allocWrap">Xem bảng phân bổ</button><button class="btn sm xl" type="button" data-csv="alloc" data-name="phan-bo-nc-sxc" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button></div>
+        <div class="tbl-wrap" id="allocWrap" hidden><table id="alloc"></table></div>
       </div>
       <div id="cards"></div>
     </section>
@@ -1709,6 +1711,7 @@ RENDER.dash = function(){
   $('recon').innerHTML = '<thead><tr><th>Tài khoản</th><th>Tên</th><th class="n">Sổ kho</th><th class="n">Sổ cái</th><th class="n">Chênh lệch</th></tr></thead><tbody>' +
     R.recon.rows.map(r => '<tr><td class="acc">' + r.acc + '</td><td>' + accName(r.acc, isTT133()) + '</td><td class="n">' + fmt(r.stock) + '</td><td class="n">' + fmt(r.gl) + '</td><td class="n">' + fmt(r.stock - r.gl) + '</td></tr>').join('') + '</tbody>';
   $('reconPill').innerHTML = R.recon.ok ? sx('s-mute', 'Khớp') : sx('s-bad', 'Lệch');
+  $('reconPanel').hidden = R.recon.ok; $('csPanel').style.gridColumn = R.recon.ok ? '1 / -1' : '';
 };
 
 // ================= Chứng từ =================
@@ -2067,12 +2070,15 @@ function itemUsage(D, k){
   return {docs, boms, lsx, used: docs.length + boms.length + lsx.length > 0};
 }
 RENDER.items = function(){
-  const D = S.data;
-  $('itemTbl').innerHTML = '<thead><tr><th>Mã · mã MISA</th><th>Tên</th><th>Loại</th><th>Đơn vị tính · kho</th><th class="n">Tồn hiện tại</th><th>QC phụ trách</th><th class="n">Hạn sử dụng (ngày)</th><th class="n">Thuế GTGT</th><th class="n">Tồn đầu kỳ</th><th>Định mức / 1 đơn vị</th><th>Thao tác</th></tr></thead><tbody>' +
+  const D = S.data, tab = S.ui.itab || 'item';
+  const TABS = [['item', 'Vật tư', Object.keys(D.items).length], ['lsx', 'Lệnh sản xuất', Object.keys(D.lsx).length], ['loc', 'Vị trí chứa', (D.locs || []).length], ['staff', 'Nhân sự', STAFF.length]];
+  $('itemsTabs').innerHTML = TABS.map(([k, l, n]) => '<button type="button" role="tab" data-itab="' + k + '" aria-selected="' + (tab === k) + '" aria-pressed="' + (tab === k) + '">' + l + ' <span class="cnt">' + n + '</span></button>').join('');
+  document.querySelectorAll('#v-items [data-ipanel]').forEach(el => { el.hidden = el.dataset.ipanel !== tab; });
+  $('itemTbl').innerHTML = '<thead><tr><th>Mã · mã MISA</th><th>Tên</th><th>Loại</th><th>Đơn vị tính · kho</th><th class="n">Tồn hiện tại</th><th>QC phụ trách</th><th class="n">Hạn sử dụng (ngày)</th><th class="n">Tồn đầu kỳ</th><th>Định mức / 1 đơn vị</th><th>Thao tác</th></tr></thead><tbody>' +
     Object.keys(D.items).map(k => { const it = D.items[k], u = itemUsage(D, k), o = openOf(D, k);
       const bom = (it.bom || []).map(b => D.items[b.item] ? D.items[b.item].code + ' ' + fmtQ(b.qty) + ' ' + D.items[b.item].uom : '').join(', ');
       const cq = R.items[k] ? R.items[k].closeQ : 0, lowS = it.min > 0 && cq <= it.min + EPS;
-      return '<tr><td class="acc">' + esc(it.code) + '<br><span class="muted small">' + esc(it.misa || '') + '</span></td><td>' + esc(it.name) + (it.prod ? '<br><span class="note">' + esc(it.prod.stage + (it.prod.steps ? ': ' + it.prod.steps : '') + ' · hao hụt định mức ' + fmtD(it.prod.loss || 0, 2) + '%') + '</span>' : '') + '</td><td>' + (it.grp ? GRP_NAME[it.grp] : KIND_NAME[it.kind].replace(/ \(\d+\)$/, '')) + ' <span class="muted small">' + KIND_ACC[it.kind] + '</span></td><td>' + esc(it.uom) + ' · ' + it.wh + '</td><td class="n">' + fmtQ(cq) + (lowS ? ' ' + sx('s-warn', 'cần đặt thêm') : '') + (it.min ? '<br><span class="muted small">tối thiểu ' + fmtQ(it.min) + '</span>' : '') + '</td><td>' + esc(qcLabel(it.qcRole)) + '</td><td class="n">' + (it.shelf || '—') + '</td><td class="n">' + it.vat + '%</td><td class="n">' + fmtQ(o.qty) + '<br><span class="muted small">' + fmt(o.value) + ' đ' + ((D.open[k] || []).length > 1 ? ' · ' + D.open[k].length + ' lô' : '') + '</span></td><td class="wrap small">' + (isProd(D, k) ? esc(bom || 'chưa khai') : '—') + '</td>' +
+      return '<tr><td class="acc">' + esc(it.code) + '<br><span class="muted small">' + esc(it.misa || '') + '</span></td><td>' + esc(it.name) + (it.prod ? '<br><span class="note">' + esc(it.prod.stage + (it.prod.steps ? ': ' + it.prod.steps : '') + ' · hao hụt định mức ' + fmtD(it.prod.loss || 0, 2) + '%') + '</span>' : '') + '</td><td>' + (it.grp ? GRP_NAME[it.grp] : KIND_NAME[it.kind].replace(/ \(\d+\)$/, '')) + ' <span class="muted small">' + KIND_ACC[it.kind] + '</span></td><td>' + esc(it.uom) + ' · ' + it.wh + '</td><td class="n">' + fmtQ(cq) + (lowS ? ' ' + sx('s-warn', 'cần đặt thêm') : '') + (it.min ? '<br><span class="muted small">tối thiểu ' + fmtQ(it.min) + '</span>' : '') + '</td><td title="' + esc(it.qcRole || '') + '">' + esc(QC_PERSON[it.qcRole] || it.qcRole || '') + '</td><td class="n">' + (it.shelf || '—') + '</td><td class="n">' + fmtQ(o.qty) + '<br><span class="muted small">' + fmt(o.value) + ' đ' + ((D.open[k] || []).length > 1 ? ' · ' + D.open[k].length + ' lô' : '') + '</span></td><td class="wrap small">' + (isProd(D, k) ? esc(bom || 'chưa khai') : '—') + '</td>' +
         '<td><div class="btn-row" style="flex-wrap:nowrap"><button class="btn sm" type="button" data-item-edit="' + k + '">Sửa</button><button class="btn sm danger" type="button" data-item-del="' + k + '"' + (u.used ? ' aria-disabled="true" title="Đã có phát sinh (' + esc(u.docs.slice(0, 3).concat(u.boms.map(b => 'định mức ' + D.items[b].code), u.lsx.map(x => D.lsx[x].no)).join(', ')) + '), không xóa được"' : '') + '>Xóa</button></div></td></tr>'; }).join('') + '</tbody>';
   $('lsxTbl').innerHTML = '<thead><tr><th>Số lệnh</th><th>Sản phẩm · giai đoạn</th><th>Trạng thái</th><th>Ngày</th><th class="n">Kế hoạch</th><th class="n">Đã nhập đạt</th><th class="n">Giá thành đơn vị (đ)</th><th>Thao tác</th></tr></thead><tbody>' +
     Object.keys(D.lsx).map(k => { const x = D.lsx[k], it = D.items[x.item] || {name:x.item, uom:''}, c = R.card[k];
@@ -2127,7 +2133,7 @@ RENDER.cost = function(){
       rw('5. Hỏng ngoài định mức → 632', c.abn, c.abnBy) +
       rw('6. Tổng giá thành sản phẩm đạt (4 − 5)', c.Z, good, 'sub') +
       '</tbody><tfoot><tr><td>7. Giá thành đơn vị = tổng giá thành / ' + fmtQ(c.qty) + '</td><td class="n">' + (done && c.qty ? fmt2(c.z) : '—') + '</td>' + cols.map(x => '<td class="n">' + (done && c.qty ? fmt2(good[x] / c.qty) : '—') + '</td>').join('') + '</tr></tfoot></table></div>' +
-    '<div class="btn-row"><span class="note mono">Dở dang đầu kỳ + phát sinh − dở dang cuối kỳ − hỏng = tổng giá thành: ' + fmt(c.ddk) + ' + ' + fmt(c.nvl + c.btp + c.nc + c.sxc) + ' − ' + fmt(c.wip) + ' − ' + fmt(c.abn) + ' = ' + fmt(c.Z) + '</span><span class="spacer" style="flex:1"></span>' + csvBtn('card-' + k, 'the-gia-thanh-' + c.no) + '</div></div>';
+    '<div class="btn-row"><span class="spacer" style="flex:1"></span>' + csvBtn('card-' + k, 'the-gia-thanh-' + c.no) + '</div></div>';
 };
 
 // ================= Cấu thành giá vốn một lô =================
@@ -2208,10 +2214,13 @@ function renderLotTree(){
     const pt10 = v => fmtD(v / 10, 1) + '%';
     const row = (b, lvl, key) => { const itx = b.item ? D.items[b.item] : null, Lx = b.lot ? R.lots[b.lot] : null, shQ = b.qty && b.v ? rq(b.qty * b.amt / b.v) : null;
       const name = b.kind === 'ddk' ? 'Dở dang đầu kỳ chuyển sang' : b.kind === 'nc' ? 'Lương công nhân trực tiếp' + (b.share != null ? ' · phân bổ ' + pct(b.share * 100) : '') : b.kind === 'sxc' ? b.name : itx ? itx.name : '';
-      const src = b.kind === 'ddk' ? 'Số dư 154 từ 12/2025' : b.kind === 'nc' || b.kind === 'sxc' ? 'Tiêu thức nguyên vật liệu trực tiếp' : Lx ? lotSource(R, b.lot) : '';
+      const src = b.kind === 'ddk' ? 'Số dư 154 từ 12/2025' : b.kind === 'nc' || b.kind === 'sxc' ? '' : Lx ? lotSource(R, b.lot) : '';
       const tog = b.sub ? '<button class="icon-btn ghost" type="button" data-tree="' + key + '" aria-expanded="' + (open[key] !== false) + '" aria-label="' + (open[key] !== false ? 'Thu gọn' : 'Mở') + ' cấu thành lô ' + esc(b.lot) + '" style="width:22px;height:22px;display:inline-grid;vertical-align:middle">' + (open[key] !== false ? '▾' : '▸') + '</button> ' : '';
       let r = '<tr class="lv' + lvl + '"><td style="padding-left:' + (8 + lvl * 18) + 'px">' + tog + '<span class="dot" style="background:var(--c-' + (b.kind === 'ddk' ? 'nvl' : b.kind) + ')"></span>' + esc(name) + '</td><td>' + (b.lot ? lotBtn(b.lot) + (Lx && Lx.mh ? ' <span class="muted small mono">' + esc(Lx.mh) + '</span>' : '') : '') + '</td><td>' + esc(src) + '</td><td>' + (b.date ? ddmm(b.date) + ' ' + esc(b.doc) : b.doc ? esc(b.doc) : '') + '</td><td class="n">' + (shQ != null ? fmtQ(shQ) + ' ' + esc(itx ? itx.uom : '') : '') + '</td><td class="n">' + (b.unit ? fmt2(b.unit) : '') + '</td><td class="n">' + fmt(b.amt) + '</td><td class="n">' + (q > EPS ? fmt2(b.amt / q) : '') + '</td><td class="n">' + (T.value > 0 ? pt10(b.pt) : '') + '</td></tr>';
-      if(b.sub && open[key] !== false) r += b.sub.map((x, j) => row(x, lvl + 1, key + '.' + j)).join('');
+      if(b.sub && open[key] !== false){ const conv = b.sub.filter(x => x.kind === 'nc' || x.kind === 'sxc');
+        r += b.sub.map((x, j) => conv.indexOf(x) < 0 ? row(x, lvl + 1, key + '.' + j) : '').join('');
+        if(conv.length){ const a = sum(conv, x => x.amt), pa = sum(conv, x => x.pt || 0), ln = Lx && Lx.lsx && D.lsx[Lx.lsx] ? D.lsx[Lx.lsx].no : '';
+          r += '<tr class="lv' + (lvl + 1) + '"><td style="padding-left:' + (8 + (lvl + 1) * 18) + 'px"><span class="dot" style="background:var(--c-nc)"></span>Nhân công và sản xuất chung</td><td></td><td>' + esc(ln) + '</td><td></td><td></td><td></td><td class="n">' + fmt(a) + '</td><td class="n">' + (q > EPS ? fmt2(a / q) : '') + '</td><td class="n">' + (T.value > 0 ? pt10(pa) : '') + '</td></tr>'; } }
       return r; };
     const groups = [['btp', 'Bán thành phẩm giai đoạn trước chuyển sang'], ['ddk', 'Dở dang đầu kỳ'], ['nvl', 'Nguyên vật liệu, bao bì, phụ gia trực tiếp'], ['nc', 'Nhân công trực tiếp'], ['sxc', 'Sản xuất chung']];
     let body = '';
@@ -2219,7 +2228,6 @@ function renderLotTree(){
       body += '<tr class="sub"><td colspan="6">' + lbl + '</td><td class="n">' + fmt(a) + '</td><td class="n">' + (q > EPS ? fmt2(a / q) : '') + '</td><td class="n">' + (T.value > 0 ? pt10(sum(xs, x => x[0].pt)) : '') + '</td></tr>' + xs.map(x => row(x[0], 0, String(x[1]))).join(''); });
     h += '<div class="tbl-wrap"><table id="treeTbl"><thead><tr><th>Thành phần</th><th>Lô · mã hóa</th><th>Nhà cung cấp / nguồn</th><th>Phiếu</th><th class="n">Số lượng</th><th class="n">Đơn giá</th><th class="n">Thành tiền</th><th class="n">đ/' + esc(u) + '</th><th class="n">%</th></tr></thead><tbody>' + body + '</tbody>' +
       '<tfoot><tr><td colspan="6">Tổng = giá trị lô ' + esc(code) + '</td><td class="n" id="treeTotal">' + fmt(sum(T.comps, b => b.amt)) + '</td><td class="n">' + fmt4(z) + '</td><td class="n">100%</td></tr></tfoot></table></div>' +
-      '<p class="note">Làm tròn tới đồng: chia theo tỷ lệ, lấy phần nguyên, số đồng còn thiếu cộng cho dòng có phần lẻ lớn nhất' + (T.c.lots.length > 1 ? '; lô cuối của lệnh nhận phần còn lại của từng thành phần' : '') + '.</p>' +
       (D.settings.method !== 'specific' ? '<p class="note">Giá xuất đang theo ' + esc(METHOD_NAME[D.settings.method].toLowerCase()) + ': giá trị dòng bán thành phẩm theo phương pháp này, nhánh bên dưới chia theo cấu thành của lô ghi trên phiếu. Giá vốn đúng từng lô khi giá xuất là thực tế đích danh.</p>' : '');
   } else h += '<p class="muted" style="margin:0">' + (L.src === 'open' ? 'Lô tồn đầu kỳ: giá trị chuyển từ kỳ 12/2025.' : L.src === 'TL' ? 'Hàng bán bị trả lại, nhận theo giá vốn lúc bán của lô ' + esc(L.from) + '.' : L.src === 'PN' ? 'Lô mua của ' + esc(partyName(D, L.partyId)) + ' theo ' + esc(L.doc) + ': giá trị lô là giá mua.' : L.src === 'KK' ? 'Lô thừa kiểm kê theo ' + esc(L.doc) + '.' : 'Lô ' + esc(lotSource(R, code)) + '.') + '</p>';
   // cuối cây: bán từ lô này / dùng cho lệnh sản xuất
@@ -3443,7 +3451,7 @@ $('btnSide').addEventListener('click', () => setSide(!$('app').classList.contain
 dlg.addEventListener('toggle', e => { if(F && e.target && e.target.id === 'fFold') F.prevOpen = e.target.open; }, true);
 // Uỷ quyền click toàn trang
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-act],[data-item-edit],[data-item-del],[data-lsx-edit],[data-open-doc],[data-goto],[data-goto-view],[data-goto-lot],[data-goto-lots],[data-edit],[data-void],[data-csv],[data-pv],[data-hint],[data-new],[data-filter],[data-wh],[data-qc],[data-lk],[data-print],[data-lot-kind],[data-tree],[data-scrap]');
+  const t = e.target.closest('[data-act],[data-item-edit],[data-item-del],[data-lsx-edit],[data-open-doc],[data-goto],[data-goto-view],[data-goto-lot],[data-goto-lots],[data-edit],[data-void],[data-csv],[data-pv],[data-hint],[data-new],[data-filter],[data-wh],[data-qc],[data-lk],[data-itab],[data-print],[data-lot-kind],[data-tree],[data-scrap]');
   if(!t) return;
   const ds = t.dataset;
   if(ds.new){ setMenu(false); return openForm(ds.new); }
@@ -3453,6 +3461,7 @@ document.addEventListener('click', e => {
   if(ds.filter){ S.ui.filter = ds.filter; return RENDER.docs(); }
   if(ds.wh){ S.ui.wh = ds.wh; return RENDER.stock(); }
   if(ds.qc) return openQC(ds.qc);
+  if(ds.itab){ S.ui.itab = ds.itab; return RENDER.items(); }
   if(ds.lk){ S.ui.lk = ds.lk; return RENDER.stock(); }
   if(ds.print) return printDoc(ds.print);
   if(ds.openDoc){ if(dlg.open) closeDialog(); return openDoc(ds.openDoc); }
@@ -3478,6 +3487,7 @@ document.addEventListener('click', e => {
     case 'dismissImpact': S.ui.impact = null; return renderAll();
     case 'saveForm': return saveForm();
     case 'saveFormPrint': return saveForm(true);
+    case 'toggleAlloc': { const w = $('allocWrap'), on = w.hidden; w.hidden = !on; t.setAttribute('aria-expanded', String(on)); t.textContent = on ? 'Ẩn bảng phân bổ' : 'Xem bảng phân bổ'; return; }
     case 'printPicked': { const nos = Object.keys(S.ui.picked || {}).filter(no => S.ui.picked[no]).sort((a, b) => { const x = S.data.docs.find(d => d.no === a), y = S.data.docs.find(d => d.no === b); return x.date < y.date ? -1 : x.date > y.date ? 1 : a < b ? -1 : 1; });
       if(!nos.length) return toast('Chọn phiếu cần in bằng ô tích ở đầu dòng.'); printDocs(nos); return toast('Đang in ' + nos.length + ' phiếu, mỗi phiếu một trang.'); }
     case 'addLine': if(F && FORMS[F.type].newLine){ F.dirty = true;

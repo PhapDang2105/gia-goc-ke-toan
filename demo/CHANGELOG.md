@@ -36,6 +36,17 @@ Nếu người làm demo đổi dữ liệu mẫu, cập nhật bảng này và 
 | 7 | Quy trình chỉ có cá linh (2 giai đoạn) và mắm tôm (1 giai đoạn) | 4 quy trình theo [YEU-CAU-KHACH-HANG](../docs/01-yeu-cau/YEU-CAU-KHACH-HANG.md) §4 | GT-01 |
 | 8 | Tiêu thức phân bổ nhân công / sản xuất chung = chi phí nguyên vật liệu trực tiếp của lệnh; lệnh hoàn thành khi có phiếu nhập kho đầu tiên | Tiêu thức cấu hình theo giai đoạn (đề xuất khối lượng × số ngày cho công đoạn ủ); trạng thái lệnh có Hoàn thành → Đóng | [QD-29](../docs/02-ke-hoach/QUYET-DINH.md#qd-29) — cố ý giản lược, chỉ cần nói rõ khi trình diễn |
 
+## v4.3 — giảm tải các trang dày (2026-10-07)
+
+Rà 10 trang (đo số khối, bảng, cột, chiều cao trang ở 1366px). Sửa 4 trang quá tải:
+
+- **Danh mục & lệnh sản xuất**: 4 bảng xếp chồng (cao 1.815px) → 4 thẻ chọn Vật tư / Lệnh sản xuất / Vị trí chứa / Nhân sự, mỗi lần một bảng (cao 440–860px). Bỏ cột Thuế GTGT khỏi bảng vật tư (vẫn sửa trong biểu mẫu); cột QC chỉ ghi tên người, rê chuột thấy khu.
+- **Giá vốn theo lô**: trong nhánh bán thành phẩm, 5 dòng nhân công / sản xuất chung gộp thành 1 dòng "Nhân công và sản xuất chung" kèm số lệnh; bỏ chữ "Tiêu thức nguyên vật liệu trực tiếp" lặp 10 lần; bỏ dòng giải thích làm tròn. Cây vẫn đi tới lô nguyên liệu, nhà cung cấp, đơn giá.
+- **Giá thành theo lệnh sản xuất**: bảng phân bổ 11 cột ẩn mặc định, bấm "Xem bảng phân bổ" để mở; cột sản phẩm rộng hơn, không vỡ 4 dòng; bỏ dòng công thức dưới thẻ tính giá thành. Trang từ 1.509px còn 933px.
+- **Tổng quan**: khối "Đối chiếu kho với sổ cái" chỉ hiện khi có lệch (khi khớp đã có dòng "Kho – sổ cái" trong Việc cần làm); cơ cấu giá thành dàn hết chiều ngang.
+- Các trang còn lại (Chứng từ, Báo cáo, Kho & lô, Giá nguyên liệu, Giá xuất kho, Nhật ký) giữ nguyên: mỗi trang 1–3 khối, đúng một việc.
+- Kiểm tra: bấm thử 1366px và 390px, không lỗi, không cuộn ngang; tự kiểm tra 480 trường hợp, 0 sai.
+
 ## v4.2 — kho và người phụ trách, ô tổng quan nổi bật (2026-10-07)
 
 - Trang **Kho & lô** có bảng "Kho và người phụ trách" ở đầu trang: 3 kho, tên thủ kho (Mr Phú – Nhà máy Bà Ba Thạo, Ms Trâm – Kho Bình Tây, Mr Hải – Cửa hàng 97 Nguyễn Thái Học), kế toán kho Ms Huyền, số lô đang tồn, giá trị tồn, nút "Xem tồn" lọc theo kho.
