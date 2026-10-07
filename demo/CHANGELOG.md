@@ -36,6 +36,36 @@ Nếu người làm demo đổi dữ liệu mẫu, cập nhật bảng này và 
 | 7 | Quy trình chỉ có cá linh (2 giai đoạn) và mắm tôm (1 giai đoạn) | 4 quy trình theo [YEU-CAU-KHACH-HANG](../docs/01-yeu-cau/YEU-CAU-KHACH-HANG.md) §4 | GT-01 |
 | 8 | Tiêu thức phân bổ nhân công / sản xuất chung = chi phí nguyên vật liệu trực tiếp của lệnh; lệnh hoàn thành khi có phiếu nhập kho đầu tiên | Tiêu thức cấu hình theo giai đoạn (đề xuất khối lượng × số ngày cho công đoạn ủ); trạng thái lệnh có Hoàn thành → Đóng | [QD-29](../docs/02-ke-hoach/QUYET-DINH.md#qd-29) — cố ý giản lược, chỉ cần nói rõ khi trình diễn |
 
+## v5.1 — cải tiến theo phản biện của 4 chuyên gia (2026-10-07)
+
+4 chuyên gia (kế toán trưởng, ban giám đốc, thủ kho và QC, trải nghiệm người dùng) tự dùng thử demo trên máy tính và điện thoại, nêu hơn 50 phát hiện. Đã sửa:
+
+**Nghiệp vụ, số liệu**
+- Chi phí bán hàng và quản lý doanh nghiệp: phiếu "Chi phí khác" có ô **Bộ phận chịu chi phí** (sản xuất → vào giá thành; bán hàng → 641; quản lý → 642; Thông tư 133: 6421 / 6422). Dữ liệu mẫu thêm thuê cửa hàng 97 Nguyễn Thái Học 15 triệu, vận chuyển 4,2 triệu, lương văn phòng 30 triệu → lợi nhuận trước thuế 34,2 triệu (trước: báo 83,4 triệu vì không có chi phí ngoài sản xuất). Dữ liệu mẫu đổi phiên bản: trình duyệt nạp lại mẫu mới.
+- Sổ cái, sổ quỹ: tài khoản đối ứng theo cặp Nợ – Có (trước liệt kê cả phía bên kia, ví dụ 632 hiện "5112, 33311, 155"); chứng từ kết chuyển xếp cuối ngày.
+- Cột "Số tiền" ở Chứng từ: hóa đơn = tổng thanh toán, phiếu nhập kho = giá trị nhập (trước cộng cả giá vốn, hỏng).
+- Phiếu nhập mua cảnh báo khi đơn giá tăng quá 5% so với lần nhập trước.
+- **Lô quá hạn sử dụng không được bán, không xuất cho sản xuất** (chỉ xuất hủy); hiện "Quá hạn" ở Tồn kho, Bản đồ bồn.
+- So với lô khác: "Giá thành" cho hàng sản xuất; số lượng hàng đếm (hũ, cái) làm tròn số nguyên trong cây giá vốn.
+
+**Quản lý**
+- Tổng quan: ô giá vốn ghi lãng phí (máy dưới công suất, hỏng); ô lãi gộp ghi lợi nhuận trước thuế; bỏ số tài khoản.
+- Việc cần làm: lô quá hạn ghi số tiền; thêm "Phải thu lớn nhất" (Thực phẩm Xanh còn nợ 171,8 triệu) mở thẳng công nợ.
+- Bản tin: lô đắt hơn ghi số tiền tăng thêm (≈ 8,4 triệu cho 1.570 hũ); không nêu nguyên nhân khi mức đổi bằng 0.
+- Báo cáo mới **Lãi gộp theo khách hàng** (số hóa đơn, doanh thu, giá vốn, lãi gộp, biên, còn nợ).
+- Danh sách lô: thêm doanh thu, lãi gộp, biên theo lô; bỏ cột tên hàng trùng dòng nhóm. Hồ sơ lô: khách hàng đã nhận có doanh thu, lãi gộp, dòng cộng.
+- Giả lập giá: dùng giá bán bình quân thực tế (Tổng quan và Giả lập cùng một biên).
+- Bản đồ bồn: vị trí có nhiều lô ghi tổng và số lô, bấm mở Tồn kho lọc theo vị trí; bồn đang ủ mở đúng lệnh; "Đủ ngày" là chữ, không nền.
+
+**Dễ dùng**
+- Thanh trên cùng: "Chế độ", "Giá xuất" vào nút **Thiết lập**; tiêu đề không còn bị ô tìm che (1366px).
+- Kiểm kê: Enter lưu số và quay về ô quét; ô quét luôn thấy khi cuộn; ô đếm ghi đơn vị; tách Thiếu / Thừa.
+- Phiếu: chưa báo lỗi khi người dùng chưa nhập gì.
+- Điện thoại: menu dạng ngăn kéo theo 4 nhóm (nút Menu); phần đầu trang từ khoảng 200px còn 83px; bỏ "Ctrl+K".
+- Bảng không ngắt chữ giữa từ, ngày; ô lọc trong khung ghi "Lọc bảng: …"; nút bị khóa đủ tương phản; tên khách "97 NTH" ghi đầy đủ; tồn kho không lặp "5.Trái Trái".
+
+**Chưa làm, cần quyết định với khách** (ghi nhận từ phản biện kế toán trưởng): chốt giá lô tại ngày nhập kho bằng đơn giá phân bổ định trước (hiện giá lô đã bán có thể đổi khi có chứng từ mới trong tháng); tiêu thức phân bổ nhân công / sản xuất chung theo kg hoặc kg × ngày ủ (CH-10); kết chuyển theo từng lệnh để 154 không âm giữa tháng; mẫu kết quả kinh doanh Thông tư 133 (mã 24); trường hóa đơn đầu vào, chi phí mua phân bổ vào lô; số dở dang đầu kỳ mẫu; quét camera trên điện thoại; bảng dạng thẻ trên điện thoại.
+
 ## v5.0 — Hồ sơ lô, menu theo luồng công việc, tìm nhanh, bỏ cuộn ngang thừa (2026-10-07)
 
 - **Hồ sơ lô**: mỗi lô một trang, đọc từ trên xuống — tên hàng, mã lô, mã QR, QC, hạn dùng, nguồn, còn tồn; 4 ô số (giá thành / đơn giá lô, giá trị lô, đã bán và số khách, còn trong kho); "Giá vốn được cấu thành từ đâu" (cây); "So với lô khác"; "Nguồn gốc và nơi đi" (sơ đồ); khách hàng đã nhận; tồn trong kho; nút In tem lô, Khóa các lô còn tồn. Gộp 3 trang cũ (Giá vốn theo lô phần cây, Truy xuất lô, so sánh lô). Mọi mã lô ở mọi nơi (bảng, sơ đồ, bồn, bản tin, tìm nhanh, mã QR) đều mở trang này.
