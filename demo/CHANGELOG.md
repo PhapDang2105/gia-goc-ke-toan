@@ -36,6 +36,15 @@ Nếu người làm demo đổi dữ liệu mẫu, cập nhật bảng này và 
 | 7 | Quy trình chỉ có cá linh (2 giai đoạn) và mắm tôm (1 giai đoạn) | 4 quy trình theo [YEU-CAU-KHACH-HANG](../docs/01-yeu-cau/YEU-CAU-KHACH-HANG.md) §4 | GT-01 |
 | 8 | Tiêu thức phân bổ nhân công / sản xuất chung = chi phí nguyên vật liệu trực tiếp của lệnh; lệnh hoàn thành khi có phiếu nhập kho đầu tiên | Tiêu thức cấu hình theo giai đoạn (đề xuất khối lượng × số ngày cho công đoạn ủ); trạng thái lệnh có Hoàn thành → Đóng | [QD-29](../docs/02-ke-hoach/QUYET-DINH.md#qd-29) — cố ý giản lược, chỉ cần nói rõ khi trình diễn |
 
+## v4.2 — kho và người phụ trách, ô tổng quan nổi bật (2026-10-07)
+
+- Trang **Kho & lô** có bảng "Kho và người phụ trách" ở đầu trang: 3 kho, tên thủ kho (Mr Phú – Nhà máy Bà Ba Thạo, Ms Trâm – Kho Bình Tây, Mr Hải – Cửa hàng 97 Nguyễn Thái Học), kế toán kho Ms Huyền, số lô đang tồn, giá trị tồn, nút "Xem tồn" lọc theo kho.
+- Trang **Danh mục** thay bảng kho bằng bảng **Nhân sự vận hành** đủ 16 người theo tài liệu HỆ THỐNG (tải được ra Excel).
+- QC phụ trách hiển thị kèm tên: khu thủy sản Ms Hằng, nông sản Ms Huỳnh, đóng gói Ms Tú, hàng xay Ms Trâm, trưởng QC Ms Lan (danh mục vật tư, phiếu nhập thành phẩm, cập nhật QC lô).
+- Phiếu in ghi sẵn tên dưới chữ ký: thủ kho theo kho của phiếu, kế toán kho Ms Huyền, kế toán trưởng Ms Nhung (phiếu thu/chi); dòng "Kho nhập/Kho xuất" kèm tên thủ kho.
+- Ô tổng quan (chỉ số) có nền xanh nhạt, viền trái màu nhấn, số màu xanh đậm để nổi bật; có bản nền tối.
+- Kiểm tra: bấm thử trên giao diện ở 1366px và 390px, nền sáng và tối, không lỗi, không cuộn ngang; tự kiểm tra 480 trường hợp, 0 sai.
+
 ## Sau v4.0 — tiêu đề trang
 
 - Tiêu đề thẻ trình duyệt đổi từ "Giá Gốc · Mắm" thành "Hệ thống quản lý" (commit 7e45cbf). Chữ "Giá Gốc" trên thanh bên giữ nguyên. Tên sản phẩm chưa chốt: [CH-56](../docs/01-yeu-cau/CAU-HOI-MO.md#ch-56).

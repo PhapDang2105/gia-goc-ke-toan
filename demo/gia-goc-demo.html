@@ -8,7 +8,7 @@
   /* Biểu đồ: 4 ô categorical (đã kiểm validate_palette.js: light / #ffffff, cả cặp kề và mọi cặp); chữ trong ô màu dùng --kN-ink */
   --k1:#1f5fa8; --k2:#6899e2; --k3:#1e8163; --k4:#67c7a4; --k1-ink:#ffffff; --k2-ink:#0f1a2a; --k3-ink:#ffffff; --k4-ink:#0f1a2a;
   --c-nvl:var(--k1); --c-btp:var(--k2); --c-nc:var(--k3); --c-sxc:var(--k4); --c-rev:var(--k1); --c-gp:var(--k2);
-  --grid:#e8eaed; --axis:#c3c8ce; --track:#dbe4ef; --band:rgba(29,34,38,.05);
+  --kpi-bg:#e8eef6; --kpi-line:#1f5fa8; --kpi-val:#123f73; --grid:#e8eaed; --axis:#c3c8ce; --track:#dbe4ef; --band:rgba(29,34,38,.05);
   --scrim:rgba(20,24,28,.45); --shadow:0 2px 8px rgba(20,24,28,.18);
   --font-ui:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
   --font-mono:Consolas,ui-monospace,monospace;
@@ -19,7 +19,7 @@
   --accent:#5b9ae0; --accent-h:#7cb0ea; --on-accent:#0f1215; --neg:#f07a72; --warn:#e2a64e; --pos:#5cc08a;
   --k1:#5894e0; --k2:#3063a6; --k3:#3ba888; --k4:#04785d; --k1-ink:#0f1215; --k2-ink:#ffffff; --k3-ink:#0f1215; --k4-ink:#ffffff;
   --c-nvl:var(--k1); --c-btp:var(--k2); --c-nc:var(--k3); --c-sxc:var(--k4); --c-rev:var(--k1); --c-gp:var(--k2);
-  --grid:#2b3035; --axis:#474e55; --track:#29364a; --band:rgba(255,255,255,.05);
+  --kpi-bg:#1d2836; --kpi-line:#5b9ae0; --kpi-val:#cfe0f5; --grid:#2b3035; --axis:#474e55; --track:#29364a; --band:rgba(255,255,255,.05);
   --scrim:rgba(0,0,0,.6); --shadow:0 2px 8px rgba(0,0,0,.5); color-scheme:dark;
 }}
 :root[data-theme="dark"]{
@@ -27,7 +27,7 @@
   --accent:#5b9ae0; --accent-h:#7cb0ea; --on-accent:#0f1215; --neg:#f07a72; --warn:#e2a64e; --pos:#5cc08a;
   --k1:#5894e0; --k2:#3063a6; --k3:#3ba888; --k4:#04785d; --k1-ink:#0f1215; --k2-ink:#ffffff; --k3-ink:#0f1215; --k4-ink:#ffffff;
   --c-nvl:var(--k1); --c-btp:var(--k2); --c-nc:var(--k3); --c-sxc:var(--k4); --c-rev:var(--k1); --c-gp:var(--k2);
-  --grid:#2b3035; --axis:#474e55; --track:#29364a; --band:rgba(255,255,255,.05);
+  --kpi-bg:#1d2836; --kpi-line:#5b9ae0; --kpi-val:#cfe0f5; --grid:#2b3035; --axis:#474e55; --track:#29364a; --band:rgba(255,255,255,.05);
   --scrim:rgba(0,0,0,.6); --shadow:0 2px 8px rgba(0,0,0,.5); color-scheme:dark;
 }
 :root[data-theme="light"]{color-scheme:light}
@@ -109,7 +109,8 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 .panel h2{font-size:14px;font-weight:600;margin:0}
 .panel-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;min-height:30px}
 .panel-head .spacer{flex:1}
-.kpi{gap:2px;padding:10px 14px}
+.kpi{gap:2px;padding:10px 14px;background:var(--kpi-bg);border-color:var(--kpi-bg);border-left:3px solid var(--kpi-line)}
+.kpi .val{color:var(--kpi-val)}
 .kpi .label{font-size:12.5px;color:var(--muted)}
 .kpi .val{font-size:20px;font-weight:600;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;line-height:1.3}
 .kpi .val small{font-size:12px;color:var(--muted);font-weight:400}
@@ -143,7 +144,7 @@ td.pick .icon-btn{display:inline-grid;width:26px;height:26px;vertical-align:midd
 #matDetail h2,#lotTree h2{font-size:14px;font-weight:600;margin:4px 0 0}
 #postTbl td:nth-child(2),.prev td:nth-child(2){white-space:normal;min-width:130px}
 #recon td:nth-child(2){white-space:normal;min-width:0}
-#whTbl td{white-space:normal;min-width:90px}
+#whTbl td,#staffTbl td{white-space:normal;min-width:90px}
 tr:last-child td{border-bottom:0}
 .tbl-wrap tbody tr:hover td{background:var(--hover)}
 .tbl-wrap tfoot td{font-weight:600;background:var(--surface-2);border-top:1px solid var(--line)}
@@ -402,6 +403,7 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
 .ps-sign{display:grid;gap:8px;margin-top:8px;text-align:center}
 .ps-sign div{display:flex;flex-direction:column;gap:2px;min-height:86px}
 .ps-sign span{font-size:11px;font-style:italic}
+.ps-sign span.ps-name{margin-top:auto;font-size:12px;font-style:normal;font-weight:600}
 @media print{
   html,body{background:#fff!important;color:#000}
   .app,.toast,dialog,.tour-ring,.tour-pop,.skip{display:none!important}
@@ -546,6 +548,10 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
     <!-- KHO & LÔ -->
     <section class="view" id="v-stock" hidden>
       <div class="panel">
+        <div class="panel-head"><h2>Kho và người phụ trách</h2></div>
+        <div class="tbl-wrap"><table id="whTbl"></table></div>
+      </div>
+      <div class="panel">
         <div class="panel-head"><h2>Tổng hợp nhập – xuất – tồn</h2><div class="seg" id="whFilter" role="group" aria-label="Lọc theo kho"></div><div class="spacer"></div>
           <button class="btn sm xl" type="button" data-csv="nxt" data-name="nhap-xuat-ton" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button></div>
         <div class="tbl-wrap"><table id="nxt"></table></div>
@@ -590,8 +596,9 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
       </div>
       <div class="duo">
         <div class="panel">
-          <div class="panel-head"><h2>Kho và người phụ trách</h2></div>
-          <div class="tbl-wrap"><table id="whTbl"></table></div>
+          <div class="panel-head"><h2>Nhân sự vận hành</h2><div class="spacer"></div>
+            <button class="btn sm xl" type="button" data-csv="staffTbl" data-name="nhan-su-van-hanh" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button></div>
+          <div class="tbl-wrap"><table id="staffTbl"></table></div>
         </div>
         <div class="panel">
           <div class="panel-head"><h2>Vị trí chứa</h2><span class="note" id="locCount"></span><div class="spacer"></div><button class="btn primary sm" type="button" data-new="LOC">+ Vị trí chứa</button>
@@ -716,14 +723,29 @@ function mulRound(a, b){ if(!isFinite(a) || !isFinite(b)) return NaN; return div
 function ratioRound(q, v, d){ if(!isFinite(q) || !isFinite(v) || !isFinite(d) || Math.abs(d) < 1e-9) return Math.round(q * v / d); return divHalfUp(big(q, 4) * big(Math.round(v), 0), big(d, 4)); }
 
 // ================= Dữ liệu mẫu (SEED) =================
-// Ngành mắm theo tài liệu HỆ THỐNG. Đối tác, số liệu là giả định. Vai trò (thủ kho, QC) lấy từ tài liệu nhưng không ghi tên người.
+// Ngành mắm theo tài liệu HỆ THỐNG. Đối tác, số liệu là giả định. Kho, thủ kho, QC và nhân sự vận hành lấy đúng theo tài liệu.
 const WH = {
-  BBT:{name:'Nhà máy Bà Ba Thạo', role:'Thủ kho nhà máy Bà Ba Thạo', note:'Nguyên vật liệu, bao bì, phụ gia, bán thành phẩm, thành phẩm; kiểm kê cuối tháng'},
-  BT: {name:'Kho Bình Tây', role:'Thủ kho Bình Tây', note:'Thành phẩm phân phối; kiểm kê cuối tháng'},
-  NTH:{name:'Cửa hàng 97 Nguyễn Thái Học', role:'Thủ kho 97 Nguyễn Thái Học', note:'Bán lẻ (sale admin đặt đơn, bán hàng); kiểm kê cuối tháng'}
+  BBT:{name:'Nhà máy Bà Ba Thạo', keeper:'Mr Phú', role:'Thủ kho nhà máy Bà Ba Thạo', note:'Nguyên vật liệu, bao bì, phụ gia, bán thành phẩm, thành phẩm; kiểm kê cuối tháng'},
+  BT: {name:'Kho Bình Tây', keeper:'Ms Trâm', role:'Thủ kho Bình Tây', note:'Thành phẩm phân phối; kiểm kê cuối tháng'},
+  NTH:{name:'Cửa hàng 97 Nguyễn Thái Học', keeper:'Mr Hải', role:'Thủ kho 97 Nguyễn Thái Học', note:'Bán lẻ (sale admin đặt đơn, bán hàng); kiểm kê cuối tháng'}
 };
 const WHK = Object.keys(WH);
 const QC_ROLES = ['QC khu thủy sản', 'QC khu nông sản', 'QC khu đóng gói', 'QC khu hàng xay'];
+const QC_PERSON = {'QC khu thủy sản':'Ms Hằng', 'QC khu nông sản':'Ms Huỳnh', 'QC khu đóng gói':'Ms Tú', 'QC khu hàng xay':'Ms Trâm', 'Trưởng QC':'Ms Lan'};
+const qcLabel = r => (r || '') + (QC_PERSON[r] ? ' · ' + QC_PERSON[r] : '');
+const keeperOf = w => WH[w] ? WH[w].keeper : '';
+const ACC_STOCK = 'Ms Huyền', ACC_CHIEF = 'Ms Nhung';
+// Nhân sự vận hành chính theo tài liệu HỆ THỐNG
+const STAFF = [
+  ['Mr Thiên', 'Ban giám đốc', 'Quản lý, triển khai', 'Tất cả'], ['Ms Tuyết', 'Ban giám đốc', 'Quản lý, triển khai', 'Tất cả'], ['Ms Kim Cương', 'Ban giám đốc', 'Quản lý, triển khai', 'Tất cả'],
+  ['Ms Nhung', 'Kế toán trưởng', 'Quản lý hệ thống kế toán', 'Tất cả'], ['Ms Loan', 'Kế toán tổng hợp', 'Thống kê dữ liệu, lập sổ sách', 'Tất cả'],
+  ['Ms Huyền', 'Kế toán kho', 'Theo dõi, quản lý tồn kho', 'Tất cả kho'], ['Ms Thảo', 'Kế hoạch', 'Gửi kế hoạch sản xuất hàng ngày xuống xưởng', 'Nhà máy Bà Ba Thạo'],
+  ['Ms Phượng Anh', 'Sale admin', 'Đặt đơn hàng, bán hàng', 'Cửa hàng 97 Nguyễn Thái Học'],
+  ['Ms Trâm', 'Thủ kho Bình Tây', 'Quản lý tồn kho, kiểm kê cuối tháng', 'Kho Bình Tây'], ['Mr Hải', 'Thủ kho 97 Nguyễn Thái Học', 'Quản lý tồn kho, kiểm kê cuối tháng', 'Cửa hàng 97 Nguyễn Thái Học'],
+  ['Mr Phú', 'Thủ kho nhà máy Bà Ba Thạo', 'Quản lý tồn kho nguyên vật liệu, bao bì, phụ gia, thành phẩm; kiểm kê cuối tháng', 'Nhà máy Bà Ba Thạo'],
+  ['Ms Lan', 'Trưởng QC', 'Lên kế hoạch sản xuất, quản lý bộ phận QC và sản xuất', 'Nhà máy Bà Ba Thạo'],
+  ['Ms Hằng', 'QC khu thủy sản', 'Quản lý chất lượng, lập mã lô, sản xuất theo lệnh sản xuất', 'Khu thủy sản'], ['Ms Huỳnh', 'QC khu nông sản', 'Quản lý chất lượng, lập mã lô, sản xuất theo lệnh sản xuất', 'Khu nông sản'],
+  ['Ms Tú', 'QC khu đóng gói', 'Quản lý chất lượng, lập mã lô, sản xuất theo lệnh sản xuất', 'Khu đóng gói'], ['Ms Trâm', 'QC khu hàng xay', 'Quản lý chất lượng, lập mã lô, sản xuất theo lệnh sản xuất', 'Khu hàng xay']];
 const QC_NAME = {pass:'Đạt', hold:'Chờ', fail:'Không đạt'};
 const QC_CLS = {pass:'', hold:'s-warn', fail:'s-bad'};
 const SEED = {
@@ -1925,7 +1947,11 @@ function whMoves(r, w){ // tổng hợp nhập / xuất theo kho (w = 'all' thì
 RENDER.stock = function(){
   const D = S.data, w = S.ui.wh, spec = D.settings.method === 'specific';
   $('whFilter').innerHTML = [['all', 'Tất cả', 'Tất cả kho']].concat(WHK.map(k => [k, k, WH[k].name])).map(([k, l, t]) => '<button type="button" data-wh="' + k + '" aria-pressed="' + (w === k) + '" title="' + esc(t) + '">' + esc(l) + '</button>').join('');
-  $('lotWh').textContent = w === 'all' ? '3 kho' : WH[w].name;
+  $('lotWh').textContent = w === 'all' ? '3 kho' : WH[w].name + ' · thủ kho ' + WH[w].keeper;
+  const whSum = k => { let n = 0, v = 0; Object.keys(R.items).forEach(i => Object.values(R.items[i].cells).forEach(c => { if(c.wh === k && c.q > EPS){ n++; v += c.v; } })); return {n, v}; };
+  $('whTbl').innerHTML = '<thead><tr><th>Kho</th><th>Thủ kho</th><th>Phạm vi</th><th class="n">Số lô đang tồn</th><th class="n">Giá trị tồn (đ)</th><th></th></tr></thead><tbody>' +
+    WHK.map(k => { const t = whSum(k); return '<tr' + (w === k ? ' class="sel"' : '') + '><td><b>' + esc(WH[k].name) + '</b></td><td><b>' + esc(WH[k].keeper) + '</b><br><span class="muted small">' + esc(WH[k].role) + '</span></td><td class="wrap small">' + esc(WH[k].note) + '</td><td class="n">' + t.n + '</td><td class="n">' + fmt(t.v) + '</td><td><button class="btn sm" type="button" data-wh="' + k + '">Xem tồn</button></td></tr>'; }).join('') +
+    '<tr><td>Kế toán kho</td><td><b>' + ACC_STOCK + '</b></td><td class="wrap small">Theo dõi, quản lý tồn kho tất cả kho; đối chiếu nhập – xuất với thủ kho</td><td></td><td></td><td></td></tr></tbody>';
   let body = '', tot = {o:0, i:0, x:0, c:0};
   [['NVL', '152'], ['BTP', '155'], ['SP', '155'], ['HH', '156']].filter(([kind]) => itemsOf(D, kind).length).forEach(([kind, acc]) => { const sub = {o:0, i:0, x:0, c:0}; let any = false;
     itemsOf(D, kind).forEach(k => { const it = D.items[k], r = R.items[k];
@@ -2046,14 +2072,13 @@ RENDER.items = function(){
     Object.keys(D.items).map(k => { const it = D.items[k], u = itemUsage(D, k), o = openOf(D, k);
       const bom = (it.bom || []).map(b => D.items[b.item] ? D.items[b.item].code + ' ' + fmtQ(b.qty) + ' ' + D.items[b.item].uom : '').join(', ');
       const cq = R.items[k] ? R.items[k].closeQ : 0, lowS = it.min > 0 && cq <= it.min + EPS;
-      return '<tr><td class="acc">' + esc(it.code) + '<br><span class="muted small">' + esc(it.misa || '') + '</span></td><td>' + esc(it.name) + (it.prod ? '<br><span class="note">' + esc(it.prod.stage + (it.prod.steps ? ': ' + it.prod.steps : '') + ' · hao hụt định mức ' + fmtD(it.prod.loss || 0, 2) + '%') + '</span>' : '') + '</td><td>' + (it.grp ? GRP_NAME[it.grp] : KIND_NAME[it.kind].replace(/ \(\d+\)$/, '')) + ' <span class="muted small">' + KIND_ACC[it.kind] + '</span></td><td>' + esc(it.uom) + ' · ' + it.wh + '</td><td class="n">' + fmtQ(cq) + (lowS ? ' ' + sx('s-warn', 'cần đặt thêm') : '') + (it.min ? '<br><span class="muted small">tối thiểu ' + fmtQ(it.min) + '</span>' : '') + '</td><td>' + esc(it.qcRole || '') + '</td><td class="n">' + (it.shelf || '—') + '</td><td class="n">' + it.vat + '%</td><td class="n">' + fmtQ(o.qty) + '<br><span class="muted small">' + fmt(o.value) + ' đ' + ((D.open[k] || []).length > 1 ? ' · ' + D.open[k].length + ' lô' : '') + '</span></td><td class="wrap small">' + (isProd(D, k) ? esc(bom || 'chưa khai') : '—') + '</td>' +
+      return '<tr><td class="acc">' + esc(it.code) + '<br><span class="muted small">' + esc(it.misa || '') + '</span></td><td>' + esc(it.name) + (it.prod ? '<br><span class="note">' + esc(it.prod.stage + (it.prod.steps ? ': ' + it.prod.steps : '') + ' · hao hụt định mức ' + fmtD(it.prod.loss || 0, 2) + '%') + '</span>' : '') + '</td><td>' + (it.grp ? GRP_NAME[it.grp] : KIND_NAME[it.kind].replace(/ \(\d+\)$/, '')) + ' <span class="muted small">' + KIND_ACC[it.kind] + '</span></td><td>' + esc(it.uom) + ' · ' + it.wh + '</td><td class="n">' + fmtQ(cq) + (lowS ? ' ' + sx('s-warn', 'cần đặt thêm') : '') + (it.min ? '<br><span class="muted small">tối thiểu ' + fmtQ(it.min) + '</span>' : '') + '</td><td>' + esc(qcLabel(it.qcRole)) + '</td><td class="n">' + (it.shelf || '—') + '</td><td class="n">' + it.vat + '%</td><td class="n">' + fmtQ(o.qty) + '<br><span class="muted small">' + fmt(o.value) + ' đ' + ((D.open[k] || []).length > 1 ? ' · ' + D.open[k].length + ' lô' : '') + '</span></td><td class="wrap small">' + (isProd(D, k) ? esc(bom || 'chưa khai') : '—') + '</td>' +
         '<td><div class="btn-row" style="flex-wrap:nowrap"><button class="btn sm" type="button" data-item-edit="' + k + '">Sửa</button><button class="btn sm danger" type="button" data-item-del="' + k + '"' + (u.used ? ' aria-disabled="true" title="Đã có phát sinh (' + esc(u.docs.slice(0, 3).concat(u.boms.map(b => 'định mức ' + D.items[b].code), u.lsx.map(x => D.lsx[x].no)).join(', ')) + '), không xóa được"' : '') + '>Xóa</button></div></td></tr>'; }).join('') + '</tbody>';
   $('lsxTbl').innerHTML = '<thead><tr><th>Số lệnh</th><th>Sản phẩm · giai đoạn</th><th>Trạng thái</th><th>Ngày</th><th class="n">Kế hoạch</th><th class="n">Đã nhập đạt</th><th class="n">Giá thành đơn vị (đ)</th><th>Thao tác</th></tr></thead><tbody>' +
     Object.keys(D.lsx).map(k => { const x = D.lsx[k], it = D.items[x.item] || {name:x.item, uom:''}, c = R.card[k];
       return '<tr><td class="acc">' + esc(x.no) + '</td><td class="wrap">' + esc(it.name) + ' · ' + esc((it.prod || {}).stage || '') + (x.note ? '<br><span class="note">' + esc(x.note) + '</span>' : '') + '</td><td>' + (c ? LSX_STATUS[c.status] : '') + '</td><td>' + dmy(x.date) + '</td><td class="n">' + fmtQ(x.plan) + ' ' + it.uom + '</td><td class="n">' + fmtQ(c ? c.good : 0) + '</td><td class="n">' + (c && c.status === 'done' && c.qty ? fmt2(c.z) : '—') + '</td><td><button class="btn sm" type="button" data-lsx-edit="' + k + '">Sửa</button></td></tr>'; }).join('') + '</tbody>';
-  $('whTbl').innerHTML = '<thead><tr><th>Mã</th><th>Kho</th><th>Phụ trách (vai trò)</th><th>Nội dung</th></tr></thead><tbody>' +
-    WHK.map(k => '<tr><td class="acc">' + k + '</td><td>' + esc(WH[k].name) + '</td><td>' + esc(WH[k].role) + '</td><td class="wrap small">' + esc(WH[k].note) + '</td></tr>').join('') +
-    '<tr><td class="acc">QC</td><td>Theo khu</td><td>' + esc(QC_ROLES.join(', ')) + '; trưởng QC</td><td class="wrap small">Quản lý chất lượng, lập mã lót hàng (mã lô), sản xuất theo lệnh sản xuất.</td></tr></tbody>';
+  $('staffTbl').innerHTML = '<thead><tr><th>Họ tên</th><th>Vai trò</th><th>Nhiệm vụ</th><th>Phạm vi</th></tr></thead><tbody>' +
+    STAFF.map(([n, r, t, w]) => '<tr><td><b>' + esc(n) + '</b></td><td>' + esc(r) + '</td><td class="wrap small">' + esc(t) + '</td><td>' + esc(w) + '</td></tr>').join('') + '</tbody>';
   // vị trí chứa: đang chứa lô nào
   const occ = {}; Object.keys(R.items).forEach(k => Object.values(R.items[k].lcells).forEach(c => { if(c.loc && c.q > EPS){ const key = c.wh + '|' + c.loc; (occ[key] = occ[key] || []).push(c.lot + ' · ' + fmtQ(c.q) + ' ' + D.items[k].uom); } }));
   const LS = (D.locs || []).slice().sort((a, b) => a.wh < b.wh ? -1 : a.wh > b.wh ? 1 : a.kind < b.kind ? 1 : a.kind > b.kind ? -1 : a.zone < b.zone ? -1 : a.zone > b.zone ? 1 : (+a.no || 0) - (+b.no || 0));
@@ -2779,7 +2804,7 @@ const FORMS = {
         linesHead([['Vị trí chứa'], ['Số lượng đạt' + (it ? ' (' + esc(it.uom) + ')' : ''), 1], ['']]) +
         dr.lines.map((l, i) => '<tr><td>' + locSel('f_l' + i + '_loc', 'lines.' + i + '.loc', dr.wh, l.loc, 'aria-label="Vị trí chứa dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="decimal" aria-label="số lượng đạt dòng ' + (i + 1) + '" style="width:110px"') + '</td><td>' + delBtn(i, n) + '</td></tr>').join('') +
         '</tbody></table></div><div><button class="btn sm" type="button" data-act="addLine">+ Vị trí</button></div>' +
-        (it ? '<dl class="kv"><dt>Sản phẩm</dt><dd>' + esc(it.code + ' · ' + it.name) + ' · ' + esc(pr.stage || '') + '</dd><dt>Định mức hao hụt</dt><dd>' + fmtD(pr.loss || 0, 2) + '% (đạt + không đạt)</dd><dt>Người QC</dt><dd>' + esc(it.qcRole || '') + '</dd><dt>Mã hóa</dt><dd class="acc" id="f_nkMh"></dd><dt>Số lượng đạt</dt><dd id="f_nkQ"></dd><dt>Tổng chi phí lệnh</dt><dd id="f_nkC"></dd><dt>Giá thành đơn vị dự kiến</dt><dd id="f_nkZ"></dd><dt>Giá trị nhập kho lô</dt><dd id="f_nkV"></dd><dt>Hỏng ngoài định mức (cả lệnh)</dt><dd id="f_nkA"></dd></dl>' : ''); },
+        (it ? '<dl class="kv"><dt>Sản phẩm</dt><dd>' + esc(it.code + ' · ' + it.name) + ' · ' + esc(pr.stage || '') + '</dd><dt>Định mức hao hụt</dt><dd>' + fmtD(pr.loss || 0, 2) + '% (đạt + không đạt)</dd><dt>Người QC</dt><dd>' + esc(qcLabel(it.qcRole)) + '</dd><dt>Mã hóa</dt><dd class="acc" id="f_nkMh"></dd><dt>Số lượng đạt</dt><dd id="f_nkQ"></dd><dt>Tổng chi phí lệnh</dt><dd id="f_nkC"></dd><dt>Giá thành đơn vị dự kiến</dt><dd id="f_nkZ"></dd><dt>Giá trị nhập kho lô</dt><dd id="f_nkV"></dd><dt>Hỏng ngoài định mức (cả lệnh)</dt><dd id="f_nkA"></dd></dl>' : ''); },
     onField(k, dr){ if(k === 'wh') dr.lines.forEach(l => { if(l.loc && !locsOf(S.data, dr.wh).some(z => locCode(z) === l.loc)) l.loc = ''; }); },
     build(dr, Rb){ Rb = Rb || R; const E = [], W = [], D = S.data; chkDate(dr, E); const x = D.lsx[dr.lsx];
       if(!x || !D.items[x.item]){ E.push({id:'f_lsx', msg:'Chọn lệnh sản xuất.'}); return {doc:null, E, W, I:[]}; }
@@ -2839,7 +2864,7 @@ FORMS.ITEM = {
       lab('Đơn vị tính', inp('f_uom', 'uom', dr.uom, 'list="uomList" autocomplete="off"' + (used ? ' readonly title="Đã có phát sinh, không đổi đơn vị tính"' : '')) + '<datalist id="uomList"><option value="kg"><option value="cái"><option value="hũ"><option value="chai"><option value="thùng"><option value="lít"></datalist>') +
       lab('Số lượng', selx('f_dec', 'dec', opt('3', 'Cho số lẻ (3 chữ số)', dr.dec) + opt('0', 'Chỉ số nguyên', dr.dec), used ? 'disabled' : '')) +
       lab('Kho', whSel('f_wh', 'wh', dr.wh)) +
-      lab('QC phụ trách', selx('f_qcRole', 'qcRole', QC_ROLES.map(r => opt(r, r, dr.qcRole)).join(''))) +
+      lab('QC phụ trách', selx('f_qcRole', 'qcRole', QC_ROLES.map(r => opt(r, qcLabel(r), dr.qcRole)).join(''))) +
       lab('Hạn sử dụng (ngày, 0 = không)', inp('f_shelf', 'shelf', dr.shelf, 'inputmode="numeric"')) +
       lab('Tồn tối thiểu', inp('f_min', 'min', dr.min, 'inputmode="decimal"')) +
       lab('Thuế suất GTGT', vatSel('f_vat', 'vat', dr.vat)) +
@@ -2961,7 +2986,7 @@ function openQC(code){
   F = {type:null, qcLot:code};
   openDialog('modal', head('QC lô ' + esc(code)) + '<div class="dlg-body"><p style="margin:0">' + esc(itName(L.item)) + ' · nhập ' + dmy(L.date) + (L.hsd ? ' · hạn sử dụng ' + dmy(L.hsd) : '') + ' · QC đang ' + qcText(L.qc) + '</p>' +
     '<label class="fl" for="q_status">Trạng thái QC<select class="inp" id="q_status">' + ['pass', 'hold', 'fail'].map(s => opt(s, QC_NAME[s], L.qc)).join('') + '</select></label>' +
-    '<label class="fl" for="q_role">Người QC (vai trò)<select class="inp" id="q_role">' + QC_ROLES.concat(['Trưởng QC']).map(r => opt(r, r, cur)).join('') + '</select></label>' +
+    '<label class="fl" for="q_role">Người QC (vai trò)<select class="inp" id="q_role">' + QC_ROLES.concat(['Trưởng QC']).map(r => opt(r, qcLabel(r), cur)).join('') + '</select></label>' +
     '<label class="fl" for="q_reason">Kết quả kiểm (≥ 5 ký tự)<input class="inp" id="q_reason" autocomplete="off" placeholder="Ví dụ: đủ ngày bảo ôn, cảm quan đạt"></label>' +
     (sold.length ? '<div class="msg warn">Lô này đã xuất bán ở ' + esc(sold.join(', ')) + '. Đổi sang "Chờ" / "Không đạt" không sửa hóa đơn cũ; xử lý thu hồi bằng phiếu hàng bán bị trả lại.</div>' : '') +
     '</div>' +
@@ -3201,12 +3226,12 @@ function printHTML(no){
     '<h1>' + PRINT_TITLE[k].toUpperCase() + '</h1>';
   const right = ['Ngày: ' + dmy(d.date), 'Số phiếu: ' + (d.kno || d.no), 'Chứng từ: ' + d.no, 'Loại tiền: ' + (d.cur || 'VND')];
   const info = (left, r) => '<div class="ps-info"><div>' + left.map(x => '<div>' + e(x) + '</div>').join('') + '</div><div>' + r.map(x => '<div>' + e(x) + '</div>').join('') + '</div></div>';
-  const sign = list => '<p class="ps-date">Ngày ' + d.date.slice(8, 10) + ' tháng ' + d.date.slice(5, 7) + ' năm ' + d.date.slice(0, 4) + '</p><div class="ps-sign" style="grid-template-columns:repeat(' + list.length + ',1fr)">' + list.map(x => '<div><b>' + x + '</b><span>(Ký, họ tên)</span></div>').join('') + '</div>';
+  const sign = list => '<p class="ps-date">Ngày ' + d.date.slice(8, 10) + ' tháng ' + d.date.slice(5, 7) + ' năm ' + d.date.slice(0, 4) + '</p><div class="ps-sign" style="grid-template-columns:repeat(' + list.length + ',1fr)">' + list.map(x => { const [t, n] = Array.isArray(x) ? x : [x, '']; return '<div><b>' + t + '</b><span>(Ký, họ tên)</span>' + (n ? '<span class="ps-name">' + e(n) + '</span>' : '') + '</div>'; }).join('') + '</div>';
   const valOfLine = i => { const r = R.rowById[moveId(d, i)]; return r ? r.value : 0; };
   if(k === 'thu' || k === 'chi'){ const l = d.lines[0], f = d.acc === '1122' && R.fx.byDoc[d.no], amt = l.amt != null ? l.amt : f ? f.cr : 0;
     return '<div class="ps">' + top + info([(k === 'thu' ? 'Họ và tên người nộp tiền: ' : 'Họ và tên người nhận tiền: ') + (P.name || ''), 'Địa chỉ:', 'Lý do ' + (k === 'thu' ? 'nộp' : 'chi') + ': ' + d.desc, 'Tài khoản: ' + d.acc + ' – ' + accName(d.acc, isTT133()), 'Số tiền: ' + fmt(amt) + ' đồng' + (l.fc ? ' (' + fmtFC(l.fc) + ' USD)' : '')], right.slice(0, 3)) +
       '<p class="ps-words">Viết bằng chữ: ' + e(moneyWords(amt)) + '</p><p class="ps-line">Kèm theo: … chứng từ gốc.</p>' +
-      sign(['Giám đốc', 'Kế toán trưởng', 'Người lập phiếu', 'Thủ quỹ', k === 'thu' ? 'Người nộp tiền' : 'Người nhận tiền']) + '</div>'; }
+      sign(['Giám đốc', ['Kế toán trưởng', ACC_CHIEF], 'Người lập phiếu', 'Thủ quỹ', k === 'thu' ? 'Người nộp tiền' : 'Người nhận tiền']) + '</div>'; }
   const rows = d.lines.map((l, i) => { const src = hd ? Object.assign({}, hd.lines[l.refLine] || {}, l.rlot ? {lot:l.rlot} : {}, l.rloc != null ? {loc:l.rloc} : {}) : l, L = R.lots[src.lot], it = D.items[l.item] || {name:l.item, uom:'', kind:'HH'};
     return {i, it, lot:src.lot || '', mh: L ? L.mh : '', loc:(src.loc || '') + (k === 'ck' ? ' → ' + (l.locTo || '—') : ''), qty:l.qty, l, value: d.type === 'PN' ? l.value : valOfLine(i), note:[l.rej ? 'Không đạt ' + fmtQ(l.rej) : '', L && L.qc !== 'pass' ? 'QC ' + QC_NAME[L.qc] : ''].filter(Boolean).join('; ')}; });
   const tot = sum(rows, r => r.value), tq = rq(sum(rows, r => Math.abs(r.qty)));
@@ -3216,19 +3241,19 @@ function printHTML(no){
     const body = rows.map(r => '<tr>' + base(r) + '<td class="r">' + fmtQ(r.l.book || 0) + '</td><td class="r">' + fmtQ(r.l.counted != null ? r.l.counted : r.l.qty) + '</td><td class="r">' + (r.qty > 0 ? '+' : '') + fmtQ(r.qty) + '</td><td class="r">' + (r.l.book > EPS ? pct(r.qty / r.l.book * 100) : '') + '</td><td class="r">' + fmt(r.qty < 0 ? -r.value : r.l.value) + '</td></tr>').join('');
     return '<div class="ps">' + top + info(['Kho kiểm kê: ' + whName(d.wh), 'Xử lý chênh lệch thiếu: tài khoản ' + d.treat + ' – ' + accName(d.treat, isTT133()), 'Ghi chú: ' + d.desc], right.slice(0, 3)) +
       '<table><thead><tr>' + head7 + '<th>Số lượng sổ sách</th><th>Số lượng kiểm kê</th><th>Chênh lệch</th><th>% chênh lệch</th><th>Giá trị chênh lệch</th></tr></thead><tbody>' + body + '</tbody></table>' +
-      sign(['Thủ kho', 'Kế toán', 'Kiểm tra chất lượng (QC)']) + '</div>'; }
+      sign([['Thủ kho', keeperOf(d.wh)], ['Kế toán', ACC_STOCK], 'Kiểm tra chất lượng (QC)']) + '</div>'; }
   const isIn = k === 'in', unit = r => r.qty ? r.value / r.qty : 0;
   let left;
-  if(isIn) left = [(d.type === 'NK' ? 'Người giao hàng: Bộ phận sản xuất' : d.type === 'TL' ? 'Khách hàng trả lại: ' + partyName(D, d.partyId) : 'Nhà cung cấp: ' + (P.name || '')), 'Mã số thuế: ' + (P.tax || ''), 'Kho nhập: ' + whName(hd ? hd.wh : d.wh)]
+  if(isIn) left = [(d.type === 'NK' ? 'Người giao hàng: Bộ phận sản xuất' : d.type === 'TL' ? 'Khách hàng trả lại: ' + partyName(D, d.partyId) : 'Nhà cung cấp: ' + (P.name || '')), 'Mã số thuế: ' + (P.tax || ''), 'Kho nhập: ' + whName(hd ? hd.wh : d.wh) + ' · thủ kho ' + keeperOf(hd ? hd.wh : d.wh)]
     .concat(d.lsx && D.lsx[d.lsx] ? ['Lệnh sản xuất: ' + D.lsx[d.lsx].no] : [], d.type === 'TL' ? ['Theo hóa đơn: ' + d.ref] : [], ['Ghi chú: ' + d.desc]);
   else if(k === 'ck') left = ['Xuất tại kho: ' + whName(d.wh), 'Nhập tại kho: ' + whName(d.whTo), 'Lý do: ' + outReason(d), 'Ghi chú: ' + d.desc];
-  else left = [(d.type === 'HD' ? 'Tên khách hàng: ' + (P.name || '') : 'Người nhận: ' + (d.type === 'PX' ? 'Bộ phận sản xuất' : '')), 'Địa chỉ:', 'Mã số thuế: ' + (P.tax || ''), 'Điện thoại:', 'Lý do xuất: ' + outReason(d), 'Kho xuất: ' + whName(d.wh)]
+  else left = [(d.type === 'HD' ? 'Tên khách hàng: ' + (P.name || '') : 'Người nhận: ' + (d.type === 'PX' ? 'Bộ phận sản xuất' : '')), 'Địa chỉ:', 'Mã số thuế: ' + (P.tax || ''), 'Điện thoại:', 'Lý do xuất: ' + outReason(d), 'Kho xuất: ' + whName(d.wh) + ' · thủ kho ' + keeperOf(d.wh)]
     .concat(d.lsx && D.lsx[d.lsx] ? ['Lệnh sản xuất: ' + D.lsx[d.lsx].no] : [], ['Ghi chú: ' + d.desc]);
   const qcols = isIn ? '<th>Số lượng</th>' : '<th>Số lượng yêu cầu</th><th>Số lượng thực xuất</th>';
   const body = rows.map(r => '<tr>' + base(r) + '<td class="r">' + fmtQ(r.qty) + '</td>' + (isIn ? '' : '<td class="r">' + fmtQ(r.qty) + '</td>') + '<td class="r">' + fmt2(unit(r)) + '</td><td class="r">' + fmt(r.value) + '</td><td>' + e(r.note) + '</td></tr>').join('');
   const foot = '<tr><td colspan="7">Tổng cộng</td><td class="r">' + fmtQ(tq) + '</td>' + (isIn ? '' : '<td class="r">' + fmtQ(tq) + '</td>') + '<td></td><td class="r">' + fmt(tot) + '</td><td></td></tr>';
   const deliv = d.type === 'HD' ? '<p class="ps-line">Ngày giao hàng: ' + dmy(d.date) + '</p><p class="ps-line">Địa điểm giao hàng:</p><p class="ps-line">Hình thức thanh toán: ' + (d.pay === '131' ? 'Công nợ' : 'Tiền mặt') + '</p>' : '';
-  const signs = isIn ? ['Người lập phiếu', 'Người giao hàng', 'Thủ kho', 'Kế toán'] : k === 'ck' ? ['Người lập phiếu', 'Người vận chuyển', 'Thủ kho xuất', 'Thủ kho nhập'] : ['Người lập phiếu', 'Người nhận hàng', 'Bảo vệ', 'Tài xế', 'Thủ kho'];
+  const signs = isIn ? ['Người lập phiếu', 'Người giao hàng', ['Thủ kho', keeperOf(hd ? hd.wh : d.wh)], ['Kế toán', ACC_STOCK]] : k === 'ck' ? ['Người lập phiếu', 'Người vận chuyển', ['Thủ kho xuất', keeperOf(d.wh)], ['Thủ kho nhập', keeperOf(d.whTo)]] : ['Người lập phiếu', 'Người nhận hàng', 'Bảo vệ', 'Tài xế', ['Thủ kho', keeperOf(d.wh)]];
   return '<div class="ps">' + top + info(left, right) + '<table><thead><tr>' + head7 + qcols + '<th>Đơn giá</th><th>Thành tiền</th><th>Ghi chú</th></tr></thead><tbody>' + body + '</tbody><tfoot>' + foot + '</tfoot></table>' +
     '<p class="ps-words">Tổng số tiền (viết bằng chữ): ' + e(moneyWords(tot)) + '</p>' + deliv + sign(signs) + '</div>';
 }
