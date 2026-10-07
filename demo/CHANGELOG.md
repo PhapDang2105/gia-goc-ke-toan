@@ -36,6 +36,11 @@ Nếu người làm demo đổi dữ liệu mẫu, cập nhật bảng này và 
 | 7 | Quy trình chỉ có cá linh (2 giai đoạn) và mắm tôm (1 giai đoạn) | 4 quy trình theo [YEU-CAU-KHACH-HANG](../docs/01-yeu-cau/YEU-CAU-KHACH-HANG.md) §4 | GT-01 |
 | 8 | Tiêu thức phân bổ nhân công / sản xuất chung = chi phí nguyên vật liệu trực tiếp của lệnh; lệnh hoàn thành khi có phiếu nhập kho đầu tiên | Tiêu thức cấu hình theo giai đoạn (đề xuất khối lượng × số ngày cho công đoạn ủ); trạng thái lệnh có Hoàn thành → Đóng | [QD-29](../docs/02-ke-hoach/QUYET-DINH.md#qd-29) — cố ý giản lược, chỉ cần nói rõ khi trình diễn |
 
+## v4.8 — chọn lô theo 3 tab ở Truy xuất lô (2026-10-07)
+
+- Bỏ danh sách lô dài 27 dòng. Thay bằng 3 tab: **Nguyên vật liệu (16) · Bán thành phẩm (3) · Thành phẩm, hàng hóa (8)**; ô Lô chỉ liệt kê lô của tab đang chọn, gom theo tên hàng, mỗi dòng: mã lô · mã hóa · ngày.
+- Bấm tab → tự chọn lô đầu tiên của nhóm (ưu tiên lô sản xuất). Bấm một lô trên sơ đồ → tab tự chuyển theo nhóm của lô đó.
+
 ## v4.7 — quay lại sơ đồ nghiệp vụ (2026-10-07)
 
 - Bấm một ô trên **Sơ đồ nghiệp vụ** → trang đích có thanh xanh ngay dưới tiêu đề: nút **Quay lại sơ đồ nghiệp vụ** + "Đang xem Bước n · tên bước".

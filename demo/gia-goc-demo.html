@@ -110,7 +110,7 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 .grid{display:grid;gap:12px}
 .kpis{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr))}
 .tabs{align-self:flex-start}
-.tabs .cnt{font-size:12px;opacity:.75}
+.tabs .cnt,#traceTabs .cnt{font-size:12px;opacity:.75}
 .duo{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(480px,calc((100% - 12px) / 2))),1fr))}
 .split{display:grid;gap:12px;grid-template-columns:minmax(0,1fr) minmax(380px,36%)}
 .split.wide-side{grid-template-columns:minmax(0,1fr) minmax(420px,42%)}
@@ -733,7 +733,7 @@ button.tn{cursor:pointer}button.tn:hover{background:var(--hover)}
     <!-- TRUY XUẤT LÔ -->
     <section class="view" id="v-trace" hidden>
       <div class="panel">
-        <div class="panel-head"><label class="field" for="traceSel">Lô <select id="traceSel"></select></label><div class="spacer"></div>
+        <div class="panel-head"><div class="seg" id="traceTabs" role="group" aria-label="Nhóm lô"></div><label class="field" for="traceSel">Lô <select id="traceSel"></select></label><div class="spacer"></div>
           <button class="btn sm" type="button" data-act="printTem"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 6V2.5h7V6M4.5 11.5h-2v-5h11v5h-2"/><path d="M4.5 9.5h7v4h-7z"/></svg>In tem lô</button>
           <button class="btn sm danger" type="button" id="btnLock" data-act="openLock">Khóa các lô còn tồn</button></div>
         <div id="traceBody"></div>
@@ -2409,10 +2409,14 @@ function trNodeHTML(n, sel){
   return '<div class="' + cls + '" data-node="' + esc(n.id) + '"><span class="tn-k">' + (n.type === 'sup' ? 'Nhà cung cấp' : 'Nguồn') + '</span><b>' + esc(n.name) + '</b></div>';
 }
 function traceDefault(){ if(R.lots['050126-01']) return '050126-01'; const L = Object.values(R.lots).find(x => S.data.items[x.item] && S.data.items[x.item].kind === 'NVL'); return L ? L.code : null; }
-function lotOptions(cur){
-  const D = S.data, g = [['NVL', 'Nguyên vật liệu, bao bì, phụ gia'], ['BTP', 'Bán thành phẩm'], ['SP', 'Thành phẩm'], ['HH', 'Hàng hóa']];
-  return g.map(([k, l]) => { const xs = Object.values(R.lots).filter(L => D.items[L.item] && D.items[L.item].kind === k).sort((a, b) => a.item < b.item ? -1 : a.item > b.item ? 1 : a.date < b.date ? -1 : 1);
-    return xs.length ? '<optgroup label="' + l + '">' + xs.map(L => opt(L.code, L.code + ' · ' + D.items[L.item].name + (L.mh ? ' · ' + L.mh : ''), cur)).join('') + '</optgroup>' : ''; }).join(''); }
+// Chọn lô theo 3 nhóm; trong nhóm gom theo tên hàng
+const TR_TABS = [['NVL', 'Nguyên vật liệu', ['NVL']], ['BTP', 'Bán thành phẩm', ['BTP']], ['SP', 'Thành phẩm, hàng hóa', ['SP', 'HH']]];
+const trTabOf = code => { const L = R.lots[code], k = L && S.data.items[L.item] ? S.data.items[L.item].kind : 'NVL'; return (TR_TABS.find(t => t[2].indexOf(k) >= 0) || TR_TABS[0])[0]; };
+function trLots(tab){ const D = S.data, ks = TR_TABS.find(t => t[0] === tab)[2];
+  return Object.values(R.lots).filter(L => D.items[L.item] && ks.indexOf(D.items[L.item].kind) >= 0).sort((a, b) => a.item < b.item ? -1 : a.item > b.item ? 1 : a.date < b.date ? -1 : 1); }
+function lotOptions(cur, tab){
+  const D = S.data, by = {}; trLots(tab).forEach(L => (by[L.item] = by[L.item] || []).push(L));
+  return Object.keys(by).map(k => '<optgroup label="' + esc(D.items[k].name) + '">' + by[k].map(L => opt(L.code, L.code + (L.mh ? ' · ' + L.mh : '') + ' · ' + dmy(L.date), cur)).join('') + '</optgroup>').join(''); }
 const lotUrl = code => location.href.split('#')[0] + '#lo=' + encodeURIComponent(code);
 function qrSVG(text, px){
   const q = qrcode(0, 'M'); q.addData(text); q.make(); const n = q.getModuleCount(); let d = '';
@@ -2421,7 +2425,9 @@ function qrSVG(text, px){
 RENDER.trace = function(){
   const D = S.data;
   if(!S.ui.tlot || !R.lots[S.ui.tlot]) S.ui.tlot = traceDefault();
-  const code = S.ui.tlot; $('traceSel').innerHTML = lotOptions(code);
+  const code = S.ui.tlot, tab = trTabOf(code);
+  $('traceTabs').innerHTML = TR_TABS.map(([k, l]) => '<button type="button" data-ttab="' + k + '" aria-pressed="' + (tab === k) + '">' + l + ' <span class="cnt">' + trLots(k).length + '</span></button>').join('');
+  $('traceSel').innerHTML = lotOptions(code, tab);
   const box = $('traceBody'); if(!code){ box.innerHTML = '<p class="muted">Chưa có lô.</p>'; $('traceMore').innerHTML = ''; return; }
   const L = R.lots[code], it = D.items[L.item], G = traceGraph(R, code), u = L.inQty > EPS ? L.inValue / L.inQty : 0, left = lotLeft(R, code);
   const cus = new Set(G.sales.map(s => s.partyId)), soldQ = {}, leftQ = {};
@@ -3796,7 +3802,7 @@ $('btnSide').addEventListener('click', () => setSide(!$('app').classList.contain
 dlg.addEventListener('toggle', e => { if(F && e.target && e.target.id === 'fFold') F.prevOpen = e.target.open; }, true);
 // Uỷ quyền click toàn trang
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-act],[data-item-edit],[data-item-del],[data-lsx-edit],[data-open-doc],[data-goto],[data-goto-view],[data-goto-lot],[data-goto-lots],[data-edit],[data-void],[data-csv],[data-pv],[data-hint],[data-new],[data-filter],[data-wh],[data-qc],[data-lk],[data-flow],[data-goto-trace],[data-itab],[data-tlot],[data-tem],[data-print],[data-lot-kind],[data-tree],[data-scrap]');
+  const t = e.target.closest('[data-act],[data-item-edit],[data-item-del],[data-lsx-edit],[data-open-doc],[data-goto],[data-goto-view],[data-goto-lot],[data-goto-lots],[data-edit],[data-void],[data-csv],[data-pv],[data-hint],[data-new],[data-filter],[data-wh],[data-qc],[data-lk],[data-ttab],[data-flow],[data-goto-trace],[data-itab],[data-tlot],[data-tem],[data-print],[data-lot-kind],[data-tree],[data-scrap]');
   if(!t) return;
   const ds = t.dataset;
   if(ds.new){ setMenu(false); return openForm(ds.new); }
@@ -3806,6 +3812,7 @@ document.addEventListener('click', e => {
   if(ds.filter){ S.ui.filter = ds.filter; return RENDER.docs(); }
   if(ds.wh){ S.ui.wh = ds.wh; return RENDER.stock(); }
   if(ds.qc) return openQC(ds.qc);
+  if(ds.ttab){ if(trTabOf(S.ui.tlot) === ds.ttab) return; const xs = trLots(ds.ttab); if(!xs.length) return; S.ui.tlot = (xs.find(L => L.src === 'NK') || xs[0]).code; return RENDER.trace(); }
   if(ds.flow){ const n = FLOW_NODES.find(x => x.id === ds.flow); if(n) return go(n.go[0], Object.assign({flowStep:{id:n.id, t:n.t, col:n.col}}, n.go[1] || {})); return; }
   if(ds.gotoTrace) return go('trace', {tlot:ds.gotoTrace});
   if(ds.tlot){ S.ui.tlot = ds.tlot; RENDER.trace(); const f = document.querySelector('#trGraph [data-tlot="' + CSS.escape(ds.tlot) + '"]'); if(f) f.focus({preventScroll:true}); return; }
