@@ -48,6 +48,8 @@ Mỗi mục theo dạng nhật ký quyết định kiến trúc rút gọn: **Qu
 | [QD-30](#qd-30) | Ước lượng tiến độ theo năng suất thực tế 60–70% | Đã chốt |
 | [QD-31](#qd-31) | In phiếu theo mẫu sổ kho của khách và mẫu chế độ | Đã chốt |
 | [QD-32](#qd-32) | Cấu trúc tài liệu, một nguồn cho mỗi nội dung | Đã chốt |
+| [QD-33](#qd-33) | Tên sản phẩm: "Hệ thống quản lý" | Đã chốt |
+| [QD-34](#qd-34) | Giữ `HỆ THỐNG.docx` trong repo, repo công khai | Đã chốt |
 
 ## Chi tiết
 
@@ -305,4 +307,19 @@ Mỗi mục theo dạng nhật ký quyết định kiến trúc rút gọn: **Qu
 - **Lý do**: các tài liệu cũ lặp lại cùng nội dung (R1, trình tự khóa kỳ, câu hỏi) và lệch nhau sau mỗi vòng sửa.
 - **Đã loại**: giữ thư mục `docs/research` đánh số 01–07.
 - **Ảnh hưởng**: [README](../../README.md).
+- **Ngày / người chốt / trạng thái**: 2026-10-07 · Người dùng · Đã chốt.
+
+<a id="qd-33"></a>
+### QD-33 — Tên sản phẩm: "Hệ thống quản lý"
+- **Quyết định**: tên sản phẩm dùng thống nhất là **Hệ thống quản lý** (tiêu đề trang, thanh bên demo, tài liệu). Tên tạm "Outhouse" và "Giá Gốc" không dùng nữa; tên file demo `gia-goc-demo.html` giữ nguyên để không đổi đường dẫn máy chủ.
+- **Lý do**: trả lời [CH-56](../01-yeu-cau/CAU-HOI-MO.md#ch-56).
+- **Đã loại**: "Outhouse", "Giá Gốc".
+- **Ảnh hưởng**: demo, README.
+- **Ngày / người chốt / trạng thái**: 2026-10-07 · Người dùng · Đã chốt.
+
+<a id="qd-34"></a>
+### QD-34 — Giữ `HỆ THỐNG.docx` trong repo, repo công khai
+- **Quyết định**: không gỡ `HỆ THỐNG.docx` khỏi repo và lịch sử git; repo tiếp tục để công khai.
+- **Lý do**: trả lời [CH-55](../01-yeu-cau/CAU-HOI-MO.md#ch-55).
+- **Rủi ro chấp nhận**: file chứa họ tên 16 nhân sự của khách và metadata tác giả, ai cũng xem được trên GitHub.
 - **Ngày / người chốt / trạng thái**: 2026-10-07 · Người dùng · Đã chốt.

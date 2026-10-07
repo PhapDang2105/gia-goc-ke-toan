@@ -1,6 +1,6 @@
 # Phần mềm kế toán – kho – giá vốn theo lô cho nhà máy chế biến mắm
 
-> Phiên bản: 1.0 · Ngày: 2026-10-07 · Người phụ trách: Quản lý dự án · Trạng thái: Chờ duyệt · Tên sản phẩm chưa chốt ([CH-56](docs/01-yeu-cau/CAU-HOI-MO.md#ch-56))
+> Phiên bản: 1.0 · Ngày: 2026-10-07 · Người phụ trách: Quản lý dự án · Trạng thái: Chờ duyệt · Tên sản phẩm: **Hệ thống quản lý** ([QD-33](docs/02-ke-hoach/QUYET-DINH.md#qd-33))
 > Viết tắt: theo [THUAT-NGU](docs/00-tong-quan/THUAT-NGU.md) §2 (DDL: câu lệnh định nghĩa cơ sở dữ liệu; QC: kiểm tra chất lượng).
 
 Dự án xây phần mềm kế toán, kho, giá vốn, giá thành và quản lý chất lượng chạy trên web (Web SaaS), dùng PostgreSQL. Khách hàng đầu tiên là một nhà máy chế biến mắm có 3 địa điểm (Nhà máy Bà Ba Thạo, Bình Tây, 97 Nguyễn Thái Học) và 16 người vận hành. Điểm chính: **giá vốn theo từng lô**, giải thích được từ lô nguyên liệu đến lô thành phẩm, tính lại ngay khi có chứng từ. Repo hiện chứa tài liệu dự án và một bản demo HTML; **chưa có mã nguồn sản phẩm**.

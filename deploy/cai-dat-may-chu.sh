@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cài đặt máy chủ hiển thị demo Giá Gốc và tự cập nhật từ GitHub.
+# Cài đặt máy chủ hiển thị demo Hệ thống quản lý và tự cập nhật từ GitHub.
 # Chạy một lần trên máy chủ Ubuntu/Debian với quyền root:
 #   curl -fsSL https://raw.githubusercontent.com/PhapDang2105/gia-goc-ke-toan/cap-nhat-theo-yeu-cau-khach-hang/deploy/cai-dat-may-chu.sh | sudo bash
 # Chạy lại bao nhiêu lần cũng được (không làm hỏng cài đặt cũ).
@@ -19,10 +19,25 @@ if ! command -v apt-get >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "==> Cài git và nginx"
+NGINX_CO_SAN=0
+if command -v nginx >/dev/null 2>&1; then NGINX_CO_SAN=1; fi
+
+echo "==> Cài git, nginx, cron, curl"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq git nginx >/dev/null
+apt-get install -y -qq git nginx cron curl >/dev/null
+systemctl enable --now cron >/dev/null 2>&1 || true
+if [ "$NGINX_CO_SAN" -eq 0 ]; then
+  # nginx vừa được cài mới: tắt trang mặc định cổng 80 để không đụng ứng dụng khác đang dùng cổng 80
+  rm -f /etc/nginx/sites-enabled/default
+fi
+
+# Chọn cổng còn trống (giữ cổng cũ nếu lần trước đã cài)
+if [ -f /etc/nginx/sites-available/gia-goc ]; then
+  PORT="$(grep -m1 -oE 'listen [0-9]+' /etc/nginx/sites-available/gia-goc | awk '{print $2}')"
+else
+  while ss -ltnH "( sport = :$PORT )" | grep -q .; do PORT=$((PORT + 1)); done
+fi
 
 echo "==> Tải mã nguồn nhánh $BRANCH vào $APP_DIR"
 if [ -d "$APP_DIR/.git" ]; then
@@ -78,4 +93,6 @@ IP="$(curl -fsS --max-time 5 https://api.ipify.org 2>/dev/null || hostname -I | 
 echo
 echo "XONG. Mở trình duyệt: http://$IP:$PORT/"
 echo "Máy chủ tự lấy bản mới từ GitHub mỗi 2 phút. Cập nhật ngay: sudo gia-goc-cap-nhat"
-echo "Nếu không mở được: mở cổng $PORT trong tường lửa của nhà cung cấp máy chủ (Security group / Firewall)."
+echo "Nếu không mở được: mở cổng $PORT trong tường lửa của nhà cung cấp máy chủ."
+echo "Google Cloud: VPC network > Firewall > Create firewall rule > Targets: All instances in the network,"
+echo "  Source IPv4 ranges: 0.0.0.0/0, Protocols and ports: TCP $PORT > Create."

@@ -97,8 +97,8 @@
 | Mã | Câu hỏi | Ảnh hưởng | Chặn | Mặc định khi chưa trả lời | Trạng thái |
 |---|---|---|---|---|---|
 | <a id="ch-54"></a>CH-54 | Đội phát triển 5 hay 4 người; ngày bắt đầu? | Mốc tháng trong [KE-HOACH-DU-AN](../02-ke-hoach/KE-HOACH-DU-AN.md) §3.5 | 1A thiết kế (đặt mốc) | Ghi cả hai kịch bản | Mở |
-| <a id="ch-55"></a>CH-55 | `HỆ THỐNG.docx` ở gốc repo chứa họ tên 16 nhân sự và metadata tác giả. Giữ hay gỡ khỏi repo (và lịch sử git)? | Bảo mật thông tin khách | Không chặn | Giữ nguyên tên và vị trí (chỉ đạo ngày 2026-10-07) | Mở |
-| <a id="ch-56"></a>CH-56 | Tên sản phẩm: kế hoạch dùng tên tạm "Outhouse", demo dùng "Giá Gốc", tiêu đề trang demo là "Hệ thống quản lý". Chốt tên nào? | Tài liệu, giao diện, tên miền | Không chặn | Tài liệu gọi "phần mềm"; demo giữ như hiện tại | Mở |
+| <a id="ch-55"></a>CH-55 | `HỆ THỐNG.docx` ở gốc repo chứa họ tên 16 nhân sự và metadata tác giả. Giữ hay gỡ khỏi repo (và lịch sử git)? | Bảo mật thông tin khách | Không chặn | Giữ nguyên tên và vị trí (chỉ đạo ngày 2026-10-07) | Đã trả lời: giữ nguyên trong repo, repo để công khai (người dùng, 2026-10-07) — [QD-34](../02-ke-hoach/QUYET-DINH.md#qd-34) |
+| <a id="ch-56"></a>CH-56 | Tên sản phẩm: kế hoạch dùng tên tạm "Outhouse", demo dùng "Giá Gốc", tiêu đề trang demo là "Hệ thống quản lý". Chốt tên nào? | Tài liệu, giao diện, tên miền | Không chặn | Tài liệu gọi "phần mềm"; demo giữ như hiện tại | Đã trả lời: **Hệ thống quản lý** (người dùng, 2026-10-07) — [QD-33](../02-ke-hoach/QUYET-DINH.md#qd-33) |
 
 ## 7. Đội dự án: việc cần xác minh văn bản
 
