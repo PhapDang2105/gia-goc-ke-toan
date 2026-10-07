@@ -84,6 +84,9 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 .top{display:flex;align-items:center;gap:8px 12px;padding:8px 20px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:6;min-height:48px}
 .top h1{font-size:18px;font-weight:600;margin:0;display:flex;align-items:center;gap:10px;white-space:nowrap;min-width:0}
 .top .spacer{flex:1}
+.top .back{gap:4px;padding-inline:8px 10px;max-width:260px}
+.top .back span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:640px){.top .back span{display:none}}
 .settings{display:flex;align-items:center;gap:8px 12px}
 .field{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);white-space:nowrap}
 .field select,.field input,.inp{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:3px 7px;color:var(--fg);min-height:30px}
@@ -514,6 +517,7 @@ button.tn{cursor:pointer}button.tn:hover{background:var(--hover)}
 
   <div class="main">
     <header class="top">
+      <button class="btn sm back" id="btnBack2" type="button" data-act="goBack" hidden><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg><span id="backLbl">Quay lại</span></button>
       <h1><span id="viewTitle">Tổng quan</span></h1>
       <div class="spacer"></div>
       <span class="period">Kỳ <b>01/2026</b></span>
@@ -1600,8 +1604,14 @@ function renderAll(){
   RENDER[S.ui.view]();
   if(S.ui.refocus){ const el = document.querySelector(S.ui.refocus); S.ui.refocus = null; if(el) try{ el.focus({preventScroll:true}); }catch(_){ el.focus(); } }
 }
+function goBack(){
+  const hs = S.ui.hist || [], e = hs.pop(); if(!e) return;
+  S.ui.impact = null; S.ui.view = e.view; Object.assign(S.ui, e.keep); renderAll();
+  requestAnimationFrame(() => window.scrollTo(0, e.y || 0));
+}
 function renderChrome(){
-  const set = S.data.settings;
+  const set = S.data.settings, hs = S.ui.hist || [], prev = hs[hs.length - 1];
+  $('btnBack2').hidden = !prev; if(prev){ $('backLbl').textContent = TITLES[prev.view]; $('btnBack2').title = 'Quay lại ' + TITLES[prev.view]; $('btnBack2').setAttribute('aria-label', 'Quay lại ' + TITLES[prev.view]); }
   document.querySelectorAll('#nav button').forEach(b => { if(b.dataset.view === S.ui.view) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   document.querySelectorAll('.view').forEach(v => v.hidden = v.id !== 'v-' + S.ui.view);
   $('viewTitle').textContent = TITLES[S.ui.view];
@@ -1620,8 +1630,13 @@ function hl(sel){
   try{ el.scrollIntoView({block:'center', behavior: reduced() ? 'auto' : 'smooth'}); }catch(_){}
   el.addEventListener('click', () => el.classList.remove('hl'), {once:true});
 }
+// Lịch sử xem: mỗi lần chuyển trang lưu trang cũ + bộ lọc + vị trí cuộn; "Quay lại" và nút Back của trình duyệt đều trả về đúng chỗ
+const HIST_KEYS = ['filter', 'itab', 'tlot', 'lot', 'lotKind', 'rep', 'repDebt', 'wh', 'mat', 'item', 'lk'];
 function go(view, opt){
-  if(view !== S.ui.view) S.ui.impact = null;
+  if(view !== S.ui.view){ S.ui.impact = null;
+    const hs = S.ui.hist || (S.ui.hist = []), keep = {}; HIST_KEYS.forEach(k => keep[k] = S.ui[k]);
+    hs.push({view:S.ui.view, keep, y:window.scrollY}); if(hs.length > 30) hs.shift();
+    try{ history.pushState({gg:hs.length}, '', '#' + view); }catch(_){} }
   S.ui.view = view; Object.assign(S.ui, opt || {}); renderAll();
   window.scrollTo(0, 0);
   const b = document.querySelector('#nav button[data-view="' + view + '"]');
@@ -3820,6 +3835,7 @@ document.addEventListener('click', e => {
     case 'printTraceTems': return printTems((S.ui._trace || {stock:[]}).stock);
     case 'printTems': return printTems(S.ui._tems || []);
     case 'simReset': S.ui.sim = {}; return RENDER.sim();
+    case 'goBack': { if(history.state && history.state.gg) history.back(); else goBack(); return; }
     case 'toggleAlloc': { const w = $('allocWrap'), on = w.hidden; w.hidden = !on; t.setAttribute('aria-expanded', String(on)); t.textContent = on ? 'Ẩn bảng phân bổ' : 'Xem bảng phân bổ'; return; }
     case 'printPicked': { const nos = Object.keys(S.ui.picked || {}).filter(no => S.ui.picked[no]).sort((a, b) => { const x = S.data.docs.find(d => d.no === a), y = S.data.docs.find(d => d.no === b); return x.date < y.date ? -1 : x.date > y.date ? 1 : a < b ? -1 : 1; });
       if(!nos.length) return toast('Chọn phiếu cần in bằng ô tích ở đầu dòng.'); printDocs(nos); return toast('Đang in ' + nos.length + ' phiếu, mỗi phiếu một trang.'); }
@@ -4150,6 +4166,7 @@ window.__giagoc = {get tour(){ return T; }, tourStart, tourGo, tourEnd, addNewIt
 const h0 = (location.hash || '').slice(1); if(TITLES[h0]) S.ui.view = h0;
 const lotHash = () => { const m = /^#lo=(.+)$/.exec(location.hash || ''); if(!m) return false; S.ui.view = 'trace'; S.ui.tlot = decodeURIComponent(m[1]); return true; };
 lotHash(); window.addEventListener('hashchange', () => { if(lotHash()) renderAll(); });
+window.addEventListener('popstate', () => { if((S.ui.hist || []).length) goBack(); });
 renderAll();
 })();
 </script>

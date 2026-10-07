@@ -36,6 +36,11 @@ Nếu người làm demo đổi dữ liệu mẫu, cập nhật bảng này và 
 | 7 | Quy trình chỉ có cá linh (2 giai đoạn) và mắm tôm (1 giai đoạn) | 4 quy trình theo [YEU-CAU-KHACH-HANG](../docs/01-yeu-cau/YEU-CAU-KHACH-HANG.md) §4 | GT-01 |
 | 8 | Tiêu thức phân bổ nhân công / sản xuất chung = chi phí nguyên vật liệu trực tiếp của lệnh; lệnh hoàn thành khi có phiếu nhập kho đầu tiên | Tiêu thức cấu hình theo giai đoạn (đề xuất khối lượng × số ngày cho công đoạn ủ); trạng thái lệnh có Hoàn thành → Đóng | [QD-29](../docs/02-ke-hoach/QUYET-DINH.md#qd-29) — cố ý giản lược, chỉ cần nói rõ khi trình diễn |
 
+## v4.6 — nút quay lại (2026-10-07)
+
+- Thanh trên cùng có nút **← <tên trang trước>** (điện thoại chỉ hiện mũi tên). Bấm là về đúng trang trước, giữ nguyên bộ lọc, thẻ đang chọn, lô đang xem và vị trí cuộn. Quay lui được nhiều bước (tối đa 30).
+- Nút Back của trình duyệt / vuốt lùi trên điện thoại cũng quay về trang trước thay vì thoát khỏi phần mềm.
+
 ## v4.5 — sơ đồ nghiệp vụ (2026-10-07)
 
 - Trang **Sơ đồ nghiệp vụ** (menu Tổng hợp): quy trình từ mua hàng đến lãi lỗ, 8 bước, 6 làn theo bộ phận (Kế hoạch, Kho, Kiểm tra chất lượng, Sản xuất, Bán hàng, Kế toán) kèm tên người phụ trách theo tài liệu HỆ THỐNG.
