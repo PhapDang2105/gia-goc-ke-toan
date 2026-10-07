@@ -1,5 +1,26 @@
 # Giá Gốc demo v3: nhật ký thay đổi
 
+## v3.4: biểu đồ
+
+Thiết kế lại các biểu đồ theo quy trình dataviz (chọn dạng → màu → kiểm bảng màu bằng `validate_palette.js` → vạch, khe → lớp hover → a11y). Chỉ đổi giao diện; engine, số liệu, ID và `window.__giagoc` giữ nguyên.
+
+### Bảng màu biểu đồ (4 ô categorical, chế độ tối có bước riêng)
+- Sáng (nền #ffffff): `--k1` #1f5fa8 xanh dương, `--k2` #6899e2 xanh dương nhạt, `--k3` #1e8163 xanh lục lam đậm, `--k4` #67c7a4 xanh lục lam nhạt. Validator: dải L, chroma ≥ 0,10 đạt; CVD cặp kề ΔE 18,9, mọi cặp 16,5; thị lực thường cặp kề 19,5, mọi cặp 17,2. Tương phản < 3:1 ở #6899e2, #67c7a4 → có nhãn trực tiếp và chế độ Bảng.
+- Tối (nền #1e2124): #5894e0, #3063a6, #3ba888, #04785d. Validator: mọi cặp CVD 13,7, thị lực thường 15,1; tương phản < 3:1 ở #3063a6, #04785d → nhãn và Bảng.
+- Gán theo đối tượng, không theo thứ hạng: doanh thu = k1, lãi gộp = k2; khoản mục giá thành NVL = k1, BTP GĐ trước = k2, NC = k3, SXC = k4 (dùng chung cho cơ cấu giá thành và chấm màu ở Truy xuất). Đỏ / cam chỉ cho trạng thái. Không tím, không gradient.
+- Chữ luôn dùng màu chữ; nhãn đặt trong ô màu chọn trắng hoặc mực đậm theo độ sáng nền (`--kN-ink`).
+
+### Từng biểu đồ
+- **Doanh thu và lãi gộp 6 tháng**: cột nhóm vẽ SVG theo đúng bề rộng thật (vẽ lại khi đổi kích thước, chữ không bị co), cột ≤ 24px, đầu cột bo 2px, chân vuông, khe 2px giữa hai cột; một trục y số tròn (0 / 100 / 200 / 300), lưới mảnh liền nét; kỳ hiện tại: nhãn tháng đậm và chỉ hai cột kỳ này có nhãn số. Thêm biểu đồ nhỏ **biên lãi gộp %** dùng chung trục x, trục y riêng (không dùng 2 trục y trên một biểu đồ). Bỏ độ mờ 55% của các tháng trước. Rê chuột / chạm / Tab vào cả dải tháng (lớn hơn cột) hiện tooltip doanh thu, lãi gộp, biên và tô nền dải tháng ở cả hai biểu đồ. Chú giải đặt trên biểu đồ. Nút **Biểu đồ / Bảng** (bảng số vẫn có cho trình đọc màn hình khi xem biểu đồ).
+- **Cơ cấu giá thành đơn vị**: thanh xếp chồng 100% nằm ngang, thứ tự cố định BTP GĐ trước → NVL → NC → SXC (khớp cột thẻ S37), khe 2px, đầu thanh bo 2px; nhãn % trong đoạn chỉ khi đủ chỗ (đo sau khi vẽ); giá thành đơn vị ở đầu dòng. Dở dang đầu kỳ gộp vào khoản mục NVL (như thẻ giá thành), số tiền hiện trong tooltip và cột "Gồm DDĐK" của bảng. Rê / Tab vào đoạn: tooltip đ/đvt, tỷ trọng; các đoạn khác mờ đi. Bỏ dòng chữ liệt kê dưới mỗi thanh; thay bằng nút **Biểu đồ / Bảng**.
+- **Khóa sổ**: thanh tiến độ 12 ô (xong = màu nhấn, cần chạy lại / dừng = đỏ, bước tiếp theo = viền màu nhấn, chưa chạy = bước nhạt cùng dải); rê chuột hiện tên bước và trạng thái.
+- **Báo cáo tiến độ sản xuất**: cột Hoàn thành có thanh nhỏ (nền nhạt cùng dải, phần hoàn thành màu nhấn) cạnh số %.
+- **Sơ đồ thứ tự tính giá thành**: ô nền trắng viền mảnh, mũi tên nét mảnh; sản phẩm 1 giai đoạn tách bằng vạch dọc. Vạch nhánh ở Truy xuất đổi từ nét đứt sang nét liền.
+
+### Đã kiểm tra (Playwright, Chromium)
+- `__giagoc.selfTest()`: **1.216 tổ hợp, 0 lỗi**; số chính không đổi (doanh thu 225.990.000, giá vốn 154.605.503, z BTP 71.848,61, tồn kho 284.266.497).
+- 1366×768 và 390×844, sáng và tối: chụp từng biểu đồ, rê chuột lên cột / đoạn / ô tiến độ thấy tooltip, focus bàn phím hiện tooltip, chuyển Bảng và lại Biểu đồ, chạy hết 12 bước khóa sổ, thu cửa sổ 1366 → 900 (biểu đồ vẽ lại). Không chữ chồng nhau trong SVG, không chữ ra ngoài panel, không nhãn % bị cắt, không cuộn ngang, không NaN / undefined, không pageerror / console error; mọi `border-radius` ≤ 2px và mọi `rx` / `ry` SVG ≤ 2.
+
 ## v3.3: giao diện phẳng
 
 Theo phản hồi của người dùng (kế toán / vận hành): bỏ nhãn màu, màu sắc "kiểu AI" và bo góc. Chỉ đổi giao diện; engine, số liệu, ID, `window.__giagoc`, a11y và bản in giữ nguyên.

@@ -1,11 +1,14 @@
 <meta charset="utf-8">
 <title>Giá Gốc · Mắm</title>
 <style>
-/* Giá Gốc v3.3 (ngành mắm) — giao diện phẳng kiểu phần mềm kế toán: một màu nhấn, bo góc ≤ 2px, không nhãn màu. */
+/* Giá Gốc v3.4 (ngành mắm) — giao diện phẳng kiểu phần mềm kế toán: một màu nhấn, bo góc ≤ 2px, không nhãn màu. */
 :root{
   --bg:#f5f6f7; --surface:#ffffff; --surface-2:#eef0f2; --hover:#f3f5f7; --sel:#e6ebf1; --fg:#1d2226; --muted:#59626b; --line:#d0d4d9; --line-2:#e3e6ea;
   --accent:#1f5fa8; --accent-h:#184d8a; --on-accent:#ffffff; --neg:#b42318; --warn:#9a5b00; --pos:#1e7a46;
-  --c-nvl:#1f5fa8; --c-nc:#6e9fd4; --c-sxc:#56616c; --c-dd:#a4adb6; --c-btp:#12355e;
+  /* Biểu đồ: 4 ô categorical (đã kiểm validate_palette.js: light / #ffffff, cả cặp kề và mọi cặp); chữ trong ô màu dùng --kN-ink */
+  --k1:#1f5fa8; --k2:#6899e2; --k3:#1e8163; --k4:#67c7a4; --k1-ink:#ffffff; --k2-ink:#0f1a2a; --k3-ink:#ffffff; --k4-ink:#0f1a2a;
+  --c-nvl:var(--k1); --c-btp:var(--k2); --c-nc:var(--k3); --c-sxc:var(--k4); --c-rev:var(--k1); --c-gp:var(--k2);
+  --grid:#e8eaed; --axis:#c3c8ce; --track:#dbe4ef; --band:rgba(29,34,38,.05);
   --scrim:rgba(20,24,28,.45); --shadow:0 2px 8px rgba(20,24,28,.18);
   --font-ui:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
   --font-mono:Consolas,ui-monospace,monospace;
@@ -14,13 +17,17 @@
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#16181b; --surface:#1e2124; --surface-2:#272b2f; --hover:#24282c; --sel:#2a323b; --fg:#e3e6e8; --muted:#a0a8b0; --line:#3b4147; --line-2:#2f3439;
   --accent:#5b9ae0; --accent-h:#7cb0ea; --on-accent:#0f1215; --neg:#f07a72; --warn:#e2a64e; --pos:#5cc08a;
-  --c-nvl:#5b9ae0; --c-nc:#2f6aa8; --c-sxc:#b6bec6; --c-dd:#6b747d; --c-btp:#a9cdf2;
+  --k1:#5894e0; --k2:#3063a6; --k3:#3ba888; --k4:#04785d; --k1-ink:#0f1215; --k2-ink:#ffffff; --k3-ink:#0f1215; --k4-ink:#ffffff;
+  --c-nvl:var(--k1); --c-btp:var(--k2); --c-nc:var(--k3); --c-sxc:var(--k4); --c-rev:var(--k1); --c-gp:var(--k2);
+  --grid:#2b3035; --axis:#474e55; --track:#29364a; --band:rgba(255,255,255,.05);
   --scrim:rgba(0,0,0,.6); --shadow:0 2px 8px rgba(0,0,0,.5); color-scheme:dark;
 }}
 :root[data-theme="dark"]{
   --bg:#16181b; --surface:#1e2124; --surface-2:#272b2f; --hover:#24282c; --sel:#2a323b; --fg:#e3e6e8; --muted:#a0a8b0; --line:#3b4147; --line-2:#2f3439;
   --accent:#5b9ae0; --accent-h:#7cb0ea; --on-accent:#0f1215; --neg:#f07a72; --warn:#e2a64e; --pos:#5cc08a;
-  --c-nvl:#5b9ae0; --c-nc:#2f6aa8; --c-sxc:#b6bec6; --c-dd:#6b747d; --c-btp:#a9cdf2;
+  --k1:#5894e0; --k2:#3063a6; --k3:#3ba888; --k4:#04785d; --k1-ink:#0f1215; --k2-ink:#ffffff; --k3-ink:#0f1215; --k4-ink:#ffffff;
+  --c-nvl:var(--k1); --c-btp:var(--k2); --c-nc:var(--k3); --c-sxc:var(--k4); --c-rev:var(--k1); --c-gp:var(--k2);
+  --grid:#2b3035; --axis:#474e55; --track:#29364a; --band:rgba(255,255,255,.05);
   --scrim:rgba(0,0,0,.6); --shadow:0 2px 8px rgba(0,0,0,.5); color-scheme:dark;
 }
 :root[data-theme="light"]{color-scheme:light}
@@ -161,12 +168,56 @@ tr:last-child td{border-bottom:0}
 .todo li>.k{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .todo li>.t{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .todo li>.btn{justify-self:end}
-.bar{display:flex;height:16px;overflow:hidden;background:var(--surface-2)}
-.bar span{display:block;height:100%}
-.bar span+span{border-left:1px solid var(--surface)}
-.bar-lbl{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted)}
-.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
-.legend i,.bar-lbl i{display:inline-block;width:10px;height:10px;margin-right:5px;vertical-align:-1px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;margin-right:6px;vertical-align:-1px}
+/* Biểu đồ (SVG / HTML thuần) */
+.viz{position:relative;min-width:0}
+.viz svg{display:block;overflow:visible}
+.viz .v-grid{stroke:var(--grid);stroke-width:1;shape-rendering:crispEdges}
+.viz .v-axis{stroke:var(--axis);stroke-width:1;shape-rendering:crispEdges}
+.viz .v-val{fill:var(--fg);font-weight:600}
+.viz .v-cur{fill:var(--fg);font-weight:600}
+.viz .v-hit{fill:transparent;cursor:default}
+.viz .v-hit:focus{outline:none}
+.viz .v-hit:focus-visible{outline:none;stroke:var(--accent);stroke-width:2}
+.viz .band-hl{fill:transparent}
+.viz .band-hl.on{fill:var(--band)}
+.viz-sub{font-size:12px;color:var(--muted);margin:2px 0 0}
+.viz-tbl[hidden]{display:none!important}
+.vtip{position:fixed;z-index:80;pointer-events:none;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:6px 9px;font-size:12px;line-height:1.4;max-width:min(300px,calc(100vw - 24px));display:flex;flex-direction:column;gap:2px}
+.vtip[hidden]{display:none}
+.vtip .vt-h{color:var(--muted);margin-bottom:1px}
+.vtip .vt-r{display:grid;grid-template-columns:12px auto 1fr;gap:0 7px;align-items:center;white-space:nowrap}
+.vtip .vt-r i{display:block;width:12px;height:3px}
+.vtip .vt-r b{font-weight:600;text-align:right}
+.vtip .vt-r span{color:var(--muted)}
+.vtip .vt-n{color:var(--muted);white-space:normal}
+/* Cơ cấu giá thành: thanh xếp chồng 100% nằm ngang, khe 2px */
+.cs{display:flex;flex-direction:column;gap:12px}
+.cs-row{display:flex;flex-direction:column;gap:2px}
+.cs-head{display:flex;align-items:baseline;gap:4px 8px;flex-wrap:wrap;font-size:13px}
+.cs-head .z{margin-left:auto;white-space:nowrap}
+.stk{display:flex;gap:2px;min-width:0}
+.stk-seg{flex:1 1 0;min-width:0;padding:4px 0;cursor:default;outline:none}
+.stk-seg i{display:flex;align-items:center;height:20px;padding:0 6px;font-style:normal;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:visible;transition:opacity .12s}
+.stk-seg:last-child i{border-radius:0 var(--r) var(--r) 0}
+.stk-seg i b{font-weight:600}
+.stk-seg i b.off{visibility:hidden}
+.stk:hover .stk-seg:not(:hover) i,.stk:focus-within .stk-seg:not(:focus-visible):not(:hover) i{opacity:.55}
+.stk-seg:focus-visible i{outline:2px solid var(--fg);outline-offset:1px}
+/* Thanh tiến độ: phần đã làm màu nhấn, nền là bước nhạt cùng dải */
+.meter{display:flex;gap:2px}
+.meter span{flex:1 1 0;padding:6px 0;cursor:default;outline:none}
+.meter span i{display:block;height:8px;background:var(--track)}
+.meter span:first-child i{border-radius:var(--r) 0 0 var(--r)}
+.meter span:last-child i{border-radius:0 var(--r) var(--r) 0}
+.meter span.done i{background:var(--accent)}
+.meter span.bad i{background:var(--neg)}
+.meter span.next i{box-shadow:inset 0 0 0 1px var(--accent)}
+.meter span:focus-visible i{outline:2px solid var(--fg);outline-offset:1px}
+.mtr{display:inline-block;width:64px;height:6px;background:var(--track);vertical-align:middle;margin-right:8px;position:relative}
+.mtr i{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+.mtr-v{display:inline-block;min-width:46px}
 .tree{display:flex;flex-direction:column;gap:6px;font-size:13px}
 .node{border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
 .node>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:14px minmax(0,1fr) auto auto;gap:6px 10px;align-items:center;padding:7px 10px}
@@ -257,13 +308,14 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
 .tour-arrow.up{top:-7px;border-right:0;border-bottom:0}
 .tour-arrow.down{bottom:-7px;border-left:0;border-top:0}
 .flow{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:stretch;font-size:12.5px}
-.flow .st{border:1px solid var(--line);padding:5px 10px;background:var(--surface-2);display:flex;flex-direction:column;gap:1px;min-width:0;white-space:normal;font-size:12.5px}
+.flow .st{border:1px solid var(--line);padding:5px 10px;background:var(--surface);display:flex;flex-direction:column;gap:1px;min-width:0;white-space:normal;font-size:12.5px}
 .flow .st b{font-size:13px;font-weight:600}
-.flow .ar{color:var(--muted);align-self:center}
+.flow .ar{color:var(--muted);align-self:center;flex:none}
+.flow .sep{width:1px;align-self:stretch;background:var(--line);margin:0 8px}
 .rep-ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
 #repOut h2{font-size:14px;font-weight:600;margin:0}
 #repOut h2 .sx{margin-left:6px}
-.sub-tree{margin-top:6px;border-left:2px dashed var(--c-btp);padding-left:10px;display:flex;flex-direction:column;gap:4px}
+.sub-tree{margin-top:6px;border-left:2px solid var(--c-btp);padding-left:10px;display:flex;flex-direction:column;gap:4px}
 @media (max-width:1280px){.split,.split.wide-side{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:1700px){.split.ledger-split{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:1180px){.top .field>span{display:none}}
@@ -430,18 +482,21 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
           <ul class="todo" id="todo"></ul>
         </div>
         <div class="panel">
-          <div class="panel-head"><h2>Doanh thu và lãi gộp 6 tháng</h2><div class="spacer"></div><span class="note">triệu đồng</span></div>
-          <div id="chart"></div>
-          <div class="legend"><span><i style="background:var(--c-nvl)"></i>Doanh thu thuần</span><span><i style="background:var(--c-nc)"></i>Lãi gộp</span></div>
+          <div class="panel-head"><h2>Doanh thu và lãi gộp 6 tháng</h2><span class="note">triệu đồng</span><div class="spacer"></div>
+            <div class="seg" role="group" aria-label="Cách xem doanh thu và lãi gộp"><button type="button" data-vt="rev" data-v="chart">Biểu đồ</button><button type="button" data-vt="rev" data-v="table">Bảng</button></div></div>
+          <div class="legend" id="chartLegend"><span><i style="background:var(--c-rev)"></i>Doanh thu thuần</span><span><i style="background:var(--c-gp)"></i>Lãi gộp</span></div>
+          <div id="chart" class="viz" data-viz="rev"></div>
         </div>
         <div class="panel" id="reconPanel">
           <div class="panel-head"><h2>Đối chiếu kho với sổ cái</h2><div class="spacer"></div><span id="reconPill"></span></div>
           <div class="tbl-wrap"><table id="recon"></table></div>
         </div>
         <div class="panel">
-          <div class="panel-head"><h2>Cơ cấu giá thành đơn vị</h2></div>
-          <div id="structure" style="display:flex;flex-direction:column;gap:16px"></div>
-          <div class="legend"><span><i style="background:var(--c-dd)"></i>Dở dang đầu kỳ</span><span><i style="background:var(--c-btp)"></i><abbr title="Bán thành phẩm">BTP</abbr> giai đoạn trước</span><span><i style="background:var(--c-nvl)"></i><abbr title="Nguyên vật liệu">NVL</abbr> trực tiếp</span><span><i style="background:var(--c-nc)"></i>Nhân công trực tiếp</span><span><i style="background:var(--c-sxc)"></i>Sản xuất chung</span></div>
+          <div class="panel-head"><h2>Cơ cấu giá thành đơn vị</h2><div class="spacer"></div>
+            <div class="seg" role="group" aria-label="Cách xem cơ cấu giá thành"><button type="button" data-vt="cs" data-v="chart">Biểu đồ</button><button type="button" data-vt="cs" data-v="table">Bảng</button></div></div>
+          <div class="legend" id="csLegend"><span><i style="background:var(--c-btp)"></i><abbr title="Bán thành phẩm">BTP</abbr> giai đoạn trước</span><span><i style="background:var(--c-nvl)"></i><abbr title="Nguyên vật liệu">NVL</abbr> trực tiếp</span><span><i style="background:var(--c-nc)"></i>Nhân công trực tiếp</span><span><i style="background:var(--c-sxc)"></i>Sản xuất chung</span></div>
+          <div id="structure" class="cs viz"></div>
+          <div id="csTbl" class="viz-tbl"></div>
         </div>
       </div>
     </section>
@@ -1362,7 +1417,7 @@ function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S.data)); }catch(
 function clearSaved(){ try{ localStorage.removeItem(KEY); }catch(_){} }
 const UI0 = {view:'dash', item:'CL', sel:null, doc:'PX0001', lot:null, filter:'all', q:'', wh:'all', lk:'all', sq:'', rep:'nkc', repAcc:'1111', repDebt:'331', repCash:'1111',
   repFrom:'2026-01-01', repTo:'2026-01-31', repItem:'BTP', repWh:'all',
-  impact:null, fail:null, refocus:null};
+  vt:{rev:'chart', cs:'chart'}, impact:null, fail:null, refocus:null};
 const S = {data: load() || freshData(), ui:clone(UI0)};
 let R = null;
 const isTT133 = () => S.data.settings.regime === 'TT133';
@@ -1484,6 +1539,85 @@ function go(view, opt){
 const XL_ICO = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>';
 const xlBtn = (id, what) => '<button class="btn sm xl" type="button" data-copy="' + id + '" aria-label="Sao chép ' + esc(what) + ' cho Excel">' + XL_ICO + 'Excel</button>';
 
+// ================= Biểu đồ: tooltip, cột nhóm, thanh xếp chồng, thanh tiến độ =================
+// Tooltip dùng chung: nội dung ghi bằng textContent; hover chuột, chạm và focus bàn phím cho cùng chi tiết.
+const TIPS = {};
+const tipEl = (() => { const t = document.createElement('div'); t.className = 'vtip'; t.id = 'vtip'; t.setAttribute('role', 'tooltip'); t.hidden = true; document.body.appendChild(t); return t; })();
+let tipKey = null;
+function tipShow(el, x, y){
+  const k = el.dataset.tip, d = TIPS[k]; if(!d) return;
+  if(tipKey !== k){ tipKey = k; tipEl.textContent = '';
+    const h = document.createElement('div'); h.className = 'vt-h'; h.textContent = d.h; tipEl.appendChild(h);
+    d.rows.forEach(r => { const row = document.createElement('div'), key = document.createElement('i'), b = document.createElement('b'), l = document.createElement('span');
+      row.className = 'vt-r'; if(r.c) key.style.background = r.c; b.textContent = r.v; l.textContent = r.l; row.append(key, b, l); tipEl.appendChild(row); });
+    if(d.n){ const n = document.createElement('div'); n.className = 'vt-n'; n.textContent = d.n; tipEl.appendChild(n); } }
+  tipEl.hidden = false;
+  const w = tipEl.offsetWidth, hh = tipEl.offsetHeight, vw = document.documentElement.clientWidth, vh = window.innerHeight;
+  let lx = x + 14, ly = y + 14;
+  if(lx + w > vw - 8) lx = x - 14 - w; if(lx < 8) lx = 8;
+  if(ly + hh > vh - 8) ly = y - 14 - hh; if(ly < 8) ly = 8;
+  tipEl.style.left = Math.round(lx) + 'px'; tipEl.style.top = Math.round(ly) + 'px';
+  const g = el.closest('[data-viz]'); if(g) g.querySelectorAll('.band-hl').forEach(r => r.classList.toggle('on', r.dataset.i === el.dataset.i));
+}
+function tipHide(){ if(tipEl.hidden && tipKey == null) return; tipKey = null; tipEl.hidden = true; document.querySelectorAll('.band-hl.on').forEach(r => r.classList.remove('on')); }
+const tipTarget = e => e.target && e.target.closest ? e.target.closest('[data-tip]') : null;
+document.addEventListener('pointermove', e => { const el = tipTarget(e); if(el) tipShow(el, e.clientX, e.clientY); else if(tipKey != null && !(document.activeElement && document.activeElement.dataset && document.activeElement.dataset.tip)) tipHide(); });
+document.addEventListener('pointerdown', e => { const el = tipTarget(e); if(el) tipShow(el, e.clientX, e.clientY); else tipHide(); });
+document.addEventListener('pointerout', e => { if(!e.relatedTarget) tipHide(); });
+document.addEventListener('focusin', e => { const el = tipTarget(e); if(!el) return; const r = el.getBoundingClientRect(); tipShow(el, r.left + Math.min(r.width, 40), r.bottom - 8); });
+document.addEventListener('focusout', e => { if(tipTarget(e)) tipHide(); });
+window.addEventListener('scroll', () => { const a = document.activeElement; if(tipKey != null && a && a.dataset && a.dataset.tip === tipKey){ const r = a.getBoundingClientRect(); tipShow(a, r.left + Math.min(r.width, 40), r.bottom - 8); } else tipHide(); }, true);
+// Cột có đầu bo 2px, chân vuông ở đường gốc
+function topBar(x, y, w, y0, r){ const h = y0 - y; if(!(h > 0)) return ''; r = Math.min(r, h, w / 2);
+  return 'M' + x + ',' + y0 + 'V' + (y + r) + 'A' + r + ',' + r + ' 0 0 1 ' + (x + r) + ',' + y + 'H' + (x + w - r) + 'A' + r + ',' + r + ' 0 0 1 ' + (x + w) + ',' + (y + r) + 'V' + y0 + 'Z'; }
+function niceStep(max, n){ const raw = max / n, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; }
+const txtW = (s, px) => String(s).length * (px || 11) * 0.6;
+// Doanh thu và lãi gộp: cột nhóm (một trục y, số tròn) + biểu đồ nhỏ biên lãi gộp % dùng chung trục x
+let revData = null;
+function drawRev(){
+  const box = $('chart'), out = $('chartSvg'); if(!box || !out || !revData || box.offsetParent === null || S.ui.vt.rev === 'table') return;
+  const hist = revData, n = hist.length, W = Math.max(260, Math.floor(box.clientWidth)); box._w = W;
+  const H = W < 440 ? 176 : 196, pl = 34, pr = W < 440 ? 12 : 4, pt = 20, pb = 24, ph = H - pt - pb;
+  const vmax = Math.max.apply(null, hist.map(h => h[1])), step = niceStep(vmax, 4), max = Math.ceil(vmax / step - 1e-9) * step;
+  const y = v => Math.round(pt + ph * (1 - Math.max(0, v) / max)), y0 = y(0);
+  const bw = (W - pl - pr) / n, bar = Math.max(6, Math.min(24, Math.floor((bw * 0.62 - 2) / 2)));
+  const mg = hist.map(h => h[1] ? h[2] / h[1] * 100 : 0), mlo = Math.floor(Math.min.apply(null, mg) - 0.5), mhi = Math.ceil(Math.max.apply(null, mg) + 0.5);
+  const mt = H + 26, mh = 44, HT = mt + mh + 8, my = v => Math.round(mt + mh * (1 - (v - mlo) / (mhi - mlo)));
+  const cxs = hist.map((h, i) => pl + i * bw + bw / 2);
+  let g = '';
+  hist.forEach((h, i) => { g += '<rect class="band-hl" data-i="' + i + '" x="' + (pl + i * bw + 1) + '" y="' + (pt - 14) + '" width="' + (bw - 2) + '" height="' + (HT - pt + 12) + '"/>'; });
+  for(let t = step; t <= max + 1e-9; t += step) g += '<line class="v-grid" x1="' + pl + '" x2="' + (W - pr) + '" y1="' + (y(t) + .5) + '" y2="' + (y(t) + .5) + '"/>';
+  for(let t = 0; t <= max + 1e-9; t += step) g += '<text x="' + (pl - 6) + '" y="' + (y(t) + 4) + '" text-anchor="end">' + fmtD(t, 0) + '</text>';
+  hist.forEach((h, i) => { const cx = cxs[i], x1 = Math.round(cx - bar - 1), x2 = Math.round(cx + 1), cur = i === n - 1;
+    g += '<path d="' + topBar(x1, y(h[1]), bar, y0, 2) + '" fill="var(--c-rev)"/><path d="' + topBar(x2, y(h[2]), bar, y0, 2) + '" fill="var(--c-gp)"/>';
+    if(cur){ const a = fmtD(h[1], 1), b = fmtD(h[2], 1), fitsR = x2 + txtW(b) <= W - 2;
+      g += '<text class="v-val" x="' + (x1 + bar / 2) + '" y="' + (y(h[1]) - 6) + '" text-anchor="middle">' + a + '</text>' +
+        '<text class="v-val" x="' + (fitsR ? x2 : x2 + bar) + '" y="' + (y(h[2]) - 6) + '" text-anchor="' + (fitsR ? 'start' : 'end') + '">' + b + '</text>'; }
+    g += '<text x="' + cx + '" y="' + (H - 7) + '" text-anchor="middle"' + (cur ? ' class="v-cur"' : '') + '>' + h[0] + '</text>'; });
+  g += '<line class="v-axis" x1="' + pl + '" x2="' + (W - pr) + '" y1="' + (y0 + .5) + '" y2="' + (y0 + .5) + '"/>';
+  // biên lãi gộp %
+  g += '<text x="0" y="' + (mt - 12) + '">Biên lãi gộp, %</text>';
+  [mlo, mhi].forEach(t => { g += '<line class="v-grid" x1="' + pl + '" x2="' + (W - pr) + '" y1="' + (my(t) + .5) + '" y2="' + (my(t) + .5) + '"/><text x="' + (pl - 6) + '" y="' + (my(t) + 4) + '" text-anchor="end">' + t + '</text>'; });
+  g += '<path d="' + mg.map((v, i) => (i ? 'L' : 'M') + cxs[i] + ',' + my(v)).join('') + '" fill="none" stroke="var(--c-rev)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+  mg.forEach((v, i) => { g += '<circle cx="' + cxs[i] + '" cy="' + my(v) + '" r="4" fill="var(--c-rev)" stroke="var(--surface)" stroke-width="2"/>'; });
+  const lastM = mg[n - 1], lx = cxs[n - 1], lt = pct(lastM), above = my(lastM) - mt > 14;
+  g += '<text class="v-val" x="' + (lx + txtW(lt) / 2 > W ? W : lx) + '" y="' + (above ? my(lastM) - 8 : my(lastM) + 16) + '" text-anchor="' + (lx + txtW(lt) / 2 > W ? 'end' : 'middle') + '">' + lt + '</text>';
+  // vùng rê chuột: cả dải tháng (lớn hơn cột), dùng chung cho hai biểu đồ
+  hist.forEach((h, i) => { const k = 'rev' + i, cur = i === n - 1;
+    TIPS[k] = {h: 'Tháng ' + h[0] + (cur ? ' (kỳ này)' : ''), rows: [{c:'var(--c-rev)', v: fmtD(h[1], 1) + ' tr', l:'Doanh thu thuần'}, {c:'var(--c-gp)', v: fmtD(h[2], 1) + ' tr', l:'Lãi gộp'}, {v: pct(mg[i]), l:'Biên lãi gộp'}]};
+    g += '<rect class="v-hit" data-tip="' + k + '" data-i="' + i + '" tabindex="0" role="img" aria-label="' + esc(TIPS[k].h + ': doanh thu ' + fmtD(h[1], 1) + ' triệu, lãi gộp ' + fmtD(h[2], 1) + ' triệu, biên ' + pct(mg[i])) + '" x="' + (pl + i * bw) + '" y="' + (pt - 14) + '" width="' + bw + '" height="' + (HT - pt + 12) + '"/>'; });
+  out.innerHTML = '<svg width="' + W + '" height="' + HT + '" viewBox="0 0 ' + W + ' ' + HT + '" role="group" aria-label="Doanh thu, lãi gộp và biên lãi gộp 6 tháng">' + g + '</svg>';
+}
+// Ẩn nhãn % trong đoạn khi không đủ chỗ (giá trị vẫn có ở tooltip và bảng)
+function fitCs(){ document.querySelectorAll('#structure .stk-seg i b').forEach(b => { b.classList.toggle('off', b.offsetWidth + 10 > b.parentElement.clientWidth); }); }
+if(window.ResizeObserver){ const ro = new ResizeObserver(() => { const c = $('chart'); if(c && c.offsetParent !== null && revData && c._w !== Math.max(260, Math.floor(c.clientWidth))) drawRev(); fitCs(); });
+  ro.observe($('chart')); ro.observe($('structure')); }
+const vtSeg = k => document.querySelectorAll('[data-vt="' + k + '"]').forEach(b => b.setAttribute('aria-pressed', S.ui.vt[k] === b.dataset.v ? 'true' : 'false'));
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-vt]'); if(!b) return; S.ui.vt[b.dataset.vt] = b.dataset.v; tipHide(); RENDER.dash(); });
+// Cơ cấu giá thành: thứ tự đoạn cố định theo khoản mục (màu theo khoản mục, không theo thứ hạng)
+const CS_K = [['btp', 'BTP giai đoạn trước', 'var(--c-btp)', 'var(--k2-ink)', '<abbr title="BTP giai đoạn trước">BTP GĐ trước</abbr>'], ['nvl', 'NVL trực tiếp', 'var(--c-nvl)', 'var(--k1-ink)', '<abbr title="Nguyên vật liệu trực tiếp">NVL TT</abbr>'],
+  ['nc', 'Nhân công trực tiếp', 'var(--c-nc)', 'var(--k3-ink)', '<abbr title="Nhân công trực tiếp">NC TT</abbr>'], ['sxc', 'Sản xuất chung', 'var(--c-sxc)', 'var(--k4-ink)', '<abbr title="Sản xuất chung">SXC</abbr>']];
+
 // ================= Tổng quan =================
 RENDER.dash = function(){
   const D = S.data, imp = S.ui.impact ? S.ui.impact.before : null;
@@ -1495,17 +1629,13 @@ RENDER.dash = function(){
     k('Giá vốn hàng bán', R.cogs, (R.toCogs + abn ? 'Gồm ' + fmt(R.toCogs + abn) + ' đ ngoài giá thành' : METHOD_NAME[D.settings.method]), 'cogs') +
     k('Lãi gộp', R.gross, 'Biên ' + pct(R.margin) + ' · 12/2025: ' + pct(prev[2] / prev[1] * 100), 'gross') +
     k('Hàng tồn kho cuối kỳ', R.stock, 'Dở dang 154: ' + fmt(R.gl['154'] || 0) + ' đ', 'stock');
-  const hist = HIST.concat([['01/26', R.rev / 1e6, R.gross / 1e6]]);
-  const W = 560, H = 220, pl = 40, pb = 24, pt = 10, max = Math.max(50, Math.ceil(Math.max.apply(null, hist.map(h => h[1])) / 50) * 50);
-  const bw = (W - pl) / hist.length, y = v => pt + (H - pt - pb) * (1 - Math.max(0, v) / max);
-  let g = ''; for(let t = 0; t <= max; t += 50) g += '<line x1="' + pl + '" x2="' + W + '" y1="' + y(t) + '" y2="' + y(t) + '" stroke="var(--line)"/><text x="' + (pl - 6) + '" y="' + (y(t) + 4) + '" text-anchor="end">' + t + '</text>';
-  hist.forEach((h, i) => { const x = pl + i * bw + bw * .18, w = bw * .3, cur = i === hist.length - 1;
-    g += '<rect x="' + x + '" y="' + y(h[1]) + '" width="' + w + '" height="' + (y(0) - y(h[1])) + '" fill="var(--c-nvl)" opacity="' + (cur ? 1 : .55) + '"><title>Doanh thu ' + h[0] + ': ' + fmtD(h[1], 1) + ' tr</title></rect>';
-    g += '<rect x="' + (x + w + 3) + '" y="' + y(h[2]) + '" width="' + w + '" height="' + (y(0) - y(h[2])) + '" fill="var(--c-nc)" opacity="' + (cur ? 1 : .55) + '"><title>Lãi gộp ' + h[0] + ': ' + fmtD(h[2], 1) + ' tr</title></rect>';
-    g += '<text x="' + (pl + i * bw + bw / 2) + '" y="' + (H - 6) + '" text-anchor="middle"' + (cur ? ' style="font-weight:700;fill:var(--fg)"' : '') + '>' + h[0] + '</text>'; });
-  $('chart').innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-height:300px" role="img" aria-label="Biểu đồ doanh thu và lãi gộp 6 tháng, chi tiết ở bảng ngay sau">' + g + '</svg>' +
-    '<table class="vh"><caption>Doanh thu và lãi gộp (triệu đồng)</caption><thead><tr><th>Tháng</th><th>Doanh thu</th><th>Lãi gộp</th><th>Biên</th></tr></thead><tbody>' +
-    hist.map(h => '<tr><td>' + h[0] + '</td><td>' + fmtD(h[1], 1) + '</td><td>' + fmtD(h[2], 1) + '</td><td>' + pct(h[1] ? h[2] / h[1] * 100 : 0) + '</td></tr>').join('') + '</tbody></table>';
+  const hist = HIST.concat([['01/26', R.rev / 1e6, R.gross / 1e6]]), vt = S.ui.vt;
+  revData = hist; vtSeg('rev'); vtSeg('cs');
+  const revTbl = '<table' + (vt.rev === 'table' ? '' : ' class="vh"') + '><caption class="vh">Doanh thu và lãi gộp (triệu đồng)</caption><thead><tr><th>Tháng</th><th class="n">Doanh thu thuần</th><th class="n">Lãi gộp</th><th class="n">Biên lãi gộp</th></tr></thead><tbody>' +
+    hist.map(h => '<tr><td>' + h[0] + '</td><td class="n">' + fmtD(h[1], 1) + '</td><td class="n">' + fmtD(h[2], 1) + '</td><td class="n">' + pct(h[1] ? h[2] / h[1] * 100 : 0) + '</td></tr>').join('') + '</tbody></table>';
+  $('chartLegend').hidden = vt.rev === 'table';
+  if(vt.rev === 'table'){ $('chart').innerHTML = '<div class="tbl-wrap">' + revTbl + '</div>'; }
+  else { $('chart').innerHTML = '<div id="chartSvg"></div>' + revTbl; drawRev(); }
   // việc cần làm: 1 dòng / mục, có nút hành động
   const st = D.closing, nx = nextStep(D), items = [], m = D.settings.method;
   const li = (cls, key, txt, btn) => '<li><span class="k' + (cls === 'warn' ? ' s-warn' : cls === 'bad' ? ' s-bad' : '') + '">' + key + '</span><span class="t" title="' + esc(txt) + '">' + esc(txt) + '</span>' + (btn || '<span></span>') + '</li>';
@@ -1531,15 +1661,25 @@ RENDER.dash = function(){
   items.push(R.recon.ok ? li('', 'Kho – sổ cái', 'Khớp sổ cái ' + R.recon.rows.filter(r => /^15/.test(r.acc)).map(r => r.acc).join(', '))
     : li('bad', 'Kho – sổ cái', 'Kho chưa khớp sổ cái'));
   $('todo').innerHTML = items.join('');
-  // cơ cấu giá thành
-  const col = {dd:'var(--c-dd)', btp:'var(--c-btp)', nvl:'var(--c-nvl)', nc:'var(--c-nc)', sxc:'var(--c-sxc)'}, nm = {dd:'Dở dang đầu kỳ', btp:'BTP GĐ trước', nvl:'NVL', nc:'Nhân công', sxc:'SXC'};
-  $('structure').innerHTML = R.order.map(o => { const c = R.card[o], u = D.items[o].uom; if(!c.qty) return '<div><b>' + esc(D.items[o].name) + '</b> <span class="muted">—</span></div>';
+  // cơ cấu giá thành: thanh xếp chồng 100% nằm ngang, khe 2px, nhãn % khi đủ chỗ
+  let csRows = '';
+  $('structure').innerHTML = R.order.map(o => { const c = R.card[o], it = D.items[o], u = it.uom, st = (it.prod || {}).stage || '';
+    const head = '<div class="cs-head"><b>' + esc(it.name) + '</b><span class="muted">' + esc(st) + '</span><span class="z">';
+    if(!c.qty){ csRows += '<tr><td>' + esc(it.name) + '</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">—</td></tr>'; return '<div class="cs-row">' + head + '<span class="muted">—</span></span></div></div>'; }
     const good = x => c.km[x] - c.abnBy[x], gN = good('nvl');
     const ddShare = c.ddk + c.nvl > 0 ? Math.round(gN * c.ddk / (c.ddk + c.nvl)) : 0;
-    const parts = [['dd', ddShare], ['btp', good('btp')], ['nvl', gN - ddShare], ['nc', good('nc')], ['sxc', good('sxc')]].filter(p => p[1] > 0.5);
-    return '<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>' + esc(D.items[o].name) + ' <span class="muted">· ' + esc((D.items[o].prod || {}).stage || '') + '</span></b><span><b>' + fmt(c.z) + '</b> <span class="muted">đ/' + u + '</span>' + (imp ? ' ' + deltaTxt(c.z - (imp.z ? imp.z[o] || 0 : 0)) : '') + '</span></div>' +
-      '<div class="bar" aria-hidden="true">' + parts.map(p => '<span style="width:' + (c.Z ? p[1] / c.Z * 100 : 0) + '%;background:' + col[p[0]] + '"></span>').join('') + '</div>' +
-      '<div class="bar-lbl">' + parts.map(p => '<span><i style="background:' + col[p[0]] + '"></i>' + nm[p[0]] + ' ' + fmt(p[1] / c.qty) + ' đ · ' + fmtD(c.Z ? p[1] / c.Z * 100 : 0, 0) + '%</span>').join('') + '</div></div>'; }).join('');
+    const share = x => c.Z ? good(x) / c.Z * 100 : 0, per = x => fmt(good(x) / c.qty);
+    const parts = CS_K.filter(k => good(k[0]) > 0.5);
+    csRows += '<tr><td class="wrap" style="min-width:110px">' + esc(it.name) + ' <span class="muted">đ/' + esc(u) + '</span></td>' + CS_K.map(k => '<td class="n">' + (good(k[0]) > 0.5 ? per(k[0]) + '<br><span class="muted small">' + fmtD(share(k[0]), 1) + '%</span>' : '—') + '</td>').join('') + '<td class="n">' + (ddShare ? fmt(ddShare / c.qty) : '—') + '</td><td class="n"><b>' + fmt(c.z) + '</b></td></tr>';
+    return '<div class="cs-row">' + head + '<b>' + fmt(c.z) + '</b> <span class="muted">đ/' + esc(u) + '</span>' + (imp ? ' ' + deltaTxt(c.z - (imp.z ? imp.z[o] || 0 : 0)) : '') + '</span></div>' +
+      '<div class="stk" role="group" aria-label="' + esc('Cơ cấu giá thành ' + it.name) + '">' + parts.map(k => { const key = 'cs|' + o + '|' + k[0], pc = fmtD(share(k[0]), 0) + '%';
+        TIPS[key] = {h: it.name + ' · ' + st, rows: [{c:k[2], v: per(k[0]) + ' đ/' + u, l:k[1]}, {v: fmtD(share(k[0]), 1) + '%', l:'trong giá thành đơn vị'}], n: k[0] === 'nvl' && ddShare ? 'Gồm dở dang đầu kỳ ' + fmt(ddShare / c.qty) + ' đ/' + u : ''};
+        return '<span class="stk-seg" style="flex-grow:' + share(k[0]).toFixed(3) + '" data-tip="' + key + '" tabindex="0" role="img" aria-label="' + esc(k[1] + ': ' + per(k[0]) + ' đ/' + u + ', ' + pc) + '"><i style="background:' + k[2] + ';color:' + k[3] + '"><b>' + pc + '</b></i></span>'; }).join('') + '</div></div>'; }).join('');
+  const csTable = '<div class="tbl-wrap"><table><caption class="vh">Cơ cấu giá thành đơn vị (đồng / đơn vị tính)</caption><thead><tr><th>Sản phẩm</th>' + CS_K.map(k => '<th class="n">' + k[4] + '</th>').join('') + '<th class="n"><abbr title="Trong đó dở dang đầu kỳ (thuộc NVL)">Gồm DDĐK</abbr></th><th class="n">z (đ)</th></tr></thead><tbody>' + csRows + '</tbody></table></div>';
+  const csT = vt.cs === 'table';
+  $('structure').hidden = csT; $('csLegend').hidden = csT;
+  $('csTbl').innerHTML = csTable; $('csTbl').className = csT ? 'viz-tbl' : 'viz-tbl vh';
+  if(!csT) fitCs();
   $('recon').innerHTML = '<thead><tr><th>TK</th><th>Tên</th><th class="n">Sổ kho</th><th class="n">Sổ cái</th><th class="n">Chênh lệch</th></tr></thead><tbody>' +
     R.recon.rows.map(r => '<tr><td class="acc">' + r.acc + '</td><td>' + accName(r.acc, isTT133()) + '</td><td class="n">' + fmt(r.stock) + '</td><td class="n">' + fmt(r.gl) + '</td><td class="n">' + fmt(r.stock - r.gl) + '</td></tr>').join('') + '</tbody>';
   $('reconPill').innerHTML = R.recon.ok ? sx('s-mute', 'Khớp') : sx('s-bad', 'Lệch');
@@ -1720,7 +1860,7 @@ RENDER.reports = function(){
       return {k, x, g:rq(g), rj:rq(rj)}; });
     h = '<h2>Báo cáo tiến độ sản xuất · kế hoạch so với hoàn thành</h2>' + tblH('repTbl', '<tr><th>Lệnh sản xuất</th><th>Sản phẩm · giai đoạn</th><th>Kho</th><th class="n">Kế hoạch</th><th class="n">Nhập kho đạt</th><th class="n">Không đạt (loại bỏ)</th><th class="n">Hoàn thành</th><th class="n">Còn lại</th></tr>',
       L.map(r => { const it = D.items[r.x.item] || {uom:'', name:r.x.item}, done = rq(r.g + r.rj), p = r.x.plan ? done / r.x.plan * 100 : 0;
-        return '<tr>' + td(esc(r.x.no), 'acc') + td(esc(it.name) + ' · ' + esc((it.prod || {}).stage || '')) + td(r.x.wh) + td(fmtQ(r.x.plan) + ' ' + it.uom, 'n') + td(fmtQ(r.g), 'n') + td(fmtQ(r.rj), 'n') + td(pct(p), 'n') + td(fmtQ(Math.max(0, rq(r.x.plan - done))), 'n') + '</tr>'; }).join(''));
+        return '<tr>' + td(esc(r.x.no), 'acc') + td(esc(it.name) + ' · ' + esc((it.prod || {}).stage || '')) + td(r.x.wh) + td(fmtQ(r.x.plan) + ' ' + it.uom, 'n') + td(fmtQ(r.g), 'n') + td(fmtQ(r.rj), 'n') + td('<span class="mtr" aria-hidden="true"><i style="width:' + fmtD(Math.min(100, Math.max(0, p)), 2).replace(',', '.') + '%"></i></span><span class="mtr-v">' + pct(p) + '</span>', 'n') + td(fmtQ(Math.max(0, rq(r.x.plan - done))), 'n') + '</tr>'; }).join(''));
   }
   if(u.rep === 'lsxout'){ let body = '', tq = 0, tv = 0;
     Object.keys(D.lsx).forEach(k => { const x = D.lsx[k], by = {};
@@ -1926,9 +2066,9 @@ RENDER.cost = function(){
   // sơ đồ thứ tự tính
   const box = (o) => { const c = R.card[o], it = D.items[o]; return '<div class="st"><span class="muted">' + esc((it.prod || {}).stage || '') + ' · ' + esc(it.code) + '</span><b>' + esc(it.name) + '</b><span>z = ' + fmt2(c.z) + ' đ/' + esc(it.uom) + '</span></div>'; };
   let fl = ''; R.order.forEach((o, i) => { const it = D.items[o];
-    if(i) fl += it.prod && it.prod.prev && R.card[it.prod.prev] ? '<span class="ar" aria-hidden="true">→</span>' : '<span class="ar" aria-hidden="true">·</span>';
+    if(i) fl += it.prod && it.prod.prev && R.card[it.prod.prev] ? '<svg class="ar" aria-hidden="true" width="22" height="10" viewBox="0 0 22 10"><path d="M0 5H20M16 1l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>' : '<span class="sep" aria-hidden="true"></span>';
     if(it.prod && it.prod.prev && R.card[it.prod.prev]){ const pv = it.prod.prev, outQ = sum(R.items[pv].rows.filter(r => r.kind === 'out' && r.to === o), r => r.qty);
-      fl += '<div class="st"><span class="muted">Kho BTP</span><b>Nhập ' + R.card[pv].lots.length + ' lô, xuất ' + fmtQ(outQ) + ' ' + esc(D.items[pv].uom) + '</b><span>theo lô cho ' + esc(it.code) + '</span></div><span class="ar" aria-hidden="true">→</span>'; }
+      fl += '<div class="st"><span class="muted">Kho BTP</span><b>Nhập ' + R.card[pv].lots.length + ' lô, xuất ' + fmtQ(outQ) + ' ' + esc(D.items[pv].uom) + '</b><span>theo lô cho ' + esc(it.code) + '</span></div><svg class="ar" aria-hidden="true" width="22" height="10" viewBox="0 0 22 10"><path d="M0 5H20M16 1l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>'; }
     fl += box(o); });
   $('flow').innerHTML = '<span class="muted" style="align-self:center">Thứ tự tính:</span>' + fl;
   $('allocBasis').innerHTML = 'Tiêu thức: <abbr title="Nhân công trực tiếp">NCTT</abbr> · ' + codes.map(o => esc(D.items[o].code) + ' ' + fmtD(R.share[o] * 100, 1) + '%').join(' · ');
@@ -2024,7 +2164,10 @@ RENDER.close = function(){
   $('btnReopen').disabled = lk || !st.done.slice(4).some(x => x); $('btnReopen').title = lk ? LOCK_MSG : '';
   const pr = st.done[9] && !st.dirty[9], doneN = st.done.filter((x, j) => x && !st.dirty[j]).length;
   const nEq = R.posts.every(p => p.dr === p.cr);
-  const kv = '<dl class="kv"><dt>Tiến độ</dt><dd class="n"><b>' + doneN + '/12</b> bước</dd><dt>Nợ = Có</dt><dd class="n">' + (nEq ? 'Cân' : sx('s-bad', 'Lệch')) + '</dd>' +
+  const meter = '<div class="meter" aria-hidden="true">' + STEPS.map((f, i) => { const isFail = fail && fail.i === i, cls = isFail || st.dirty[i] ? 'bad' : st.done[i] ? 'done' : (i === nx && !lk ? 'next' : '');
+    const stt = isFail ? 'Dừng' : st.dirty[i] ? 'Cần chạy lại' : st.done[i] ? 'Xong' : i === nx ? 'Tiếp theo' : 'Chưa chạy';
+    TIPS['cl' + i] = {h: 'Bước ' + (i + 1) + '/12 · ' + stt, rows: [], n: f(t)}; return '<span class="' + cls + '" data-tip="cl' + i + '"><i></i></span>'; }).join('') + '</div>';
+  const kv = meter + '<dl class="kv"><dt>Tiến độ</dt><dd class="n"><b>' + doneN + '/12</b> bước</dd><dt>Nợ = Có</dt><dd class="n">' + (nEq ? 'Cân' : sx('s-bad', 'Lệch')) + '</dd>' +
     '<dt>Kho – sổ cái</dt><dd class="n">' + (R.recon.ok ? 'Khớp' : sx('s-bad', 'Lệch')) + '</dd><dt>Tồn âm</dt><dd class="n">' + (R.negatives.length ? sx('s-bad', R.negatives.length + ' chỗ') : 'Không') + '</dd>' +
     '<dt>Doanh thu thuần</dt><dd class="n">' + fmt(R.rev) + '</dd><dt>Giá vốn</dt><dd class="n">' + fmt(R.cogs) + '</dd><dt>Lãi gộp</dt><dd class="n">' + fmt(R.gross) + '</dd>' +
     (pr ? '<dt>Lợi nhuận trước thuế</dt><dd class="n"><b>' + fmt(R.profit || 0) + '</b></dd>' : '') + '</dl>';
