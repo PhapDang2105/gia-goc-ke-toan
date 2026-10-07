@@ -36,6 +36,14 @@ Nếu người làm demo đổi dữ liệu mẫu, cập nhật bảng này và 
 | 7 | Quy trình chỉ có cá linh (2 giai đoạn) và mắm tôm (1 giai đoạn) | 4 quy trình theo [YEU-CAU-KHACH-HANG](../docs/01-yeu-cau/YEU-CAU-KHACH-HANG.md) §4 | GT-01 |
 | 8 | Tiêu thức phân bổ nhân công / sản xuất chung = chi phí nguyên vật liệu trực tiếp của lệnh; lệnh hoàn thành khi có phiếu nhập kho đầu tiên | Tiêu thức cấu hình theo giai đoạn (đề xuất khối lượng × số ngày cho công đoạn ủ); trạng thái lệnh có Hoàn thành → Đóng | [QD-29](../docs/02-ke-hoach/QUYET-DINH.md#qd-29) — cố ý giản lược, chỉ cần nói rõ khi trình diễn |
 
+## v4.10 — chuyển trang mượt, khuôn trang thống nhất (2026-10-07)
+
+Đo 15 trang ở 1366px và 390px, sửa các điểm làm chuyển trang bị "giật":
+- **Tiêu đề trang đứng yên**: nút quay lại chỉ còn mũi tên, luôn giữ chỗ (ẩn bằng trong suốt khi không có trang trước). Trước đây chữ trên nút đổi theo tên trang trước nên tiêu đề nhảy ngang 232–449px; nay cố định một vị trí. Rê chuột vào nút vẫn thấy "Quay lại <tên trang>".
+- **Menu bên trái không tự cuộn** khi bấm trên máy tính (chỉ cuộn ngang trên điện thoại để mục đang chọn nằm giữa).
+- **Một khuôn cho tab chọn nhóm**: Chứng từ (Tất cả / Phiếu nhập kho / …), Kho & lô (Tất cả kho / Nhà máy Bà Ba Thạo / Kho Bình Tây / Cửa hàng 97 Nguyễn Thái Học), Danh mục, Giá vốn theo lô, Truy xuất lô, Kiểm kê: đều nằm ở hàng đầu trang, cùng kiểu, cùng vị trí; khung bên dưới chỉ còn tiêu đề khung và nút thao tác. Bỏ chữ viết tắt kho (BBT, BT, NTH) trên tab Kho & lô.
+- **Không trùng tiêu đề**: khung đầu của Giá vốn theo lô → "Danh sách lô", Giá nguyên liệu → "Bảng giá theo lô", Nhật ký sửa đổi → "Các lần sửa, hủy chứng từ".
+
 ## v4.9 — bản đồ bồn, vì sao giá thành khác, kiểm kê bằng điện thoại, bản tin (2026-10-07)
 
 - **Bản đồ bồn** (Kho & giá): mặt bằng nhà máy Bà Ba Thạo theo khu A, B, C, 2, 4 và trái, phuy. Mỗi bồn: số bồn, lô hoặc lệnh đang ủ, số kg, vòng tiến độ ủ (số ngày / 30 ngày chuẩn — giả định), nhãn "Đủ ngày". 4 ô số: bồn đang dùng, kg đang ủ, giá trị trong bồn, số vị trí đủ ngày. Bấm bồn có lô → truy xuất lô; bồn đang ủ theo lệnh → giá thành theo lệnh. Dữ liệu mẫu: lệnh LSX-2512-05 ủ ở bồn A.15 (thêm trường `tank` cho lệnh sản xuất).
