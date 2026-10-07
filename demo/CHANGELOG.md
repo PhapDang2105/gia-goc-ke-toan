@@ -1,5 +1,32 @@
 # Giá Gốc demo v3: nhật ký thay đổi
 
+## v4.1: kiểm toán logic v4.0 — sửa lỗi giá thành theo lệnh, cây cấu thành, tải bảng
+
+Số liệu bộ mẫu không đổi (doanh thu thuần 266.790.000; giá vốn 183.496.965; 154 = 19.529.099; hàng tồn kho 262.575.035). Tính tay độc lập bằng Python (phân số) khớp engine tới đồng ở giờ máy 800 và 1.200: chi phí, hỏng, tổng giá thành từng lệnh, giá trị 5 lô sản xuất, giá vốn, tồn kho; bảo toàn chi phí: 494.145.134 = 494.145.134 (giờ máy 800).
+
+### Lỗi đã sửa
+- **Nhập kho lần 2 khác ngày cho lệnh đã hoàn thành (trung bình).** v4.0 cho lập; giá thành lệnh chia lại theo số lượng nên lô đầu đã bán bị đổi giá mà không báo (ví dụ thêm 20 kg cho LSX-2601-01 ngày 25/01: lô 180126-01 128.172.272 → 126.732.134, giá vốn dòng 1 HD0003 43.457.563 → 43.191.629). Nay chặn: chỉ nhập kho thêm cùng ngày với phiếu nhập kho đầu tiên (có cảnh báo "giá thành lệnh chia lại cho các lô theo số lượng đạt"); sản xuất tiếp thì lập lệnh mới.
+- **Lệnh nhập kho nhiều lô: cây cấu thành chia không khớp theo cột (thấp).** Mỗi lô chia độc lập nên Σ một thành phần qua các lô + phần hỏng có thể lệch vài đồng so với thành phần của lệnh. Nay `lsxSplit()`: hỏng chia theo thành phần trước, các lô lần lượt `allocate()` trên phần còn lại, lô cuối nhận đúng phần còn lại. Mỗi lô cộng đúng giá trị lô, mỗi thành phần cộng đúng tới đồng.
+- **% trong cây cấu thành không cộng 100 (thấp).** Lô 270126-01 hiển thị 100,1%; nhánh 180126-01 54,6% trong khi dòng cha 54,5%; nhánh 240126-01 39,7% so với 39,8%. Nay % tính theo phần nghìn, chia bằng R1 (b): các dòng cùng cấp cộng đúng 100% hoặc đúng % của dòng cha; nhóm = tổng các dòng.
+- **Tải bảng không mở đúng cột trong Excel thiết lập Việt Nam (thấp).** v4.0 phân cách bằng dấu phẩy, số lẻ dấu chấm. Nay dùng dấu chấm phẩy, số không có dấu chấm nghìn, phần lẻ dấu phẩy, số âm dấu trừ; vẫn UTF-8 có BOM; ô bắt đầu bằng = + @ được đặt nháy để Excel không chạy công thức; bỏ ký tự của nút thu gọn cây.
+- **Giá vốn theo lô khi giá xuất không phải đích danh (thấp, trình bày).** Thêm một dòng ghi chú ở bảng giá vốn theo lô, cây cấu thành và bảng giá vốn theo sản phẩm: giá vốn đúng từng lô khi giá xuất là thực tế đích danh; phương pháp khác thì giá trị xuất theo phương pháp đó. Cột "Lệnh sản xuất / nguồn"; lô mua ghi "Lô mua của … theo PN…".
+- Cây cấu thành có một dòng ghi cách làm tròn: phần nguyên, số đồng còn thiếu cộng cho dòng có phần lẻ lớn nhất; lô cuối của lệnh nhận phần còn lại.
+
+### Kiểm tra lại, không phải lỗi
+- Hủy phiếu xuất của lệnh đã nhập kho và đã bán (PX0001): lô 180126-01, lô 270126-01, giá vốn HD0003 tính lại (43.457.563 → 22.534.136), không âm, không NaN, kho khớp sổ cái. Hủy phiếu nhập kho của lô đã bán (NK0003) bị chặn vì tồn âm. Bán vượt tồn lô bị chặn. Trả lại về lô: lần cuối nhận phần còn lại.
+- Định khoản: Thông tư 99 Nợ 621 / Có 152 rồi KC0001 sang 154 theo lệnh; Thông tư 133 Nợ 154; nhập kho Nợ 155 / Có 154; giá vốn Nợ 632 / Có 155; xuất hủy Nợ 632 hoặc 811. Bảng giá vốn theo sản phẩm = 632 = chỉ tiêu 11 báo cáo kết quả kinh doanh (183.496.965).
+
+### Kiểm tra tự động
+- `selfTest()`: **480 tổ hợp, 0 lỗi** (2 chế độ × 4 phương pháp × giờ máy 800 / 1.200 × 30 biến thể). Biến thể mới: hủy phiếu xuất của lệnh đã bán, sửa phiếu xuất (hủy + lập lại), nhập kho lần 2 cùng ngày có hỏng (lệnh 2 lô), lệnh chỉ có bao bì, sản phẩm không có nhân công, hủy phiếu nhập kho của lô đã bán (phải chặn).
+- `invariants41()` chạy cho mọi biến thể hợp lệ: bảo toàn từng lệnh (chi phí = lô + dở dang + hỏng) và tổng (dở dang đầu kỳ + nguyên vật liệu + bán thành phẩm + nhân công + sản xuất chung phát sinh = lô + dở dang cuối kỳ + hỏng + dưới công suất + chi phí không có lệnh); phiếu xuất của lệnh = nguyên vật liệu + bán thành phẩm; phiếu nhập kho = Σ lô; 154 = Σ dở dang; 632 = giá vốn hóa đơn − trả lại + khoản khác = kết quả kinh doanh; cây cấu thành mọi lô (đệ quy) cộng đúng từng cấp, không thành phần âm, không phiếu sau ngày nhập kho, nhánh bán thành phẩm mở xuống; mỗi thành phần chia qua các lô cộng đúng; truy xuôi đủ phiếu; định khoản phiếu xuất, nhập kho, giá vốn, xuất hủy, KC0001. Form: chặn nhập kho lần 2 khác ngày, cho cùng ngày có cảnh báo; CSV dấu chấm phẩy.
+- Làm hỏng có chủ ý (bản sao trong scratchpad): chia lô độc lập như v4.0 → 48 lỗi; bỏ chặn nhập kho lần 2 → 4; CSV dấu phẩy → 4; bỏ kết chuyển sản xuất chung → 1.104; bỏ trừ hỏng khỏi tổng giá thành → 5.058; bỏ chia lại nhánh bán thành phẩm → 2.624.
+- Giao diện (Playwright, thao tác thật): nhập kho lần 2 ngày 25/01 báo lỗi, nút lưu khóa, Ctrl+Enter không lưu; cùng ngày 18/01 chỉ cảnh báo. Mọi lô thành phẩm và bán thành phẩm: Σ dòng = giá trị lô, % cộng 100,0. Tệp tải về có BOM, dấu chấm phẩy. 1366×768 và 390×844, sáng và tối: 10 trang, 10 báo cáo, cây ở 3 phương pháp, 6 biểu mẫu: không lỗi trang / console, không NaN / undefined, không cuộn ngang, bo góc ≤ 2px, không chữ viết tắt.
+
+### Giả định còn lại
+- Tiêu thức nhân công và sản xuất chung là chi phí nguyên vật liệu trực tiếp: lệnh chỉ có bán thành phẩm (không bao bì) nhận 0 nhân công, 0 sản xuất chung nếu lệnh cùng kỳ khác có nguyên vật liệu.
+- Một lô bán thành phẩm dùng cho nhiều lệnh: mỗi nhánh chia theo cấu thành của lô độc lập, nên Σ các nhánh cùng thành phần có thể lệch 1 đồng so với phần đã xuất của lô (phần còn trong kho không theo dõi theo thành phần).
+- Nhập kho lần 2 cùng ngày vẫn chia lại giá thành cho lô đầu (cùng thời điểm hoàn thành).
+
 ## v4.0: giá vốn theo lô, giá thành theo lệnh sản xuất, bỏ khóa sổ
 
 Mục tiêu người dùng: biết giá vốn hàng bán của mọi sản phẩm; kiểm soát giá nguyên liệu; mỗi lô một giá; bấm vào lô thấy giá vốn cấu thành từ những lô nguyên liệu nào, giá bao nhiêu. Theo phản biện `docs/PHAN-BIEN-v3.md`.

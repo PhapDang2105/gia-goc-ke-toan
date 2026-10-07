@@ -491,6 +491,7 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
       <div class="panel" id="cogsPanel">
         <div class="panel-head"><h2>Giá vốn hàng bán theo sản phẩm</h2><div class="spacer"></div><button class="btn sm xl" type="button" data-csv="cogsTbl" data-name="gia-von-theo-san-pham" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button></div>
         <div class="tbl-wrap"><table id="cogsTbl"></table></div>
+        <p class="note" id="cogsMethodNote" hidden></p>
       </div>
       <div class="duo">
         <div class="panel">
@@ -632,6 +633,7 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
       <div class="panel">
         <div class="panel-head"><h2>Giá vốn theo lô</h2><div class="seg" id="lotKind" role="group" aria-label="Lọc loại"></div><div class="spacer"></div><button class="btn sm xl" type="button" data-csv="lotCostTbl" data-name="gia-von-theo-lo" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button></div>
         <div class="tbl-wrap"><table id="lotCostTbl"></table></div>
+        <p class="note" id="lotMethodNote" hidden></p>
       </div>
       <div class="panel" id="lotTree" tabindex="-1"></div>
     </section>
@@ -1630,6 +1632,8 @@ RENDER.dash = function(){
   $('cogsTbl').innerHTML = '<thead><tr><th>Sản phẩm</th><th class="n">Số lượng bán</th><th class="n">Doanh thu</th><th class="n">Giá vốn</th><th class="n">Lãi gộp</th><th class="n">Biên</th><th class="n">Số lô đã bán</th><th class="n">Đơn giá vốn thấp – cao</th></tr></thead><tbody>' + body +
     oth.map(x => '<tr><td class="muted">' + esc(x[0]) + '</td><td></td><td></td><td class="n">' + fmt(x[1]) + '</td><td class="n">' + fmt(-x[1]) + '</td><td></td><td></td><td></td></tr>').join('') + '</tbody>' +
     '<tfoot><tr><td>Cộng</td><td></td><td class="n">' + fmt(tq.rev) + '</td><td class="n">' + fmt(tq.cost + othT) + '</td><td class="n">' + fmt(tq.rev - tq.cost - othT) + '</td><td class="n">' + (tq.rev ? pct((tq.rev - tq.cost - othT) / tq.rev * 100) : '') + '</td><td></td><td></td></tr></tfoot>';
+  $('cogsMethodNote').hidden = D.settings.method === 'specific';
+  $('cogsMethodNote').textContent = D.settings.method === 'specific' ? '' : 'Giá xuất đang theo ' + METHOD_NAME[D.settings.method].toLowerCase() + ': đơn giá vốn theo lô là giá xuất của phương pháp này.';
   const hist = HIST.concat([['01/26', R.rev / 1e6, R.gross / 1e6]]), vt = S.ui.vt;
   revData = hist; vtSeg('rev'); vtSeg('cs');
   const revTbl = '<table' + (vt.rev === 'table' ? '' : ' class="vh"') + '><caption class="vh">Doanh thu và lãi gộp (triệu đồng)</caption><thead><tr><th>Tháng</th><th class="n">Doanh thu thuần</th><th class="n">Lãi gộp</th><th class="n">Biên lãi gộp</th></tr></thead><tbody>' +
@@ -2104,16 +2108,28 @@ RENDER.cost = function(){
 // ================= Cấu thành giá vốn một lô =================
 // Thành phần của lệnh (DDĐK, từng dòng xuất NVL / BTP, NC, SXC) phân cho lô theo R1 (b); dòng BTP mở tiếp xuống lệnh GĐ trước (đệ quy).
 function rescale(comps, total){ const a = allocate(total, comps.map(x => x.amt)); return comps.map((x, i) => Object.assign({}, x, {amt:a[i], sub: x.sub ? rescale(x.sub, a[i]) : null})); }
-function lotComps(Rx, code, depth){
-  const L = Rx.lots[code]; if(!L) return null;
-  const c = L.src === 'NK' ? Rx.card[L.lsx] : null;
-  if(!c) return {L, c:null, value:L.inValue, comps:[]};
+// Chia thành phần của lệnh cho các lô nhập kho (R1 b), làm sao cho cả hàng lẫn cột cộng đúng tới đồng:
+//   1) hỏng ngoài định mức chia theo thành phần → phần còn lại của từng thành phần (cộng = tổng giá thành);
+//   2) lần lượt từng lô trừ lô cuối: allocate(giá trị lô, phần còn lại của từng thành phần); trừ dần;
+//   3) lô cuối nhận đúng phần còn lại. Mỗi lô cộng = giá trị lô; mỗi thành phần: Σ các lô + hỏng = thành phần.
+function lsxSplit(c){
+  if(c._split) return c._split;
   const base = [];
   if(c.ddk) base.push({kind:'ddk', v:c.ddk});
   c.rows.forEach(r => base.push({kind: r.btp ? 'btp' : 'nvl', item:r.item, lot:r.lot, doc:r.doc, date:r.date, qty:r.qty, unit:r.unit, v:r.value}));
   c.ncBy.forEach(x => base.push({kind:'nc', doc:x.doc, v:x.amt, share:x.share}));
   c.sxcBy.forEach(x => base.push({kind:'sxc', doc:x.doc, name:x.name, v:x.amt, fixed:x.fixed}));
-  const a = allocate(L.inValue, base.map(b => b.v));
+  const abn = c.abn ? allocate(c.abn, base.map(b => b.v)) : base.map(() => 0);
+  let rem = base.map((b, i) => b.v - abn[i]); const by = {};
+  c.lots.forEach((l, j) => { const a = j < c.lots.length - 1 ? allocate(l.value, rem) : rem.slice(); rem = rem.map((x, i) => x - a[i]); by[l.lot] = a; });
+  return (c._split = {base, abn, by});
+}
+function lotComps(Rx, code, depth){
+  const L = Rx.lots[code]; if(!L) return null;
+  const c = L.src === 'NK' ? Rx.card[L.lsx] : null;
+  if(!c || !c.lots.length) return {L, c:null, value:L.inValue, comps:[]};
+  const sp = lsxSplit(c), a = sp.by[code] || allocate(L.inValue, sp.base.map(b => b.v));
+  const base = sp.base.map(b => Object.assign({}, b));
   base.forEach((b, i) => { b.amt = a[i];
     if(b.kind === 'btp' && (depth || 0) < 4){ const sub = lotComps(Rx, b.lot, (depth || 0) + 1); if(sub && sub.comps.length){ b.sub = rescale(sub.comps, b.amt); b.subLsx = sub.c.no; } } });
   return {L, c, value:L.inValue, comps:base};
@@ -2145,8 +2161,10 @@ RENDER.lots = function(){
   list.forEach(L => { const it = D.items[L.item], s = bt ? (used[L.code] || {q:0, v:0}) : (sl[L.code] || {q:0, cost:0}), u = L.inQty > EPS ? L.inValue / L.inQty : 0;
     if(cur !== L.item){ cur = L.item; body += '<tr class="sub"><td colspan="11">' + esc(it.name) + '</td></tr>'; }
     body += '<tr class="click' + (L.code === S.ui.lot ? ' sel' : '') + '" data-lot-sel="' + esc(L.code) + '" tabindex="0"><td>' + esc(it.name) + '</td><td class="acc">' + esc(L.code) + '</td><td class="acc">' + esc(L.mh || '') + '</td><td>' + esc(L.src === 'NK' ? (D.lsx[L.lsx] ? D.lsx[L.lsx].no : '') : L.src === 'open' ? 'Tồn đầu kỳ' : lotSource(R, L.code)) + '</td><td>' + dmy(L.date) + '</td><td class="n">' + fmtQ(L.inQty) + '</td><td class="n"><b>' + fmt2(u) + '</b></td><td class="n">' + fmt(L.inValue) + '</td><td class="n">' + fmtQ(s.q) + '</td><td class="n">' + fmt(bt ? s.v : s.cost) + '</td><td class="n">' + fmtQ(lotLeft(R, L.code)) + '</td></tr>'; });
-  $('lotCostTbl').innerHTML = '<thead><tr><th>Sản phẩm</th><th>Mã lô</th><th>Mã hóa</th><th>Lệnh sản xuất</th><th>Ngày</th><th class="n">Số lượng nhập</th><th class="n">Đơn giá thành</th><th class="n">Giá trị lô</th><th class="n">' + (bt ? 'Số lượng đã xuất cho sản xuất' : 'Số lượng đã bán') + '</th><th class="n">' + (bt ? 'Giá trị đã xuất' : 'Giá vốn đã bán') + '</th><th class="n">Số lượng còn</th></tr></thead><tbody>' +
+  $('lotCostTbl').innerHTML = '<thead><tr><th>Sản phẩm</th><th>Mã lô</th><th>Mã hóa</th><th>Lệnh sản xuất / nguồn</th><th>Ngày</th><th class="n">Số lượng nhập</th><th class="n">Đơn giá thành</th><th class="n">Giá trị lô</th><th class="n">' + (bt ? 'Số lượng đã xuất cho sản xuất' : 'Số lượng đã bán') + '</th><th class="n">' + (bt ? 'Giá trị đã xuất' : 'Giá vốn đã bán') + '</th><th class="n">Số lượng còn</th></tr></thead><tbody>' +
     (body || '<tr><td colspan="11" class="muted">Không có lô.</td></tr>') + '</tbody>';
+  const mn = $('lotMethodNote'), spec = D.settings.method === 'specific'; mn.hidden = spec;
+  mn.textContent = spec ? '' : 'Giá xuất đang theo ' + METHOD_NAME[D.settings.method].toLowerCase() + ': giá vốn đã bán, giá trị đã xuất tính theo phương pháp này, không theo giá từng lô. Giá vốn đúng từng lô khi giá xuất là thực tế đích danh.';
   renderLotTree();
 };
 function renderLotTree(){
@@ -2159,20 +2177,26 @@ function renderLotTree(){
     (T.c ? '<div class="panel kpi"><span class="label">Tổng chi phí lệnh</span><span class="val">' + fmt(T.c.total) + '<small>đ</small></span><span class="sub">' + (T.c.abn ? 'Hỏng ngoài định mức → 632: ' + fmt(T.c.abn) + ' đ' : T.c.lots.length > 1 ? T.c.lots.length + ' lô cùng lệnh' : 'Toàn bộ vào lô này') + '</span></div>' : '') + '</div>';
   if(T.comps.length){
     const open = S.ui.treeOpen || (S.ui.treeOpen = {});
+    // % theo phần nghìn chia bằng R1 (b): các dòng cùng cấp cộng đúng 100% / đúng % của dòng cha
+    const setPt = (xs, t10) => { const a = allocate(t10, xs.map(x => x.amt)); xs.forEach((x, i) => { x.pt = a[i]; if(x.sub) setPt(x.sub, a[i]); }); };
+    if(T.value > 0) setPt(T.comps, 1000);
+    const pt10 = v => fmtD(v / 10, 1) + '%';
     const row = (b, lvl, key) => { const itx = b.item ? D.items[b.item] : null, Lx = b.lot ? R.lots[b.lot] : null, shQ = b.qty && b.v ? rq(b.qty * b.amt / b.v) : null;
       const name = b.kind === 'ddk' ? 'Dở dang đầu kỳ chuyển sang' : b.kind === 'nc' ? 'Lương công nhân trực tiếp' + (b.share != null ? ' · phân bổ ' + pct(b.share * 100) : '') : b.kind === 'sxc' ? b.name : itx ? itx.name : '';
       const src = b.kind === 'ddk' ? 'Số dư 154 từ 12/2025' : b.kind === 'nc' || b.kind === 'sxc' ? 'Tiêu thức nguyên vật liệu trực tiếp' : Lx ? lotSource(R, b.lot) : '';
       const tog = b.sub ? '<button class="icon-btn ghost" type="button" data-tree="' + key + '" aria-expanded="' + (open[key] !== false) + '" aria-label="' + (open[key] !== false ? 'Thu gọn' : 'Mở') + ' cấu thành lô ' + esc(b.lot) + '" style="width:22px;height:22px;display:inline-grid;vertical-align:middle">' + (open[key] !== false ? '▾' : '▸') + '</button> ' : '';
-      let r = '<tr class="lv' + lvl + '"><td style="padding-left:' + (8 + lvl * 18) + 'px">' + tog + '<span class="dot" style="background:var(--c-' + (b.kind === 'ddk' ? 'nvl' : b.kind) + ')"></span>' + esc(name) + '</td><td>' + (b.lot ? lotBtn(b.lot) + (Lx && Lx.mh ? ' <span class="muted small mono">' + esc(Lx.mh) + '</span>' : '') : '') + '</td><td>' + esc(src) + '</td><td>' + (b.date ? ddmm(b.date) + ' ' + esc(b.doc) : b.doc ? esc(b.doc) : '') + '</td><td class="n">' + (shQ != null ? fmtQ(shQ) + ' ' + esc(itx ? itx.uom : '') : '') + '</td><td class="n">' + (b.unit ? fmt2(b.unit) : '') + '</td><td class="n">' + fmt(b.amt) + '</td><td class="n">' + (q > EPS ? fmt2(b.amt / q) : '') + '</td><td class="n">' + (T.value ? pct(b.amt / T.value * 100) : '') + '</td></tr>';
+      let r = '<tr class="lv' + lvl + '"><td style="padding-left:' + (8 + lvl * 18) + 'px">' + tog + '<span class="dot" style="background:var(--c-' + (b.kind === 'ddk' ? 'nvl' : b.kind) + ')"></span>' + esc(name) + '</td><td>' + (b.lot ? lotBtn(b.lot) + (Lx && Lx.mh ? ' <span class="muted small mono">' + esc(Lx.mh) + '</span>' : '') : '') + '</td><td>' + esc(src) + '</td><td>' + (b.date ? ddmm(b.date) + ' ' + esc(b.doc) : b.doc ? esc(b.doc) : '') + '</td><td class="n">' + (shQ != null ? fmtQ(shQ) + ' ' + esc(itx ? itx.uom : '') : '') + '</td><td class="n">' + (b.unit ? fmt2(b.unit) : '') + '</td><td class="n">' + fmt(b.amt) + '</td><td class="n">' + (q > EPS ? fmt2(b.amt / q) : '') + '</td><td class="n">' + (T.value > 0 ? pt10(b.pt) : '') + '</td></tr>';
       if(b.sub && open[key] !== false) r += b.sub.map((x, j) => row(x, lvl + 1, key + '.' + j)).join('');
       return r; };
     const groups = [['btp', 'Bán thành phẩm giai đoạn trước chuyển sang'], ['ddk', 'Dở dang đầu kỳ'], ['nvl', 'Nguyên vật liệu, bao bì, phụ gia trực tiếp'], ['nc', 'Nhân công trực tiếp'], ['sxc', 'Sản xuất chung']];
     let body = '';
     groups.forEach(([g, lbl]) => { const xs = T.comps.map((b, i) => [b, i]).filter(x => x[0].kind === g); if(!xs.length) return; const a = sum(xs, x => x[0].amt);
-      body += '<tr class="sub"><td colspan="6">' + lbl + '</td><td class="n">' + fmt(a) + '</td><td class="n">' + (q > EPS ? fmt2(a / q) : '') + '</td><td class="n">' + (T.value ? pct(a / T.value * 100) : '') + '</td></tr>' + xs.map(x => row(x[0], 0, String(x[1]))).join(''); });
+      body += '<tr class="sub"><td colspan="6">' + lbl + '</td><td class="n">' + fmt(a) + '</td><td class="n">' + (q > EPS ? fmt2(a / q) : '') + '</td><td class="n">' + (T.value > 0 ? pt10(sum(xs, x => x[0].pt)) : '') + '</td></tr>' + xs.map(x => row(x[0], 0, String(x[1]))).join(''); });
     h += '<div class="tbl-wrap"><table id="treeTbl"><thead><tr><th>Thành phần</th><th>Lô · mã hóa</th><th>Nhà cung cấp / nguồn</th><th>Phiếu</th><th class="n">Số lượng</th><th class="n">Đơn giá</th><th class="n">Thành tiền</th><th class="n">đ/' + esc(u) + '</th><th class="n">%</th></tr></thead><tbody>' + body + '</tbody>' +
-      '<tfoot><tr><td colspan="6">Tổng = giá trị lô ' + esc(code) + '</td><td class="n" id="treeTotal">' + fmt(sum(T.comps, b => b.amt)) + '</td><td class="n">' + fmt4(z) + '</td><td class="n">100%</td></tr></tfoot></table></div>';
-  } else h += '<p class="muted" style="margin:0">' + (L.src === 'open' ? 'Lô tồn đầu kỳ: giá trị chuyển từ kỳ 12/2025.' : L.src === 'TL' ? 'Hàng bán bị trả lại, nhận theo giá vốn lúc bán của lô ' + esc(L.from) + '.' : 'Lô ' + esc(lotSource(R, code)) + '.') + '</p>';
+      '<tfoot><tr><td colspan="6">Tổng = giá trị lô ' + esc(code) + '</td><td class="n" id="treeTotal">' + fmt(sum(T.comps, b => b.amt)) + '</td><td class="n">' + fmt4(z) + '</td><td class="n">100%</td></tr></tfoot></table></div>' +
+      '<p class="note">Làm tròn tới đồng: chia theo tỷ lệ, lấy phần nguyên, số đồng còn thiếu cộng cho dòng có phần lẻ lớn nhất' + (T.c.lots.length > 1 ? '; lô cuối của lệnh nhận phần còn lại của từng thành phần' : '') + '.</p>' +
+      (D.settings.method !== 'specific' ? '<p class="note">Giá xuất đang theo ' + esc(METHOD_NAME[D.settings.method].toLowerCase()) + ': giá trị dòng bán thành phẩm theo phương pháp này, nhánh bên dưới chia theo cấu thành của lô ghi trên phiếu. Giá vốn đúng từng lô khi giá xuất là thực tế đích danh.</p>' : '');
+  } else h += '<p class="muted" style="margin:0">' + (L.src === 'open' ? 'Lô tồn đầu kỳ: giá trị chuyển từ kỳ 12/2025.' : L.src === 'TL' ? 'Hàng bán bị trả lại, nhận theo giá vốn lúc bán của lô ' + esc(L.from) + '.' : L.src === 'PN' ? 'Lô mua của ' + esc(partyName(D, L.partyId)) + ' theo ' + esc(L.doc) + ': giá trị lô là giá mua.' : L.src === 'KK' ? 'Lô thừa kiểm kê theo ' + esc(L.doc) + '.' : 'Lô ' + esc(lotSource(R, code)) + '.') + '</p>';
   // cuối cây: bán từ lô này / dùng cho lệnh sản xuất
   if(it.kind === 'BTP'){ const us = usesOf(R, code);
     h += '<h2>Xuất cho lệnh sản xuất</h2>' + (us.length ? '<div class="tbl-wrap"><table><thead><tr><th>Ngày</th><th>Phiếu</th><th>Lệnh</th><th class="n">Số lượng</th><th class="n">Giá trị</th><th>Lô thành phẩm</th></tr></thead><tbody>' +
@@ -2770,6 +2794,10 @@ const FORMS = {
       const done = sum(R.active.filter(d => d.type === 'NK' && d.lsx === dr.lsx && d.no !== (F && F.edit)), d => sum(d.lines, l => l.qty + (l.rej || 0)));
       if(done + q + rj > x.plan + EPS) W.push('Vượt kế hoạch của ' + x.no + ': sau phiếu này ' + fmtQ(rq(done + q + rj)) + ' / ' + fmtQ(x.plan) + ' ' + it.uom + '.');
       const cx = Rb.card[dr.lsx]; if(cx && cx.lastPX && dr.date < cx.lastPX) E.push({id:'f_date', msg:'Ngày nhập kho trước phiếu xuất cuối của lệnh ' + x.no + ' (' + dmy(cx.lastPX) + ').'});
+      // Lệnh hoàn thành ở phiếu nhập kho đầu tiên: phiếu nhập kho khác ngày sẽ chia lại giá thành cho lô đã xuất bán / đã dùng → chặn; cùng ngày thì chia theo số lượng đạt
+      if(cx && cx.firstNK){ const nos = cx.nks.map(d => d.no).join(', ');
+        if(dr.date !== cx.firstNK) E.push({id:'f_date', msg:'Lệnh ' + x.no + ' đã hoàn thành ngày ' + dmy(cx.firstNK) + ' (' + nos + '): chỉ nhập kho thêm cùng ngày đó. Sản xuất tiếp thì lập lệnh sản xuất mới.'});
+        else W.push('Lệnh ' + x.no + ' đã nhập kho ở ' + nos + ': giá thành lệnh chia lại cho các lô theo số lượng đạt.'); }
       if(cx && !cx.total && !cx.pxs.length) W.push('Lệnh ' + x.no + ' chưa có phiếu xuất nguyên liệu: giá thành lô bằng 0.');
       parts.forEach(p => mixWarn(Rb, dr.wh, p.loc, dr.date, (dr.lot || '').trim(), W));
       const lot = (dr.lot || '').trim() || nextLot(D, x.item, dr.date || '2026-01-31'), oldDoc = F && F.edit ? D.docs.find(z => z.no === F.edit) : null;
@@ -3123,13 +3151,16 @@ function doReset(){ closeDialog(); clearSaved(); S.data = freshData(); S.ui = cl
 function parseShown(s){ const t = s.trim(); if(!/^\(?[\d.]+(,\d+)?\)?$/.test(t)) return null; const neg = t[0] === '('; const v = parseNum(t.replace(/[()]/g, '')); return isFinite(v) ? (neg ? -v : v) : null; }
 function tableRows(tbl){
   return Array.prototype.map.call(tbl.querySelectorAll('tr'), tr => { const out = [];
-    Array.prototype.forEach.call(tr.children, c => { let txt = (c.innerText || c.textContent || '').replace(/\s*\n\s*/g, ' ').trim();
-      if(c.classList.contains('n')){ const v = parseShown(txt); if(v != null) txt = String(v); }
+    Array.prototype.forEach.call(tr.children, c => { let txt = (c.innerText || c.textContent || '');
+      c.querySelectorAll('.icon-btn').forEach(b => { const t = b.innerText || b.textContent || ''; if(t) txt = txt.replace(t, ''); });
+      txt = txt.replace(/\s*\n\s*/g, ' ').trim();
+      if(c.classList.contains('n')){ const v = parseShown(txt); if(v != null) txt = String(v).replace('.', ','); }
       out.push(txt); for(let i = 1; i < (c.colSpan || 1); i++) out.push(''); });
     return out; });
 }
-// U16: tải CSV UTF-8 có BOM (Excel mở đúng tiếng Việt)
-function tableCSV(tbl){ return '﻿' + tableRows(tbl).map(r => r.map(x => /[",;\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x).join(',')).join('\r\n'); }
+// U16: tải CSV UTF-8 có BOM (Excel mở đúng tiếng Việt). Excel thiết lập Việt Nam dùng dấu phẩy thập phân nên phân cách cột bằng dấu chấm phẩy;
+// số: không dấu chấm nghìn, phần lẻ dùng dấu phẩy, số âm có dấu trừ.
+function tableCSV(tbl){ return '\ufeff' + tableRows(tbl).map(r => r.map(x => /[";\n\r]/.test(x) || /^[=+@]/.test(x) ? '"' + (/^[=+@]/.test(x) ? "'" : '') + x.replace(/"/g, '""') + '"' : x).join(';')).join('\r\n'); }
 function downloadCSV(id, name){
   const tb = $(id); if(!tb) return;
   const blob = new Blob([tableCSV(tb)], {type:'text/csv;charset=utf-8'}), url = URL.createObjectURL(blob), a = document.createElement('a');
@@ -3585,6 +3616,26 @@ function selfTest(){
     move: {f: D => { D.lsx.LSX07 = {no:'LSX-2601-07', item:'ML5', plan:500, wh:'BBT', date:'2026-01-30'}; D.docs.push(U({no:'CK0004', type:'CK', date:'2026-01-30', wh:'BBT', whTo:'BBT', desc:'chuyển bồn', lines:[{item:'BTP', lot:'240126-01', loc:'A.29', locTo:'A.16', qty:150}]}),
       U({no:'PX0011', type:'PX', date:'2026-01-31', lsx:'LSX07', to:'ML5', wh:'BBT', desc:'xuất bồn mới', lines:[{item:'BTP', qty:100, lot:'240126-01', loc:'A.16'}]})); },
       chk: Rx => lq(Rx, 'BTP', 'BBT', '240126-01', 'A.29') === 50 && lq(Rx, 'BTP', 'BBT', '240126-01', 'A.16') === 50 && lq(Rx, 'BTP', 'BBT', '240126-01', 'A.30') === 55 && Rx.rowById['CK0004'].value > 0},
+    // v4.1: kịch bản biên của giá thành theo lệnh
+    // hủy phiếu xuất của lệnh đã nhập kho và đã bán: lô, bán thành phẩm dùng tiếp, hóa đơn tính lại
+    voidPX: {f: D => { find(D, 'PX0001').status = 'void'; }, chk: Rx => Rx.card.LSX01.status === 'done' && (Rx.D.settings.method !== 'specific' || Rx.card.LSX01.nvl === 7350000) && Rx.rowById['HD0003#1'].value > 0},
+    // sửa phiếu xuất của lệnh đã nhập kho (hủy + lập lại cùng ngày, ít hơn)
+    editPX: {f: D => { const x = find(D, 'PX0009'); x.status = 'void'; x.voidedBy = 'PX0011';
+      D.docs.push(U({no:'PX0011', type:'PX', date:'2026-01-26', lsx:'LSX04', to:'ML5', wh:'BBT', desc:'sửa PX0009', replaces:'PX0009', lines:[{item:'HU5', qty:1500, lot:'051225-01'}, {item:'HU5', qty:900, lot:'070126-01'}]})); },
+      chk: Rx => Rx.D.settings.method !== 'specific' || Rx.card.LSX04.nvl === 18004000 - 64000},
+    // nhập kho lần 2 cùng ngày cho một lệnh, có hỏng ngoài định mức: lệnh 2 lô
+    nk2same: {f: D => D.docs.push(U({no:'NK0006', type:'NK', date:'2026-01-24', lsx:'LSX02', wh:'BBT', desc:'nk lần 2', lines:[{item:'BTP', qty:30, rej:30, lot:'240126-02', qc:'pass', loc:'A.18'}]})),
+      chk: Rx => Rx.card.LSX02.lots.length === 2 && Rx.card.LSX02.abn > 0},
+    // lệnh chỉ có bao bì
+    onlyPack: {f: D => { D.lsx.LSX06 = {no:'LSX-2601-06', item:'ML5', plan:500, wh:'BBT', date:'2026-01-30'};
+      D.docs.push(U({no:'PX0011', type:'PX', date:'2026-01-30', lsx:'LSX06', to:'ML5', wh:'BBT', desc:'chỉ hũ', lines:[{item:'HU5', qty:500, lot:'080126-01'}]}),
+        U({no:'NK0006', type:'NK', date:'2026-01-31', lsx:'LSX06', wh:'BBT', desc:'nk', lines:[{item:'ML5', qty:500, rej:0, lot:'310126-01', qc:'pass'}]}),
+        U({no:'HD0006', type:'HD', date:'2026-01-31', partyId:'C01', pay:'131', wh:'BBT', desc:'bán', lines:[{item:'ML5', lot:'310126-01', qty:100, price:68000, vat:10}]})); },
+      chk: Rx => Rx.card.LSX06.btp === 0 && Rx.card.LSX06.nvl > 0 && Rx.card.LSX06.Z === Rx.card.LSX06.total},
+    // sản phẩm mới không có nhân công
+    noNC: {f: D => { addNewItems(D); D.docs = D.docs.filter(d => d.no !== 'BL0002'); }, chk: Rx => Rx.card.LSX06.nc === 0 && Rx.card.LSX06.status === 'done'},
+    // hủy phiếu nhập kho của lệnh đã bán: chặn
+    negVoidNK3: {neg:'void', no:'NK0003', f: D => { find(D, 'NK0003').status = 'void'; }},
     kkLoc: {f: D => D.docs.push(U({no:'KK0001', type:'KK', date:'2026-01-31', wh:'BBT', treat:'1381', desc:'kk theo bồn', lines:[{item:'BTP', lot:'240126-01', loc:'A.29', book:200, counted:190, qty:-10, value:0}, {item:'BTP', lot:'240126-01', loc:'A.30', book:55, counted:60, qty:5, unit:80000, value:400000}]})),
       chk: Rx => lq(Rx, 'BTP', 'BBT', '240126-01', 'A.29') === 190 && lq(Rx, 'BTP', 'BBT', '240126-01', 'A.30') === 60}
   };
@@ -3620,6 +3671,7 @@ function selfTest(){
     Object.keys(Rx.items).forEach(k => { if(!isFinite(Rx.items[k].closeV)) f('NaN tồn ' + k); Rx.items[k].rows.forEach(r => { if(!isFinite(r.value)) f('NaN dòng ' + r.id); }); });
     if((Rx.gl['154'] || 0) < 0) f('154 âm ' + Rx.gl['154']);
     if(spec.chk && !spec.chk(Rx)) f('kiểm tra riêng của biến thể không đạt');
+    if(!spec.neg) invariants41(Rx, f);
     Object.keys(Rx.items).forEach(k => { const it = Rx.items[k], slc = {}; Object.values(it.lcells).forEach(c => { const key = c.wh + '|' + c.lot; slc[key] = rq((slc[key] || 0) + c.q); });
       Object.values(it.cells).forEach(c => { if(Math.abs((slc[c.wh + '|' + c.lot] || 0) - c.q) > EPS) f('Σ vị trí ≠ tồn lô ' + k + ' ' + c.wh + ' ' + c.lot); }); });
     if(spec.neg){
@@ -3651,6 +3703,12 @@ function selfTest(){
       if(!px.E.length) f('form cho xuất thêm vào lệnh đã hoàn thành sau ngày nhập kho');
       const nk = FORMS.NK.build({date:'2026-01-07', lsx:'LSX01', wh:'BBT', lot:'', rej:'0', qc:'pass', desc:'', lines:[{loc:'A.18', qty:'10'}]}, Rx);
       if(!nk.E.length) f('form cho nhập kho trước phiếu xuất của lệnh');
+      const nkLater = FORMS.NK.build({date:'2026-01-25', lsx:'LSX01', wh:'BBT', lot:'', rej:'0', qc:'pass', desc:'', lines:[{loc:'A.18', qty:'20'}]}, Rx);
+      if(!nkLater.E.length) f('form cho nhập kho lần 2 khác ngày vào lệnh đã hoàn thành');
+      const nkSame = FORMS.NK.build({date:'2026-01-18', lsx:'LSX01', wh:'BBT', lot:'', rej:'0', qc:'pass', desc:'', lines:[{loc:'A.18', qty:'20'}]}, Rx);
+      if(nkSame.E.length || !nkSame.W.some(w => /chia lại/.test(w))) f('form nhập kho lần 2 cùng ngày: ' + JSON.stringify(nkSame.E.concat(nkSame.W)));
+      const t = document.createElement('table'); t.innerHTML = '<tr><td>Mắm; hũ "500g"</td><td class="n">1.234,5</td><td class="n">(5.964.000)</td><td>=1+1</td></tr>';
+      const csv = tableCSV(t); if(csv !== '﻿"Mắm; hũ ""500g""";1234,5;-5964000;"\'=1+1"') f('CSV không theo dấu chấm phẩy / dấu phẩy thập phân: ' + csv);
       const nk2 = FORMS.NK.build({date:'2026-01-31', lsx:'LSX00', wh:'BBT', lot:'', rej:'0', qc:'pass', desc:'', lines:[{loc:'A.27', qty:'10'}]}, Rx);
       if(!nk2.W.some(w => /trộn lô/.test(w))) f('U7: không cảnh báo trộn lô');
       const mhs = {}; Object.values(Rx.lots).forEach(L => { if(!L.mh) f('lô ' + L.code + ' thiếu mã hóa'); else if(mhs[L.mh]) f('trùng mã hóa ' + L.mh); mhs[L.mh] = 1; });
@@ -3673,6 +3731,47 @@ function selfTest(){
   return {cases, nFails:fails.length, fails:fails.slice(0, 25), rev:R0.rev, cogs:R0.cogs, gross:R0.gross, margin:+R0.margin.toFixed(2), profit:R0.pl.profit, stock:R0.stock, gl154:R0.gl['154'],
     lsx:Object.fromEntries(R0.order.map(k => [R0.card[k].no, {status:R0.card[k].status, total:R0.card[k].total, Z:R0.card[k].Z, z:+R0.card[k].z.toFixed(2), wip:R0.card[k].wip, nvl:R0.card[k].nvl, btp:R0.card[k].btp, nc:R0.card[k].nc, sxc:R0.card[k].sxc, abn:R0.card[k].abn}])),
     lots:{CL:lotsOf('CL'), BTP:lotsOf('BTP'), ML5:lotsOf('ML5'), MT2:lotsOf('MT2')}};
+}
+// v4.1: bất biến 1–4 cho mọi biến thể hợp lệ
+function invariants41(Rx, f){
+  const D = Rx.D, act = Rx.active, cards = Rx.order.map(k => Rx.card[k]);
+  // (1) bảo toàn chi phí theo lệnh và tổng
+  cards.forEach(c => { const lotV = sum(c.lots, l => l.value);
+    if(c.ddk + c.nvl + c.btp + c.nc + c.sxc !== lotV + c.wip + c.abn) f('bảo toàn lệnh ' + c.no + ': chi phí ≠ lô + dở dang + hỏng');
+    const px = sum(act.filter(d => d.type === 'PX' && d.lsx === c.k), d => sum(d.lines.map((l, i) => valOf(Rx, d, i))));
+    if(px !== c.nvl + c.btp) f('phiếu xuất của lệnh ' + c.no + ' ≠ nguyên vật liệu + bán thành phẩm');
+    const nkV = sum(act.filter(d => d.type === 'NK' && d.lsx === c.k), d => sum(d.lines.map((l, i) => valOf(Rx, d, i))));
+    if(nkV !== lotV) f('phiếu nhập kho của lệnh ' + c.no + ' ≠ Σ lô');
+    if(new Set(c.nks.map(d => d.date)).size > 1) f('lệnh ' + c.no + ' nhập kho nhiều ngày'); });
+  const ncPs = sum(Rx.PRODK, o => Rx.nc[o]), poolPs = sum(Rx.pool, p => p.amt);
+  const ps = sum(cards, c => c.ddk + c.nvl + c.btp) + ncPs + poolPs;
+  const out = sum(cards, c => sum(c.lots, l => l.value) + c.wip + c.abn) + Rx.toCogs + Rx.unNC + Rx.unSXC;
+  if(ps !== out) f('bảo toàn tổng: phát sinh ' + ps + ' ≠ lô + dở dang + hỏng + dưới công suất ' + out);
+  if(Math.round(Rx.gl['154'] || 0) !== sum(cards, c => c.wip)) f('154 ≠ Σ dở dang theo lệnh');
+  // 632 = giá vốn hóa đơn − trả lại + khoản khác; = kết quả kinh doanh
+  let inv = 0; act.forEach(d => { if(d.type === 'HD') d.lines.forEach((l, i) => inv += valOf(Rx, d, i)); if(d.type === 'TL') d.lines.forEach((l, i) => inv -= valOf(Rx, d, i)); });
+  if(inv + sum(cogsOther(Rx), x => x[1]) !== Math.round(Rx.cogs)) f('632 ≠ giá vốn hóa đơn + khoản khác');
+  if(Rx.pl.cogs !== Rx.cogs) f('kết quả kinh doanh giá vốn ≠ 632');
+  // (2) cây cấu thành mọi lô thành phẩm / bán thành phẩm
+  const walk = (xs, parentAmt, lotDate, path) => { if(sum(xs, x => x.amt) !== parentAmt) f('nhánh ≠ dòng cha ' + path);
+    xs.forEach(x => { if(!(x.amt >= 0) || !isFinite(x.amt)) f('thành phần âm / NaN ' + path); if(x.date && x.date > lotDate) f('phiếu ' + x.doc + ' sau ngày nhập kho ' + path);
+      if(x.kind === 'btp' && Rx.lots[x.lot] && Rx.lots[x.lot].src === 'NK' && x.amt > 0 && !x.sub && path.split('>').length < 4) f('nhánh bán thành phẩm không mở xuống ' + path + '>' + x.lot);
+      if(x.sub) walk(x.sub, x.amt, Rx.lots[x.lot].date, path + '>' + x.lot); }); };
+  Object.values(Rx.lots).filter(L => L.src === 'NK').forEach(L => { const T = lotComps(Rx, L.code); walk(T.comps, L.inValue, L.date, L.code); });
+  cards.filter(c => c.lots.length).forEach(c => { const sp = lsxSplit(c);
+    sp.base.forEach((b, i) => { if(sum(c.lots, l => sp.by[l.lot][i]) + sp.abn[i] !== b.v) f('thành phần ' + i + ' của ' + c.no + ' chia cho các lô không cộng đúng'); }); });
+  // truy xuôi: mỗi lô nguyên vật liệu, Σ đã dùng cho lệnh = Σ phiếu xuất từ lô
+  Object.values(Rx.lots).filter(L => D.items[L.item].kind === 'NVL').forEach(L => { let q = 0; act.forEach(d => { if(d.type === 'PX') d.lines.forEach(l => { if(l.lot === L.code) q = rq(q + l.qty); }); });
+    if(Math.abs(rq(sum(usesOf(Rx, L.code), u => u.row.qty)) - q) > EPS) f('truy xuôi lô ' + L.code + ' thiếu phiếu'); });
+  // (4) định khoản
+  Rx.posts.forEach(p => { const d = p.d; if(d.status === 'void' || p.sys) return; const has = (a, side) => p.lines.some(l => l.acc === a && l[side] > 0);
+    if(d.type === 'PX') d.lines.forEach((l, i) => { const v = valOf(Rx, d, i); if(!v) return; const nv = D.items[l.item].kind === 'NVL';
+      if(!has(nv ? (Rx.tt133 ? '154' : '621') : '154', 'dr') || !has(accOfItem(D, l.item), 'cr')) f('định khoản phiếu xuất ' + d.no); });
+    if(d.type === 'NK' && sum(p.lines.filter(l => l.acc === '155'), l => l.dr) !== sum(d.lines.map((l, i) => valOf(Rx, d, i)))) f('định khoản nhập kho ' + d.no);
+    if(d.type === 'HD' && sum(p.lines.filter(l => l.acc === '632'), l => l.dr) !== sum(d.lines.map((l, i) => valOf(Rx, d, i)))) f('định khoản giá vốn ' + d.no);
+    if(d.type === 'XH' && !has(d.treat, 'dr')) f('định khoản xuất hủy ' + d.no); });
+  const kc = Rx.postByNo.KC0001; if(kc && kc.dr !== kc.cr) f('KC0001 Nợ ≠ Có');
+  if(!Rx.tt133 && kc){ const k154 = sum(kc.lines.filter(l => l.acc === '154'), l => l.dr); if(k154 !== sum(cards, c => c.nvl + c.nc + c.sxc)) f('KC0001 sang 154 ≠ nguyên vật liệu + nhân công + sản xuất chung theo lệnh'); }
 }
 function freshData0(rg, m, h){ const D = freshData(); Object.assign(D.settings, {regime:rg, method:m, hours:h}); return D; }
 $('btnTour').addEventListener('click', () => tourStart(0));
