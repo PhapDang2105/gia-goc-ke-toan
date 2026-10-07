@@ -36,6 +36,13 @@ Nếu người làm demo đổi dữ liệu mẫu, cập nhật bảng này và 
 | 7 | Quy trình chỉ có cá linh (2 giai đoạn) và mắm tôm (1 giai đoạn) | 4 quy trình theo [YEU-CAU-KHACH-HANG](../docs/01-yeu-cau/YEU-CAU-KHACH-HANG.md) §4 | GT-01 |
 | 8 | Tiêu thức phân bổ nhân công / sản xuất chung = chi phí nguyên vật liệu trực tiếp của lệnh; lệnh hoàn thành khi có phiếu nhập kho đầu tiên | Tiêu thức cấu hình theo giai đoạn (đề xuất khối lượng × số ngày cho công đoạn ủ); trạng thái lệnh có Hoàn thành → Đóng | [QD-29](../docs/02-ke-hoach/QUYET-DINH.md#qd-29) — cố ý giản lược, chỉ cần nói rõ khi trình diễn |
 
+## v4.9 — bản đồ bồn, vì sao giá thành khác, kiểm kê bằng điện thoại, bản tin (2026-10-07)
+
+- **Bản đồ bồn** (Kho & giá): mặt bằng nhà máy Bà Ba Thạo theo khu A, B, C, 2, 4 và trái, phuy. Mỗi bồn: số bồn, lô hoặc lệnh đang ủ, số kg, vòng tiến độ ủ (số ngày / 30 ngày chuẩn — giả định), nhãn "Đủ ngày". 4 ô số: bồn đang dùng, kg đang ủ, giá trị trong bồn, số vị trí đủ ngày. Bấm bồn có lô → truy xuất lô; bồn đang ủ theo lệnh → giá thành theo lệnh. Dữ liệu mẫu: lệnh LSX-2512-05 ủ ở bồn A.15 (thêm trường `tank` cho lệnh sản xuất).
+- **Vì sao giá thành khác** (Giá vốn theo lô, dưới cây cấu thành): chọn lô so sánh cùng sản phẩm; tách chênh lệch đơn giá thành ảnh hưởng giá và ảnh hưởng lượng của từng nguyên liệu, nhân công, sản xuất chung (tổng khớp đúng chênh lệch); câu giải thích tự viết và nguyên liệu gốc gây ra (đi xuống tận lô nguyên liệu). Ví dụ: 290126-01 đắt hơn 270126-01 5.331 đ/hũ (+12,3%), gốc ở cá linh 45.000 → 52.000 đ/kg.
+- **Bản tin tháng** (Tổng quan, dưới 4 ô số): 3–4 câu viết từ số liệu theo quy tắc (lãi gộp và biên so với tháng trước; sản phẩm có lô chênh giá thành lớn nhất và nguyên nhân gốc; nguyên liệu tăng giá mạnh nhất; bồn đủ ngày ủ), mỗi câu có nút "Xem" mở đúng chỗ (giả lập giá mở sẵn mức tăng).
+- **Kiểm kê** (Kho & giá): chọn kho (ghi thủ kho, kế toán kho); ô "Quét tem hoặc gõ mã lô" nhận mã lô, mã hóa hoặc nội dung mã QR trên tem (máy quét cầm tay gõ như bàn phím); từng dòng lô × vị trí có số sổ sách, ô thực đếm, chênh lệch tức thì; 4 ô số: đã đếm, khớp, lệch, giá trị chênh lệch. Số đếm giữ lại khi tải lại trang; khi đang có phiên đếm, quét mã QR trên tem bằng camera điện thoại mở thẳng dòng của lô đó. "Lập biên bản kiểm kê" mở phiếu kiểm kê đã điền sẵn số đếm → ghi sổ → phiên đếm tự kết thúc.
+
 ## v4.8 — chọn lô theo 3 tab ở Truy xuất lô (2026-10-07)
 
 - Bỏ danh sách lô dài 27 dòng. Thay bằng 3 tab: **Nguyên vật liệu (16) · Bán thành phẩm (3) · Thành phẩm, hàng hóa (8)**; ô Lô chỉ liệt kê lô của tab đang chọn, gom theo tên hàng, mỗi dòng: mã lô · mã hóa · ngày.
