@@ -36,6 +36,15 @@ Nếu người làm demo đổi dữ liệu mẫu, cập nhật bảng này và 
 | 7 | Quy trình chỉ có cá linh (2 giai đoạn) và mắm tôm (1 giai đoạn) | 4 quy trình theo [YEU-CAU-KHACH-HANG](../docs/01-yeu-cau/YEU-CAU-KHACH-HANG.md) §4 | GT-01 |
 | 8 | Tiêu thức phân bổ nhân công / sản xuất chung = chi phí nguyên vật liệu trực tiếp của lệnh; lệnh hoàn thành khi có phiếu nhập kho đầu tiên | Tiêu thức cấu hình theo giai đoạn (đề xuất khối lượng × số ngày cho công đoạn ủ); trạng thái lệnh có Hoàn thành → Đóng | [QD-29](../docs/02-ke-hoach/QUYET-DINH.md#qd-29) — cố ý giản lược, chỉ cần nói rõ khi trình diễn |
 
+## v5.0 — Hồ sơ lô, menu theo luồng công việc, tìm nhanh, bỏ cuộn ngang thừa (2026-10-07)
+
+- **Hồ sơ lô**: mỗi lô một trang, đọc từ trên xuống — tên hàng, mã lô, mã QR, QC, hạn dùng, nguồn, còn tồn; 4 ô số (giá thành / đơn giá lô, giá trị lô, đã bán và số khách, còn trong kho); "Giá vốn được cấu thành từ đâu" (cây); "So với lô khác"; "Nguồn gốc và nơi đi" (sơ đồ); khách hàng đã nhận; tồn trong kho; nút In tem lô, Khóa các lô còn tồn. Gộp 3 trang cũ (Giá vốn theo lô phần cây, Truy xuất lô, so sánh lô). Mọi mã lô ở mọi nơi (bảng, sơ đồ, bồn, bản tin, tìm nhanh, mã QR) đều mở trang này.
+- **Menu 13 mục, 4 nhóm theo luồng công việc**: Điều hành (Tổng quan, Sơ đồ nghiệp vụ) · Kho (Bản đồ bồn, Tồn kho, Kiểm kê) · Giá thành (Giá nguyên liệu, Giá thành theo lệnh, Danh sách lô, Giả lập giá) · Sổ sách (Chứng từ, Báo cáo, Danh mục, Nhật ký sửa đổi). Trước: 16 mục, 4 nhóm theo phân hệ.
+- **Giá nguyên liệu** gộp "Giá xuất kho": 2 tab "Giá theo lô" và "Sổ chi tiết và giá xuất kho".
+- **Danh sách lô**: thêm tab Nguyên vật liệu; bấm dòng mở Hồ sơ lô.
+- **Tìm nhanh** trên thanh trên cùng (Ctrl+K): lô, mã hóa, chứng từ, số phiếu kho, lệnh sản xuất, bồn / trái / phuy, hàng, người; tìm không dấu; ↑ ↓ Enter, Esc; tối đa 8 kết quả.
+- **Bỏ thanh cuộn ngang thừa**: ô chữ trong bảng được xuống dòng (số, mã giữ một dòng); sơ đồ nguồn gốc co theo khung; bảng nhiều cột số thu gọn đệm; Chứng từ và Sổ chi tiết xếp chồng thay vì chia đôi khi màn hẹp hơn 1800px. Đo ở 1366, 1536, 1920px: không còn bảng nào phải kéo ngang (trước: 9 chỗ, nhiều nhất 600px).
+
 ## v4.11 — nhanh hơn, thoáng hơn (2026-10-07)
 
 **Tốc độ chuyển trang** (đo với CPU chậm 4 lần, mô phỏng máy văn phòng):

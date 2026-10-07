@@ -89,6 +89,16 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 .top{display:flex;align-items:center;gap:8px 12px;padding:8px 20px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:6;min-height:48px}
 .top h1{font-size:18px;font-weight:600;margin:0;display:flex;align-items:center;gap:10px;white-space:nowrap;min-width:0}
 .top .spacer{flex:1}
+.qs{position:relative;flex:0 1 280px;min-width:160px}
+.qs .inp{width:100%;min-height:32px}
+.qs-list{position:absolute;left:0;top:calc(100% + 4px);width:min(440px,92vw);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);z-index:30;max-height:70vh;overflow:auto;padding:4px}
+.qs-o{all:unset;box-sizing:border-box;display:grid;grid-template-columns:96px 1fr;gap:0 10px;width:100%;padding:7px 8px;cursor:pointer;border-radius:var(--r)}
+.qs-o b{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qs-o .qs-k{grid-row:span 2;font-size:12px;color:var(--muted);align-self:center}
+.qs-o .qs-s{grid-column:2;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qs-o.on,.qs-o:hover{background:var(--sel)}
+.qs-none{padding:10px;color:var(--muted)}
+@media (max-width:1080px){.qs{order:9;flex:1 1 100%}}
 .fromflow{display:flex;align-items:center;gap:12px;padding:8px 20px;background:var(--kpi-bg);border-bottom:1px solid var(--line);border-left:3px solid var(--accent);font-size:13px}
 .fromflow span{color:var(--muted)}.fromflow b{color:var(--fg)}
 @media (max-width:640px){.fromflow{padding-inline:16px}}
@@ -116,6 +126,9 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 .grid{display:grid;gap:12px}
 .kpis{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr))}
 .tabs{align-self:flex-start;flex-wrap:wrap}
+.tbl-wrap td{white-space:normal;overflow-wrap:anywhere}
+.tbl-wrap td.n,.tbl-wrap td.acc,.tbl-wrap td.mono,.tbl-wrap td .mono,.tbl-wrap td.c{white-space:nowrap;overflow-wrap:normal}
+.tbl-wrap td:first-child{min-width:72px}
 tr.more{display:none}
 .tabs .cnt,#traceTabs .cnt{font-size:12px;opacity:.75}
 .duo{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(480px,calc((100% - 12px) / 2))),1fr))}
@@ -161,7 +174,10 @@ td.pick .icon-btn{display:inline-grid;width:26px;height:26px;vertical-align:midd
 #matDetail h2,#lotTree h2{font-size:14px;font-weight:600;margin:4px 0 0}
 #postTbl td:nth-child(2),.prev td:nth-child(2){white-space:normal;min-width:130px}
 #recon td:nth-child(2){white-space:normal;min-width:0}
-#lsxCost td:nth-child(2){min-width:170px}
+#lsxCost td:nth-child(2){min-width:120px}
+@media (max-width:1500px){#lsxCost,#alloc,#ledger{font-size:12.5px}}
+#ledger th,#ledger td,#lsxCost th,#lsxCost td,#alloc th,#alloc td,#nxt th,#nxt td,#lotCostTbl th,#lotCostTbl td{padding-inline:6px}
+#lsxCost th,#lsxCost td{padding-inline:4px}#lsxCost td:nth-child(2){min-width:110px}
 #whTbl td,#staffTbl td{white-space:normal;min-width:90px}
 tr:last-child td{border-bottom:0}
 .tbl-wrap tbody tr:hover td{background:var(--hover)}
@@ -333,8 +349,8 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
 #repOut h2 .sx{margin-left:6px}
 .sub-tree{margin-top:6px;border-left:2px solid var(--c-btp);padding-left:10px;display:flex;flex-direction:column;gap:4px}
 @media (max-width:1280px){.split,.split.wide-side{grid-template-columns:minmax(0,1fr)}}
-@media (max-width:1500px){.split.wide-side{grid-template-columns:minmax(0,1fr)}}
-@media (max-width:1700px){.split.ledger-split{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1800px){.split.wide-side{grid-template-columns:minmax(0,1fr)}}
+.split.ledger-split{grid-template-columns:minmax(0,1fr)}
 @media (max-width:1180px){.top .field>span{display:none}}
 /* ≤1080px: sidebar thành menu ngang trên cùng */
 @media (max-width:1080px){
@@ -466,12 +482,12 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
 .tr-kpis{grid-column:1 / -1}
 #traceMore{display:flex;flex-direction:column;gap:12px}
 .tr-scroll{overflow-x:auto;padding-bottom:4px}
-.tr-graph{position:relative;display:flex;gap:44px;align-items:flex-start;min-width:max-content;padding:4px 2px}
+.tr-graph{position:relative;display:flex;gap:22px;align-items:flex-start;min-width:min-content;padding:4px 2px}
 .tr-svg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
 .tr-svg path{stroke:var(--axis);stroke-width:1.5}
 .tr-svg path.up{stroke:var(--k2)}.tr-svg path.dn{stroke:var(--k3)}
 .tr-svg path.hot{stroke-width:2.5}
-.tr-col{display:flex;flex-direction:column;gap:10px;width:200px;position:relative;z-index:1}
+.tr-col{display:flex;flex-direction:column;gap:10px;flex:1 1 0;min-width:128px;max-width:230px;position:relative;z-index:1}
 .tr-ch{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;min-height:18px}
 .tn{display:flex;flex-direction:column;gap:1px;text-align:left;font:inherit;font-size:12.5px;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--line);border-radius:var(--r);padding:7px 9px;width:100%}
 button.tn{cursor:pointer}button.tn:hover{background:var(--hover)}
@@ -545,24 +561,22 @@ button.tn{cursor:pointer}button.tn:hover{background:var(--hover)}
     <div class="brand"><b>Hệ thống quản lý</b><button class="icon-btn ghost" id="btnSide" type="button" aria-label="Thu gọn thanh bên" aria-expanded="true" title="Thu gọn thanh bên"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5l-5 5 5 5"/></svg></button></div>
     <div class="nav-wrap">
     <nav class="nav" aria-label="Phân hệ" id="nav">
-      <div class="nav-label">Tổng hợp</div>
+      <div class="nav-label">Điều hành</div>
       <button data-view="dash" title="Tổng quan"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="11" y="3" width="6" height="4" rx="1.5"/><rect x="11" y="9" width="6" height="8" rx="1.5"/><rect x="3" y="11" width="6" height="6" rx="1.5"/></svg><span class="nl">Tổng quan</span></button>
-      <button data-view="docs" title="Chứng từ &amp; bút toán"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 2.5h7l3 3v12H5z"/><path d="M8 9h5M8 12h5M8 15h3"/></svg><span class="nl">Chứng từ &amp; bút toán</span></button>
-      <button data-view="reports" title="Báo cáo"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17h14"/><path d="M5 14V9M9 14V5M13 14v-7M17 14v-3"/></svg><span class="nl">Báo cáo</span></button>
       <button data-view="flow" title="Sơ đồ nghiệp vụ"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="3" width="5" height="4" rx="1"/><rect x="12.5" y="3" width="5" height="4" rx="1"/><rect x="7.5" y="13" width="5" height="4" rx="1"/><path d="M7.5 5h5M15 7v3.5H10V13"/></svg><span class="nl">Sơ đồ nghiệp vụ</span></button>
-      <div class="nav-label">Kho &amp; giá</div>
-      <button data-view="stock" title="Kho &amp; lô"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2.5 7.5 10 3l7.5 4.5V17h-15z"/><path d="M6 17v-6h8v6"/></svg><span class="nl">Kho &amp; lô</span></button>
-      <button data-view="mat" title="Giá nguyên liệu"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 16l4-5 3 3 4-6 3 4"/><path d="M3 3v14h14"/></svg><span class="nl">Giá nguyên liệu</span></button>
-      <button data-view="cogs" title="Giá xuất kho"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7"/><path d="M10 6v8M12.5 7.5c-.5-.8-1.4-1.2-2.5-1.2-1.4 0-2.5.8-2.5 1.9s1 1.5 2.5 1.8 2.5.8 2.5 1.9-1.1 1.9-2.5 1.9c-1.1 0-2-.4-2.5-1.2"/></svg><span class="nl">Giá xuất kho</span></button>
-      <button data-view="items" title="Danh mục &amp; lệnh sản xuất"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3.5" width="14" height="13" rx="1.5"/><path d="M6.5 7.5h7M6.5 10.5h7M6.5 13.5h4"/></svg><span class="nl">Danh mục &amp; lệnh sản xuất</span></button>
+      <div class="nav-label">Kho</div>
       <button data-view="tanks" title="Bản đồ bồn"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="5.5" cy="5.5" r="3"/><circle cx="14.5" cy="5.5" r="3"/><circle cx="5.5" cy="14.5" r="3"/><circle cx="14.5" cy="14.5" r="3"/></svg><span class="nl">Bản đồ bồn</span></button>
+      <button data-view="stock" title="Tồn kho"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2.5 7.5 10 3l7.5 4.5V17h-15z"/><path d="M6 17v-6h8v6"/></svg><span class="nl">Tồn kho</span></button>
       <button data-view="count" title="Kiểm kê"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="5" height="5"/><rect x="12" y="3" width="5" height="5"/><rect x="3" y="12" width="5" height="5"/><path d="M12 12h2v2M17 12v5h-5"/></svg><span class="nl">Kiểm kê</span></button>
-      <div class="nav-label">Sản xuất</div>
-      <button data-view="cost" title="Giá thành theo lệnh sản xuất"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17V9l4 3V9l4 3V5l6 4v8z"/></svg><span class="nl">Giá thành theo lệnh sản xuất</span></button>
-      <button data-view="lots" title="Giá vốn theo lô"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="15" cy="10" r="2.2"/><circle cx="5" cy="4.5" r="2"/><circle cx="5" cy="10" r="2"/><circle cx="5" cy="15.5" r="2"/><path d="M7 4.5c3 0 3 5.5 5.8 5.5M7 10h5.8M7 15.5c3 0 3-5.5 5.8-5.5"/></svg><span class="nl">Giá vốn theo lô</span></button>
-      <button data-view="trace" title="Truy xuất lô"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="4" cy="10" r="2"/><circle cx="16" cy="4.5" r="2"/><circle cx="16" cy="15.5" r="2"/><circle cx="10" cy="10" r="2"/><path d="M6 10h2M12 9l2.3-3.2M12 11l2.3 3.2"/></svg><span class="nl">Truy xuất lô</span></button>
-      <button data-view="sim" title="Giả lập giá nguyên liệu"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 5h14M3 10h14M3 15h14"/><circle cx="7" cy="5" r="1.8" fill="currentColor"/><circle cx="13" cy="10" r="1.8" fill="currentColor"/><circle cx="9" cy="15" r="1.8" fill="currentColor"/></svg><span class="nl">Giả lập giá nguyên liệu</span></button>
-      <div class="nav-label">Kiểm soát</div>
+      <div class="nav-label">Giá thành</div>
+      <button data-view="mat" title="Giá nguyên liệu"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 16l4-5 3 3 4-6 3 4"/><path d="M3 3v14h14"/></svg><span class="nl">Giá nguyên liệu</span></button>
+      <button data-view="cost" title="Giá thành theo lệnh"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17V9l4 3V9l4 3V5l6 4v8z"/></svg><span class="nl">Giá thành theo lệnh</span></button>
+      <button data-view="lots" title="Danh sách lô"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="15" cy="10" r="2.2"/><circle cx="5" cy="4.5" r="2"/><circle cx="5" cy="10" r="2"/><circle cx="5" cy="15.5" r="2"/><path d="M7 4.5c3 0 3 5.5 5.8 5.5M7 10h5.8M7 15.5c3 0 3-5.5 5.8-5.5"/></svg><span class="nl">Danh sách lô</span></button>
+      <button data-view="sim" title="Giả lập giá"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 5h14M3 10h14M3 15h14"/><circle cx="7" cy="5" r="1.8" fill="currentColor"/><circle cx="13" cy="10" r="1.8" fill="currentColor"/><circle cx="9" cy="15" r="1.8" fill="currentColor"/></svg><span class="nl">Giả lập giá</span></button>
+      <div class="nav-label">Sổ sách</div>
+      <button data-view="docs" title="Chứng từ"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 2.5h7l3 3v12H5z"/><path d="M8 9h5M8 12h5M8 15h3"/></svg><span class="nl">Chứng từ</span></button>
+      <button data-view="reports" title="Báo cáo"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17h14"/><path d="M5 14V9M9 14V5M13 14v-7M17 14v-3"/></svg><span class="nl">Báo cáo</span></button>
+      <button data-view="items" title="Danh mục"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3.5" width="14" height="13" rx="1.5"/><path d="M6.5 7.5h7M6.5 10.5h7M6.5 13.5h4"/></svg><span class="nl">Danh mục</span></button>
       <button data-view="audit" title="Nhật ký sửa đổi"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg><span class="nl">Nhật ký sửa đổi</span></button>
     </nav>
     </div>
@@ -577,6 +591,7 @@ button.tn{cursor:pointer}button.tn:hover{background:var(--hover)}
     <header class="top">
       <button class="icon-btn back off" id="btnBack2" type="button" data-act="goBack" aria-label="Quay lại" title="Quay lại" tabindex="-1"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg></button>
       <h1><span id="viewTitle">Tổng quan</span></h1>
+      <div class="qs"><label class="vh" for="qs">Tìm nhanh</label><input type="search" id="qs" class="inp" placeholder="Tìm lô, phiếu, bồn, người…  Ctrl+K" autocomplete="off" role="combobox" aria-controls="qsList" aria-expanded="false"><div class="qs-list" id="qsList" role="listbox" hidden></div></div>
       <div class="spacer"></div>
       <span class="period">Kỳ <b>01/2026</b></span>
       <button class="btn sm mobile-only" id="btnSettings" type="button" aria-expanded="false" aria-controls="settings">Thiết lập</button>
@@ -700,22 +715,6 @@ button.tn{cursor:pointer}button.tn:hover{background:var(--hover)}
       </div>
     </section>
 
-    <!-- GIÁ XUẤT KHO -->
-    <section class="view" id="v-cogs" hidden>
-      <div class="split ledger-split">
-        <div class="panel">
-          <div class="panel-head">
-            <label class="field" for="itemSel">Vật tư <select id="itemSel"></select></label>
-            <div class="spacer"></div>
-            <button class="btn sm" id="btnBack" type="button">Nhập lùi ngày 06/01</button>
-            <button class="btn sm xl" type="button" data-csv="ledger" data-name="so-chi-tiet-vat-tu" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button>
-          </div>
-          <div class="tbl-wrap"><table id="ledger"></table></div>
-          <div class="cmp" id="cmp"></div>
-        </div>
-        <div class="panel" id="explain" tabindex="-1"></div>
-      </div>
-    </section>
 
     <!-- DANH MỤC -->
     <section class="view" id="v-items" hidden>
@@ -744,14 +743,28 @@ button.tn{cursor:pointer}button.tn:hover{background:var(--hover)}
 
     <!-- GIÁ NGUYÊN LIỆU -->
     <section class="view" id="v-mat" hidden>
-      <div class="panel">
+      <div class="seg tabs" id="matTabs" role="group" aria-label="Xem theo"></div>
+      <div class="panel" data-mp="price">
         <div class="panel-head"><h2>Bảng giá theo lô</h2><span class="note" id="matCount"></span><div class="spacer"></div>
           <label class="field" for="matSel">Vật tư <select id="matSel"></select></label><button class="btn sm xl" type="button" data-csv="matTbl" data-name="gia-nguyen-lieu-theo-lo" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button></div>
         <label class="vh" for="matSearch">Tìm lô nguyên liệu</label>
         <input type="search" id="matSearch" class="inp" placeholder="Tìm vật tư, mã lô, mã hóa, nhà cung cấp…">
         <div class="tbl-wrap"><table id="matTbl"></table></div>
       </div>
-      <div class="panel" id="matDetail" tabindex="-1"></div>
+      <div class="panel" id="matDetail" tabindex="-1" data-mp="price"></div>
+      <div class="split ledger-split" data-mp="ledger">
+        <div class="panel">
+          <div class="panel-head">
+            <label class="field" for="itemSel">Vật tư <select id="itemSel"></select></label>
+            <div class="spacer"></div>
+            <button class="btn sm" id="btnBack" type="button">Nhập lùi ngày 06/01</button>
+            <button class="btn sm xl" type="button" data-csv="ledger" data-name="so-chi-tiet-vat-tu" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button>
+          </div>
+          <div class="tbl-wrap"><table id="ledger"></table></div>
+          <div class="cmp" id="cmp"></div>
+        </div>
+        <div class="panel" id="explain" tabindex="-1"></div>
+      </div>
     </section>
 
     <!-- GIÁ THÀNH THEO LỆNH SẢN XUẤT -->
@@ -777,8 +790,6 @@ button.tn{cursor:pointer}button.tn:hover{background:var(--hover)}
         <div class="tbl-wrap"><table id="lotCostTbl"></table></div>
         <p class="note" id="lotMethodNote" hidden></p>
       </div>
-      <div class="panel" id="lotTree" tabindex="-1"></div>
-      <div class="panel" id="lotVar" hidden></div>
     </section>
 
     <!-- BẢN ĐỒ BỒN -->
@@ -822,6 +833,8 @@ button.tn{cursor:pointer}button.tn:hover{background:var(--hover)}
           <button class="btn sm danger" type="button" id="btnLock" data-act="openLock">Khóa các lô còn tồn</button></div>
         <div id="traceBody"></div>
       </div>
+      <div class="panel" id="lotTree" tabindex="-1"></div>
+      <div class="panel" id="lotVar" hidden></div>
       <div id="traceMore"></div>
     </section>
 
@@ -1685,7 +1698,7 @@ function impactTable(imp, short){
 }
 
 // ================= Render chung =================
-const TITLES = {dash:'Tổng quan', docs:'Chứng từ & bút toán', reports:'Báo cáo', stock:'Kho & lô', mat:'Giá nguyên liệu', cogs:'Giá xuất kho', cost:'Giá thành theo lệnh sản xuất', lots:'Giá vốn theo lô', trace:'Truy xuất lô', tanks:'Bản đồ bồn', count:'Kiểm kê', flow:'Sơ đồ nghiệp vụ', sim:'Giả lập giá nguyên liệu', audit:'Nhật ký sửa đổi', items:'Danh mục & lệnh sản xuất'};
+const TITLES = {dash:'Tổng quan', flow:'Sơ đồ nghiệp vụ', tanks:'Bản đồ bồn', stock:'Tồn kho', count:'Kiểm kê', mat:'Giá nguyên liệu', cogs:'Giá nguyên liệu', cost:'Giá thành theo lệnh', lots:'Danh sách lô', trace:'Hồ sơ lô', sim:'Giả lập giá', docs:'Chứng từ', reports:'Báo cáo', items:'Danh mục', audit:'Nhật ký sửa đổi'};
 const RENDER = {};
 // Chuyển trang không vẽ lại khi dữ liệu và bộ lọc không đổi: DV tăng mỗi khi dữ liệu / thiết lập đổi; RV[view] = DV lúc trang được vẽ gần nhất
 let DV = 0; const RV = {};
@@ -1731,6 +1744,7 @@ function go(view, opt){
     const hs = S.ui.hist || (S.ui.hist = []), keep = {}; HIST_KEYS.forEach(k => keep[k] = S.ui[k]);
     hs.push({view:S.ui.view, keep, y:window.scrollY}); if(hs.length > 30) hs.shift();
     try{ history.pushState({gg:hs.length}, '', '#' + view); }catch(_){} }
+  if(view === 'cogs'){ view = 'mat'; opt = Object.assign({}, opt, {mtab:'ledger'}); }
   const force = opt && Object.keys(opt).some(k => S.ui[k] !== opt[k]);
   S.ui.view = view; Object.assign(S.ui, opt || {}); renderAll(force ? 'force' : 'nav');
   window.scrollTo(0, 0);
@@ -2393,15 +2407,15 @@ function lotLeft(Rx, code){ const L = Rx.lots[code]; if(!L || !Rx.items[L.item])
 
 // ================= Giá vốn theo lô =================
 RENDER.lots = function(){
-  const D = S.data, kinds = [['SP', 'Thành phẩm'], ['BTP', 'Bán thành phẩm'], ['HH', 'Hàng hóa']];
+  const D = S.data, kinds = [['NVL', 'Nguyên vật liệu'], ['BTP', 'Bán thành phẩm'], ['SP', 'Thành phẩm'], ['HH', 'Hàng hóa']];
   if(!kinds.some(x => x[0] === S.ui.lotKind)) S.ui.lotKind = 'SP';
   const kind = S.ui.lotKind;
   $('lotKind').innerHTML = kinds.map(([k, l]) => '<button type="button" data-lot-kind="' + k + '" aria-pressed="' + (kind === k) + '">' + l + '</button>').join('');
   const sl = salesByLot(R), used = {};
-  if(kind === 'BTP') Object.keys(R.items).forEach(x => R.items[x].rows.forEach(r => { if(r.kind === 'out' && r.type === 'PX' && R.lots[r.lot] && R.lots[r.lot].item === x){ const u = used[r.lot] || (used[r.lot] = {q:0, v:0}); u.q = rq(u.q + r.qty); u.v += r.value; } }));
+  if(kind === 'BTP' || kind === 'NVL') Object.keys(R.items).forEach(x => R.items[x].rows.forEach(r => { if(r.kind === 'out' && r.type === 'PX' && R.lots[r.lot] && R.lots[r.lot].item === x){ const u = used[r.lot] || (used[r.lot] = {q:0, v:0}); u.q = rq(u.q + r.qty); u.v += r.value; } }));
   const list = Object.values(R.lots).filter(L => D.items[L.item] && D.items[L.item].kind === kind).sort((a, b) => (a.item < b.item ? -1 : a.item > b.item ? 1 : 0) || (a.date < b.date ? -1 : a.date > b.date ? 1 : a.code < b.code ? -1 : 1));
   if(!list.find(L => L.code === S.ui.lot)) S.ui.lot = (list.find(L => L.src === 'NK') || list[0] || {}).code || null;
-  const bt = kind === 'BTP';
+  const bt = kind === 'BTP' || kind === 'NVL';
   let body = '', cur = null;
   list.forEach(L => { const it = D.items[L.item], s = bt ? (used[L.code] || {q:0, v:0}) : (sl[L.code] || {q:0, cost:0}), u = L.inQty > EPS ? L.inValue / L.inQty : 0;
     if(cur !== L.item){ cur = L.item; body += '<tr class="sub"><td colspan="11">' + esc(it.name) + '</td></tr>'; }
@@ -2410,16 +2424,12 @@ RENDER.lots = function(){
     (body || '<tr><td colspan="11" class="muted">Không có lô.</td></tr>') + '</tbody>';
   const mn = $('lotMethodNote'), spec = D.settings.method === 'specific'; mn.hidden = spec;
   mn.textContent = spec ? '' : 'Giá xuất đang theo ' + METHOD_NAME[D.settings.method].toLowerCase() + ': giá vốn đã bán, giá trị đã xuất tính theo phương pháp này, không theo giá từng lô. Giá vốn đúng từng lô khi giá xuất là thực tế đích danh.';
-  renderLotTree();
 };
 function renderLotTree(){
   const D = S.data, code = S.ui.lot, box = $('lotTree');
   if(!code || !R.lots[code]){ box.innerHTML = '<h2>Cấu thành giá vốn</h2><p class="muted" style="margin:0">Chọn một lô.</p>'; return; }
   const T = lotComps(R, code), L = T.L, it = D.items[L.item], u = it.uom, q = L.inQty, z = q > EPS ? T.value / q : 0;
-  let h = '<div class="panel-head"><h2>Cấu thành giá vốn · lô <span class="acc">' + esc(code) + '</span></h2><div class="spacer"></div><button class="btn sm" type="button" data-goto-trace="' + esc(code) + '">Truy xuất lô</button>' + csvBtn('treeTbl', 'cau-thanh-lo-' + code) + '</div>';
-  h += '<div class="meta"><span>' + esc(it.name) + '</span>' + (L.mh ? '<span>Mã hóa <span class="acc">' + esc(L.mh) + '</span></span>' : '') + '<span>' + (T.c ? 'Lệnh <b class="acc">' + esc(T.c.no) + '</b> · nhập kho ' + esc(L.doc) + ' ngày ' + dmy(L.date) : esc(lotSource(R, code)) + ' · ' + dmy(L.date)) + '</span><span>QC ' + qcText(L.qc) + '</span></div>';
-  h += '<div class="kpis"><div class="panel kpi"><span class="label">Số lượng lô</span><span class="val" id="treeQ">' + fmtQ(q) + '<small>' + esc(u) + '</small></span></div><div class="panel kpi"><span class="label">Giá trị lô (tổng giá thành)</span><span class="val" id="treeV">' + fmt(T.value) + '<small>đ</small></span></div><div class="panel kpi"><span class="label">Giá thành đơn vị</span><span class="val" id="treeZ">' + fmt4(z) + '<small>đ/' + esc(u) + '</small></span></div>' +
-    (T.c ? '<div class="panel kpi"><span class="label">Tổng chi phí lệnh</span><span class="val">' + fmt(T.c.total) + '<small>đ</small></span><span class="sub">' + (T.c.abn ? 'Hỏng ngoài định mức → 632: ' + fmt(T.c.abn) + ' đ' : T.c.lots.length > 1 ? T.c.lots.length + ' lô cùng lệnh' : 'Toàn bộ vào lô này') + '</span></div>' : '') + '</div>';
+  let h = '<div class="panel-head"><h2>Giá vốn được cấu thành từ đâu</h2><div class="spacer"></div>' + csvBtn('treeTbl', 'cau-thanh-lo-' + code) + '</div>';
   if(T.comps.length){
     const open = S.ui.treeOpen || (S.ui.treeOpen = {});
     // % theo phần nghìn chia bằng R1 (b): các dòng cùng cấp cộng đúng 100% / đúng % của dòng cha
@@ -2444,15 +2454,6 @@ function renderLotTree(){
       '<tfoot><tr><td colspan="6">Tổng = giá trị lô ' + esc(code) + '</td><td class="n" id="treeTotal">' + fmt(sum(T.comps, b => b.amt)) + '</td><td class="n">' + fmt4(z) + '</td><td class="n">100%</td></tr></tfoot></table></div>' +
       (D.settings.method !== 'specific' ? '<p class="note">Giá xuất đang theo ' + esc(METHOD_NAME[D.settings.method].toLowerCase()) + ': giá trị dòng bán thành phẩm theo phương pháp này, nhánh bên dưới chia theo cấu thành của lô ghi trên phiếu. Giá vốn đúng từng lô khi giá xuất là thực tế đích danh.</p>' : '');
   } else h += '<p class="muted" style="margin:0">' + (L.src === 'open' ? 'Lô tồn đầu kỳ: giá trị chuyển từ kỳ 12/2025.' : L.src === 'TL' ? 'Hàng bán bị trả lại, nhận theo giá vốn lúc bán của lô ' + esc(L.from) + '.' : L.src === 'PN' ? 'Lô mua của ' + esc(partyName(D, L.partyId)) + ' theo ' + esc(L.doc) + ': giá trị lô là giá mua.' : L.src === 'KK' ? 'Lô thừa kiểm kê theo ' + esc(L.doc) + '.' : 'Lô ' + esc(lotSource(R, code)) + '.') + '</p>';
-  // cuối cây: bán từ lô này / dùng cho lệnh sản xuất
-  if(it.kind === 'BTP'){ const us = usesOf(R, code);
-    h += '<h2>Xuất cho lệnh sản xuất</h2>' + (us.length ? '<div class="tbl-wrap"><table><thead><tr><th>Ngày</th><th>Phiếu</th><th>Lệnh</th><th class="n">Số lượng</th><th class="n">Giá trị</th><th>Lô thành phẩm</th></tr></thead><tbody>' +
-      us.map(x => '<tr><td>' + ddmm(x.row.date) + '</td><td class="acc">' + x.row.doc + '</td><td class="acc">' + esc(x.c.no) + '</td><td class="n">' + fmtQ(x.row.qty) + ' ' + esc(u) + '</td><td class="n">' + fmt(x.row.value) + '</td><td>' + (x.lots.length ? x.lots.map(l => lotBtn(l.lot)).join(', ') : '<span class="muted">' + LSX_STATUS[x.c.status] + '</span>') + '</td></tr>').join('') + '</tbody></table></div>' : '<p class="muted" style="margin:0">Chưa xuất.</p>');
-  } else { const s = salesByLot(R)[code];
-    h += '<h2>Hóa đơn bán từ lô này</h2>' + (s && s.inv.length ? '<div class="tbl-wrap"><table id="lotSales"><thead><tr><th>Ngày</th><th>Chứng từ</th><th>Khách hàng</th><th class="n">Số lượng</th><th class="n">Giá vốn</th><th class="n">Doanh thu</th><th class="n">Lãi gộp</th></tr></thead><tbody>' +
-      s.inv.map(x => '<tr class="click" data-open-doc="' + x.doc + '" tabindex="0"><td>' + ddmm(x.date) + '</td><td class="acc">' + x.doc + (x.ret ? ' <span class="muted">trả lại</span>' : '') + '</td><td>' + esc(partyName(D, x.partyId)) + '</td><td class="n">' + fmtQ(x.qty) + '</td><td class="n">' + fmt(x.cost) + '</td><td class="n">' + fmt(x.rev) + '</td><td class="n">' + fmt(x.rev - x.cost) + '</td></tr>').join('') + '</tbody>' +
-      '<tfoot><tr><td colspan="3">Cộng</td><td class="n">' + fmtQ(s.q) + '</td><td class="n">' + fmt(s.cost) + '</td><td class="n">' + fmt(s.rev) + '</td><td class="n">' + fmt(s.rev - s.cost) + '</td></tr></tfoot></table></div>' : '<p class="muted" style="margin:0">Chưa bán.</p>');
-  }
   box.innerHTML = h; renderVariance();
 }
 
@@ -2530,16 +2531,16 @@ RENDER.trace = function(){
     '<dt>Nguồn</dt><dd>' + esc(lotSource(R, code)) + ' · ' + dmy(L.date) + '</dd><dt>Đơn giá lô</dt><dd>' + fmt2(u) + ' đ/' + esc(it.uom) + '</dd>' +
     '<dt>Hạn sử dụng</dt><dd>' + (L.hsd ? dmy(L.hsd) : '—') + '</dd><dt>QC</dt><dd>' + qcText(L.qc) + ' · ' + esc(qcLabel(qcP)) + '</dd>' +
     '<dt>Còn tồn</dt><dd>' + fmtQ(left) + ' ' + esc(it.uom) + (L.locs.length ? ' · ' + esc(lotCellsLeft(R, code).map(x => x.wh + (x.loc ? ' ' + x.loc : '')).join(', ')) : '') + '</dd></dl>' +
-    '<div class="kpis tr-kpis"><div class="panel kpi"><span class="label">Lô liên quan phía sau</span><span class="val">' + (G.affected.length - 1) + '</span></div>' +
-    '<div class="panel kpi"><span class="label">Khách hàng đã nhận</span><span class="val">' + cus.size + '</span></div>' +
-    '<div class="panel kpi"><span class="label">Đã bán</span><span class="val">' + qtyTxt(soldQ) + '</span></div>' +
+    '<div class="kpis tr-kpis"><div class="panel kpi"><span class="label">' + (L.src === 'NK' ? 'Giá thành đơn vị' : 'Đơn giá lô') + '</span><span class="val">' + fmt2(u) + '<small>đ/' + esc(it.uom) + '</small></span></div>' +
+    '<div class="panel kpi"><span class="label">Giá trị lô</span><span class="val">' + fmt(L.inValue) + '<small>đ · ' + fmtQ(L.inQty) + ' ' + esc(it.uom) + '</small></span></div>' +
+    '<div class="panel kpi"><span class="label">Đã bán</span><span class="val">' + qtyTxt(soldQ) + '</span><span class="sub">' + cus.size + ' khách hàng · ' + (G.affected.length - 1) + ' lô liên quan phía sau</span></div>' +
     '<div class="panel kpi"><span class="label">Còn trong kho</span><span class="val">' + qtyTxt(leftQ) + '</span></div></div></div>';
   // sơ đồ: cột theo khoảng cách tới lô đang xem (âm: nguồn gốc, dương: nơi đi)
   const cols = {}; Object.values(G.nodes).forEach(n => (cols[n.col] = cols[n.col] || []).push(n));
   const ks = Object.keys(cols).map(Number).sort((a, b) => a - b);
   const colHead = xs => { const t = [...new Set(xs.map(n => n.type === 'origin' ? 'sup' : n.type))]; return t.map(x => x === 'sup' ? 'Nguồn' : TR_TYPE[x]).join(' · '); };
   box.innerHTML = h; h = '';
-  h += '<div class="panel"><div class="panel-head"><h2>Sơ đồ truy xuất</h2><div class="spacer"></div><span class="tr-leg"><i class="up"></i>Nguồn gốc <i class="dn"></i>Nơi đi</span></div>' +
+  h += '<div class="panel"><div class="panel-head"><h2>Nguồn gốc và nơi đi</h2><div class="spacer"></div><span class="tr-leg"><i class="up"></i>Nguồn gốc <i class="dn"></i>Nơi đi</span></div>' +
     '<div class="tr-scroll"><div class="tr-graph" id="trGraph"><svg class="tr-svg" id="trSvg" aria-hidden="true"></svg>' +
     ks.map(k => '<div class="tr-col"><div class="tr-ch">' + esc(k === 0 ? 'Lô đang xem' : colHead(cols[k])) + '</div>' + cols[k].map(n => trNodeHTML(n, n.id === 'lot:' + code)).join('') + '</div>').join('') + '</div></div></div>';
   // khách đã nhận và tồn cần giữ
@@ -2550,6 +2551,7 @@ RENDER.trace = function(){
   $('traceMore').innerHTML = h;
   const canLock = G.stock.some(x => R.lots[x.lot] && R.lots[x.lot].qc === 'pass');
   $('btnLock').setAttribute('aria-disabled', String(!canLock)); $('btnLock').title = canLock ? '' : 'Không còn lô đạt QC đang tồn';
+  S.ui.lot = code; renderLotTree();
   S.ui._trace = G; requestAnimationFrame(() => { drawTrace(); const sc = document.querySelector('#traceMore .tr-scroll'), on = sc && sc.querySelector('.tn.on'); if(on){ const r = on.getBoundingClientRect(), q = sc.getBoundingClientRect(); sc.scrollLeft = Math.max(0, sc.scrollLeft + (r.left - q.left) - (sc.clientWidth - r.width) / 2); } });
 };
 function drawTrace(){
@@ -2757,7 +2759,7 @@ function renderVariance(){
   if(!others.length){ box.hidden = true; return; } box.hidden = false;
   if(others.indexOf(S.ui.varWith) < 0){ const L = R.lots[code], prev = others.filter(c => R.lots[c].date <= L.date); S.ui.varWith = prev.length ? prev[prev.length - 1] : others[0]; }
   const a = S.ui.varWith, v = lotVariance(a, code);
-  box.innerHTML = '<div class="panel-head"><h2>Vì sao giá thành khác</h2><label class="field" for="varSel">So với lô <select id="varSel">' + others.map(c => opt(c, c + ' · ' + dmy(R.lots[c].date), a)).join('') + '</select></label></div>' + (v ? varianceHTML(v, a, code) : '');
+  box.innerHTML = '<div class="panel-head"><h2>So với lô khác</h2><label class="field" for="varSel">So với lô <select id="varSel">' + others.map(c => opt(c, c + ' · ' + dmy(R.lots[c].date), a)).join('') + '</select></label></div>' + (v ? varianceHTML(v, a, code) : '');
 }
 // Bản tin điều hành: 3–4 điều đáng biết trong kỳ, viết từ số liệu theo quy tắc
 function briefItems(){
@@ -2766,7 +2768,7 @@ function briefItems(){
   let best = null; itemsOf(D, 'SP').forEach(k => { const ls = Object.values(R.lots).filter(L => L.item === k && L.src === 'NK' && L.inQty > EPS); if(ls.length < 2) return;
     ls.sort((a, b) => a.inValue / a.inQty - b.inValue / b.inQty); const lo = ls[0], hi = ls[ls.length - 1], s = (hi.inValue / hi.inQty) / (lo.inValue / lo.inQty) - 1; if(!best || s > best.s) best = {k, lo, hi, s}; });
   if(best){ const v = lotVariance(best.lo.code, best.hi.code), r = v && v.root;
-    out.push({t:D.items[best.k].name + ': lô ' + best.hi.code + ' giá thành cao hơn lô ' + best.lo.code + ' ' + fmtD(best.s * 100, 1) + '%' + (r ? ', gốc ở giá ' + D.items[r.k].name.toLowerCase() + ' ' + (r.p1 > r.p0 ? 'tăng' : 'giảm') + ' ' + fmtD(Math.abs(r.p1 / r.p0 - 1) * 100, 1) + '%' : '') + '.', go:'lots', opt:{lot:best.hi.code, lotKind:'SP', varWith:best.lo.code}}); }
+    out.push({t:D.items[best.k].name + ': lô ' + best.hi.code + ' giá thành cao hơn lô ' + best.lo.code + ' ' + fmtD(best.s * 100, 1) + '%' + (r ? ', gốc ở giá ' + D.items[r.k].name.toLowerCase() + ' ' + (r.p1 > r.p0 ? 'tăng' : 'giảm') + ' ' + fmtD(Math.abs(r.p1 / r.p0 - 1) * 100, 1) + '%' : '') + '.', go:'trace', opt:{tlot:best.hi.code, varWith:best.lo.code}}); }
   const ml = matLots(R).filter(x => x.chg != null).sort((a, b) => b.chg - a.chg)[0];
   if(ml && ml.chg > PRICE_WARN) out.push({t:D.items[ml.item].name + ' lô ' + ml.code + ' giá tăng ' + fmtD(ml.chg, 1) + '% so với lô trước. Kéo thử ở Giả lập giá để xem giá bán cần chỉnh.', go:'sim', opt:{sim:{[ml.item]:Math.round(ml.chg)}}});
   const tk = tankState(), rd = Object.keys(tk).filter(k => tk[k].some(x => x.ripe != null && x.ripe >= 1)).map(k => k.split('|')[1]);
@@ -2816,6 +2818,37 @@ function kkMake(){
 function renderBrief(){ const xs = briefItems(); S.ui._brief = xs;
   $('brief').innerHTML = '<div class="panel-head"><h2>Bản tin tháng ' + esc(S.data.period.label) + '</h2></div><ol class="brief">' + xs.map((x, i) => '<li><span>' + esc(x.t) + '</span>' + (x.go !== 'dash' ? '<button class="btn sm" type="button" data-brief="' + i + '">Xem</button>' : '') + '</li>').join('') + '</ol>'; }
 
+RENDER.mat = function(){
+  const tab = S.ui.mtab === 'ledger' ? 'ledger' : 'price';
+  $('matTabs').innerHTML = [['price', 'Giá theo lô'], ['ledger', 'Sổ chi tiết và giá xuất kho']].map(([k, l]) => '<button type="button" data-mtab="' + k + '" aria-pressed="' + (tab === k) + '">' + l + '</button>').join('');
+  document.querySelectorAll('#v-mat [data-mp]').forEach(el => { el.hidden = el.dataset.mp !== tab; });
+  if(tab === 'ledger') RENDER.cogs(); else renderMatPrices();
+};
+
+// ================= Tìm nhanh: lô, chứng từ, bồn, lệnh, hàng, người =================
+function qsIndex(){
+  const D = S.data, out = [];
+  Object.values(R.lots).forEach(L => { const it = D.items[L.item]; if(!it) return; out.push({k:'Lô', t:L.code + ' · ' + it.name, s:(L.mh || '') + ' · ' + lotSource(R, L.code), h:L.code + ' ' + (L.mh || '') + ' ' + it.name + ' ' + lotSource(R, L.code), go:['trace', {tlot:L.code}]}); });
+  R.active.forEach(d => out.push({k:'Chứng từ', t:d.no + (d.kno ? ' · ' + d.kno : ''), s:ddmm(d.date) + ' · ' + d.desc, h:d.no + ' ' + (d.kno || '') + ' ' + d.desc + ' ' + partyName(D, d.partyId), go:['docs', {doc:d.no, filter:'all'}]}));
+  Object.keys(D.lsx).forEach(k => { const x = D.lsx[k]; out.push({k:'Lệnh sản xuất', t:x.no, s:itName(x.item) + ' · ' + dmy(x.date), h:x.no + ' ' + itName(x.item), go:['cost', {lsxSel:k}]}); });
+  const tk = tankState(); (D.locs || []).forEach(z => { const c = locCode(z), xs = tk[z.wh + '|' + c], x = xs && xs[0];
+    out.push({k:LOC_KIND[z.kind], t:c + ' · ' + whName(z.wh), s:x ? (x.kind === 'wip' ? 'Đang ủ ' + x.no : 'Lô ' + x.lot) + ' · ' + fmtQ(x.q) + ' ' + unitOf(D, x.item) : 'Trống', h:c + ' ' + LOC_KIND[z.kind] + ' bồn', go: x && x.kind === 'lot' ? ['trace', {tlot:x.lot}] : ['tanks']}); });
+  Object.keys(D.items).forEach(k => { const it = D.items[k]; out.push({k:'Hàng', t:it.name, s:it.code + ' · ' + (it.grp ? GRP_NAME[it.grp] : GROUP_NAME(it)), h:it.name + ' ' + it.code + ' ' + (it.misa || ''), go: it.kind === 'NVL' ? ['mat', {mat:k, mtab:'price'}] : ['lots', {lotKind:it.kind}]}); });
+  STAFF.forEach(([n, r, , w]) => out.push({k:'Người', t:n, s:r + ' · ' + w, h:n + ' ' + r + ' ' + w, go:['items', {itab:'staff'}]}));
+  return out;
+}
+let QS = {list:[], i:0};
+function qsRender(q){
+  const box = $('qsList'); q = (q || '').trim(); if(!q){ box.hidden = true; return; }
+  const all = qsIndex(), starts = [], has = [];
+  all.forEach(x => { if(!match(x.h, q)) return; (fold(x.t).indexOf(fold(q)) === 0 ? starts : has).push(x); });
+  QS.list = starts.concat(has).slice(0, 8); QS.i = 0;
+  box.innerHTML = QS.list.length ? QS.list.map((x, i) => '<button type="button" role="option" class="qs-o' + (i === 0 ? ' on' : '') + '" data-qs="' + i + '" aria-selected="' + (i === 0) + '"><span class="qs-k">' + esc(x.k) + '</span><b>' + esc(x.t) + '</b><span class="qs-s">' + esc(x.s) + '</span></button>').join('') : '<div class="qs-none">Không tìm thấy "' + esc(q) + '"</div>';
+  box.hidden = false;
+}
+function qsGo(i){ const x = QS.list[i]; if(!x) return; $('qs').value = ''; $('qsList').hidden = true; $('qs').blur(); go(x.go[0], Object.assign({}, x.go[1] || {})); }
+function qsMove(d){ const os = $('qsList').querySelectorAll('.qs-o'); if(!os.length) return; QS.i = (QS.i + d + os.length) % os.length; os.forEach((o, i) => { o.classList.toggle('on', i === QS.i); o.setAttribute('aria-selected', String(i === QS.i)); }); }
+
 // ================= Giá nguyên liệu theo lô =================
 const PRICE_BAD = 10, PRICE_WARN = 5;   // % tăng so với lô trước cùng vật tư: > 10% đỏ, > 5% cam
 function matLots(Rx){
@@ -2828,7 +2861,7 @@ function matLots(Rx){
   return out; }
 const chgText = c => c == null ? '<span class="muted">—</span>' : Math.abs(c) < 0.05 ? '0%' : '<span class="' + (c > PRICE_BAD ? 's-bad' : c > PRICE_WARN ? 's-warn' : '') + '">' + (c > 0 ? '+' : '−') + fmtD(Math.abs(c), 1) + '%</span>';
 let matData = null;
-RENDER.mat = function(){
+const renderMatPrices = function(){
   const D = S.data, all = matLots(R), ks = itemsOf(D, 'NVL');
   if(S.ui.mat !== 'all' && !D.items[S.ui.mat]) S.ui.mat = ks[0];
   $('matSel').innerHTML = opt('all', 'Tất cả', S.ui.mat) + ks.map(k => opt(k, D.items[k].code + ' · ' + D.items[k].name, S.ui.mat)).join('');
@@ -3870,13 +3903,13 @@ const TOUR = [
     b:'Mỗi sản phẩm: số lượng bán, doanh thu, giá vốn, lãi gộp, số lô đã bán và đơn giá vốn thấp nhất – cao nhất giữa các lô. Bấm một dòng để xem từng lô.'},
   {view:'mat', sel:'#matTbl', t:'Giá nguyên liệu theo lô',
     b:'Mọi lô nguyên liệu, bao bì, phụ gia: nhà cung cấp, đơn giá, so với lô trước (đỏ khi tăng trên 10%, cam trên 5%), còn lại bao nhiêu và đã dùng cho lệnh sản xuất nào.'},
-  {view:'lots', sel:'#lotTree', t:'Giá vốn theo lô',
+  {view:'trace', sel:'#lotTree', t:'Hồ sơ lô: giá vốn được cấu thành từ đâu',
     b:'Mỗi lô thành phẩm có giá riêng theo lệnh sản xuất. Cây cấu thành đi từ lô thành phẩm qua lệnh, từng phiếu xuất, lô bán thành phẩm, tới lô cá linh và nhà cung cấp; cuối cây là các hóa đơn bán từ lô.'},
   {view:'cost', sel:'#lsxCost', t:'Giá thành theo lệnh sản xuất',
     b:'Mỗi lệnh là một đối tượng tập hợp chi phí. Lệnh có phiếu nhập kho là hoàn thành; lệnh chưa nhập kho là dở dang. Nhân công và sản xuất chung phân bổ theo chi phí nguyên vật liệu trực tiếp của lệnh.'},
   {view:'stock', sel:'#lotPanel', t:'Tồn kho chi tiết: lô, mã hóa, bồn / trái / phuy',
     b:'Tồn theo tên hàng, mã lô, mã hóa và vị trí chứa ở 3 kho. Lô "Không đạt" có nút xuất hủy.'},
-  {view:'cogs', sel:'#method', settings:true, t:'Giá xuất: thực tế đích danh theo lô',
+  {view:'mat', sel:'#method', settings:true, t:'Giá xuất: thực tế đích danh theo lô',
     b:'Mặc định giá xuất lấy đúng giá của lô được chọn. Đổi sang bình quân hoặc nhập trước – xuất trước để so sánh.'},
   {view:'reports', sel:'#repOut', t:'Báo cáo tính từ bút toán',
     b:'Sổ nhật ký chung, sổ cái, cân đối số phát sinh, kết quả kinh doanh, công nợ, sổ quỹ, tiến độ sản xuất. Nút "Tải bảng" tải tệp mở được bằng Excel.'}
@@ -3985,6 +4018,11 @@ document.addEventListener('input', e => { const k = e.target && e.target.dataset
     sp.className = 'kk-d ' + (df == null || isNaN(df) ? '' : Math.abs(df) < EPS ? 'pos' : 's-bad'); sp.textContent = df == null || isNaN(df) ? '' : Math.abs(df) < EPS ? 'Khớp' : (df > 0 ? '+' : '−') + fmtQ(Math.abs(df)) + ' ' + it.uom; } });
 document.addEventListener('change', e => { if(e.target && e.target.dataset && e.target.dataset.kk) RENDER.count(); });
 $('kkScan').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); kkScan(e.target.value); e.target.value = ''; } });
+$('qs').addEventListener('input', e => { qsRender(e.target.value); $('qs').setAttribute('aria-expanded', String(!$('qsList').hidden)); });
+$('qs').addEventListener('keydown', e => { if(e.key === 'ArrowDown'){ e.preventDefault(); qsMove(1); } else if(e.key === 'ArrowUp'){ e.preventDefault(); qsMove(-1); } else if(e.key === 'Enter'){ e.preventDefault(); qsGo(QS.i); } else if(e.key === 'Escape'){ e.target.value = ''; $('qsList').hidden = true; e.target.blur(); } });
+$('qsList').addEventListener('mousedown', e => e.preventDefault());
+$('qs').addEventListener('blur', () => setTimeout(() => { $('qsList').hidden = true; }, 150));
+document.addEventListener('keydown', e => { if((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')){ e.preventDefault(); $('qs').focus(); $('qs').select(); } });
 $('traceSel').addEventListener('change', e => { S.ui.tlot = e.target.value; RENDER.trace(); });
 $('lotSearch').addEventListener('input', e => { S.ui.sq = e.target.value; RENDER.stock(); });
 $('itemSel').addEventListener('change', e => { S.ui.item = e.target.value; S.ui.sel = null; renderAll(); });
@@ -3995,8 +4033,8 @@ $('matSel').addEventListener('change', e => { S.ui.mat = e.target.value; RENDER.
 $('matSearch').addEventListener('input', e => { S.ui.mq = e.target.value; RENDER.mat(); });
 $('matTbl').addEventListener('click', e => { const tr = e.target.closest('[data-mat]'); if(!tr) return; S.ui.mat = tr.dataset.mat; RENDER.mat(); try{ $('matDetail').scrollIntoView({block:'start', behavior: reduced() ? 'auto' : 'smooth'}); }catch(_){} });
 $('matTbl').addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ const tr = e.target.closest('[data-mat]'); if(!tr) return; e.preventDefault(); S.ui.mat = tr.dataset.mat; S.ui.refocus = '[data-mat="' + S.ui.mat + '"]'; RENDER.mat(); } });
-$('lotCostTbl').addEventListener('click', e => { pickRow(e, 'data-lot-sel', 'lot', 'lotTree'); });
-$('lotCostTbl').addEventListener('keydown', e => rowKeys(e, 'data-lot-sel', 'lot', 'lotTree'));
+$('lotCostTbl').addEventListener('click', e => { const tr = e.target.closest('[data-lot-sel]'); if(tr && !e.target.closest('button,input')) go('trace', {tlot:tr.getAttribute('data-lot-sel')}); });
+$('lotCostTbl').addEventListener('keydown', e => { const tr = e.target.closest('[data-lot-sel]'); if(tr && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); go('trace', {tlot:tr.getAttribute('data-lot-sel')}); } });
 $('lsxCost').addEventListener('click', e => pickRow(e, 'data-lsx-sel', 'lsxSel', 'cards'));
 $('lsxCost').addEventListener('keydown', e => rowKeys(e, 'data-lsx-sel', 'lsxSel', 'cards'));
 $('cogsTbl').addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ const tr = e.target.closest('[data-goto-lots]'); if(tr){ e.preventDefault(); tr.click(); } } });
@@ -4035,7 +4073,7 @@ $('btnSide').addEventListener('click', () => setSide(!$('app').classList.contain
 dlg.addEventListener('toggle', e => { if(F && e.target && e.target.id === 'fFold') F.prevOpen = e.target.open; }, true);
 // Uỷ quyền click toàn trang
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-act],[data-item-edit],[data-item-del],[data-lsx-edit],[data-open-doc],[data-goto],[data-goto-view],[data-goto-lot],[data-goto-lots],[data-edit],[data-void],[data-csv],[data-pv],[data-hint],[data-new],[data-filter],[data-wh],[data-qc],[data-lk],[data-tank],[data-brief],[data-kwh],[data-ttab],[data-flow],[data-goto-trace],[data-itab],[data-tlot],[data-tem],[data-print],[data-lot-kind],[data-tree],[data-scrap]');
+  const t = e.target.closest('[data-act],[data-item-edit],[data-item-del],[data-lsx-edit],[data-open-doc],[data-goto],[data-goto-view],[data-goto-lot],[data-goto-lots],[data-edit],[data-void],[data-csv],[data-pv],[data-hint],[data-new],[data-filter],[data-wh],[data-qc],[data-lk],[data-mtab],[data-qs],[data-tank],[data-brief],[data-kwh],[data-ttab],[data-flow],[data-goto-trace],[data-itab],[data-tlot],[data-tem],[data-print],[data-lot-kind],[data-tree],[data-scrap]');
   if(!t) return;
   const ds = t.dataset;
   if(ds.new){ setMenu(false); return openForm(ds.new); }
@@ -4045,6 +4083,8 @@ document.addEventListener('click', e => {
   if(ds.filter){ S.ui.filter = ds.filter; return RENDER.docs(); }
   if(ds.wh){ S.ui.wh = ds.wh; return RENDER.stock(); }
   if(ds.qc) return openQC(ds.qc);
+  if(ds.mtab){ S.ui.mtab = ds.mtab; return RENDER.mat(); }
+  if(ds.qs){ return qsGo(+ds.qs); }
   if(ds.tank){ const xs = tankState()['BBT|' + ds.tank]; if(!xs) return toast('Bồn ' + ds.tank + ' đang trống.'); const x = xs[0]; return x.kind === 'wip' ? go('cost') : go('trace', {tlot:x.lot}); }
   if(ds.brief){ const x = (S.ui._brief || [])[+ds.brief]; if(x) go(x.go, x.opt); return; }
   if(ds.kwh){ const d = S.ui._kk; if(d && Object.keys(d.counts).length && d.wh !== ds.kwh) return toast('Đang đếm ' + WH[d.wh].name + ': lập biên bản hoặc xóa số đã đếm trước khi đổi kho.'); S.ui.kwh = ds.kwh; if(d) d.wh = ds.kwh; return RENDER.count(); }
@@ -4059,11 +4099,9 @@ document.addEventListener('click', e => {
   if(ds.openDoc){ if(dlg.open) closeDialog(); return openDoc(ds.openDoc); }
   if(ds.goto){ const p = ds.goto.split('|'); go('cogs', {item:p[0], sel:p[1]}); if(narrow()) try{ $('explain').scrollIntoView({block:'start'}); }catch(_){} return; }
   if(ds.gotoView) return go(ds.gotoView);
-  if(ds.gotoLot){ const L = R.lots[ds.gotoLot]; if(!L) return; const kd = S.data.items[L.item].kind;
-    if(kd === 'NVL') return go('mat', {mat:L.item});
-    go('lots', {lot:ds.gotoLot, lotKind:kd}); try{ $('lotTree').scrollIntoView({block:'start'}); }catch(_){} return; }
+  if(ds.gotoLot){ if(R.lots[ds.gotoLot]) go('trace', {tlot:ds.gotoLot}); return; }
   if(ds.gotoLots){ const it = ds.gotoLots, kd = S.data.items[it].kind, Ls = Object.values(R.lots).filter(L => L.item === it).sort((a, b) => a.date < b.date ? 1 : -1);
-    return go('lots', {lotKind:kd, lot: (Ls.find(L => L.src === 'NK') || Ls[0] || {}).code || null}); }
+    return go('lots', {lotKind:kd}); }
   if(ds.lotKind){ S.ui.lotKind = ds.lotKind; S.ui.lot = null; return RENDER.lots(); }
   if(ds.tree){ const o = S.ui.treeOpen || (S.ui.treeOpen = {}); o[ds.tree] = o[ds.tree] === false; S.ui.refocus = '[data-tree="' + ds.tree + '"]'; renderLotTree(); const f = document.querySelector(S.ui.refocus); S.ui.refocus = null; if(f) f.focus(); return; }
   if(ds.scrap){ const p = ds.scrap.split('|'); return openForm('XH', {preset:{date:'2026-01-31', wh:p[1], treat:'632', desc:'', lines:[{item:p[0], lot:p[2], loc:p[3] || '', qty:''}]}}); }
