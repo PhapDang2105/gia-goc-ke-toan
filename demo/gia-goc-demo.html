@@ -89,7 +89,8 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 .top{display:flex;align-items:center;gap:8px 12px;padding:8px 20px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:6;min-height:48px}
 .top h1{font-size:18px;font-weight:600;margin:0;display:flex;align-items:center;gap:10px;white-space:nowrap;min-width:0}
 .top .spacer{flex:1}
-.qs{position:relative;flex:0 1 280px;min-width:160px}
+.top h1{flex:0 0 auto;white-space:nowrap}
+.qs{position:relative;flex:1 1 220px;min-width:160px;max-width:320px}
 .qs .inp{width:100%;min-height:32px}
 .qs-list{position:absolute;left:0;top:calc(100% + 4px);width:min(440px,92vw);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);z-index:30;max-height:70vh;overflow:auto;padding:4px}
 .qs-o{all:unset;box-sizing:border-box;display:grid;grid-template-columns:96px 1fr;gap:0 10px;width:100%;padding:7px 8px;cursor:pointer;border-radius:var(--r)}
@@ -104,7 +105,10 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 @media (max-width:640px){.fromflow{padding-inline:16px}}
 .fl-n.last{box-shadow:0 0 0 2px var(--accent)}
 .top .back{flex:none}.top .back.off{visibility:hidden}
-.settings{display:flex;align-items:center;gap:8px 12px}
+.settings{display:none;position:absolute;right:20px;top:calc(100% + 4px);z-index:30;flex-direction:column;align-items:stretch;gap:10px;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);min-width:300px}
+.settings.open{display:flex}
+.settings .field{display:flex;justify-content:space-between;gap:12px}
+.top .settings .field>span{display:inline}
 .field{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);white-space:nowrap}
 .field select,.field input,.inp{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:3px 7px;color:var(--fg);min-height:30px}
 .field select:disabled,.field input:disabled{opacity:.6;cursor:not-allowed}
@@ -126,7 +130,7 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 .grid{display:grid;gap:12px}
 .kpis{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr))}
 .tabs{align-self:flex-start;flex-wrap:wrap}
-.tbl-wrap td{white-space:normal;overflow-wrap:anywhere}
+.tbl-wrap td{white-space:normal;overflow-wrap:normal}
 .tbl-wrap td.n,.tbl-wrap td.acc,.tbl-wrap td.mono,.tbl-wrap td .mono,.tbl-wrap td.c{white-space:nowrap;overflow-wrap:normal}
 .tbl-wrap td:first-child{min-width:72px}
 tr.more{display:none}
@@ -382,7 +386,7 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
   .top .menu-wrap{order:9}
   .top .spacer{display:none}
   .mobile-only{display:inline-flex!important}
-  .settings{display:none;order:9;width:100%;flex-direction:column;align-items:stretch;gap:8px}
+  .settings{display:none;order:9;width:100%;flex-direction:column;align-items:stretch;gap:8px;position:static;box-shadow:none;border:0;padding:0;min-width:0}
   .settings.open{display:flex}
   .settings .field{justify-content:space-between}
   .top .field>span{display:inline}
@@ -594,7 +598,7 @@ button.tn{cursor:pointer}button.tn:hover{background:var(--hover)}
       <div class="qs"><label class="vh" for="qs">Tìm nhanh</label><input type="search" id="qs" class="inp" placeholder="Tìm lô, phiếu, bồn, người…  Ctrl+K" autocomplete="off" role="combobox" aria-controls="qsList" aria-expanded="false"><div class="qs-list" id="qsList" role="listbox" hidden></div></div>
       <div class="spacer"></div>
       <span class="period">Kỳ <b>01/2026</b></span>
-      <button class="btn sm mobile-only" id="btnSettings" type="button" aria-expanded="false" aria-controls="settings">Thiết lập</button>
+      <button class="btn sm" id="btnSettings" type="button" aria-expanded="false" aria-controls="settings">Thiết lập</button>
       <div class="settings" id="settings">
         <label class="field" for="regime"><span>Chế độ</span>
           <select id="regime" aria-label="Chế độ kế toán"><option value="TT99">Thông tư 99/2025</option><option value="TT133">Thông tư 133/2016</option></select>
@@ -4067,6 +4071,7 @@ menu.addEventListener('keydown', e => {
   if(e.key === 'Escape'){ setMenu(false); btnNew.focus(); }
 });
 document.addEventListener('click', e => { if(!menu.hidden && !e.target.closest('.menu-wrap')) setMenu(false); });
+document.addEventListener('click', e => { const s = $('settings'); if(s.classList.contains('open') && !e.target.closest('#settings,#btnSettings') && !(T && T.openedSet)){ s.classList.remove('open'); $('btnSettings').setAttribute('aria-expanded', 'false'); } });
 $('btnSettings').addEventListener('click', () => { const s = $('settings'), o = !s.classList.contains('open'); s.classList.toggle('open', o); $('btnSettings').setAttribute('aria-expanded', o ? 'true' : 'false'); });
 ['', '2'].forEach(x => { $('btnTheme' + x).addEventListener('click', toggleTheme); $('btnResetData' + x).addEventListener('click', openReset); });
 $('btnSide').addEventListener('click', () => setSide(!$('app').classList.contains('collapsed'), true));
