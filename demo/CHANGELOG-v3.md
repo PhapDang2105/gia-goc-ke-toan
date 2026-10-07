@@ -1,5 +1,42 @@
 # Giá Gốc demo v3: nhật ký thay đổi
 
+## v3.2: theo dõi theo vị trí chứa và mã hóa
+
+Theo file Excel sổ kho BTP của nhà máy Bà Ba Thạo và yêu cầu "hàng tồn kho theo dõi: tên hàng + mã lot + mã hóa + bồn/trái/phuy". Đối chiếu tính năng file → yêu cầu: `docs/YEU-CAU-KHACH-HANG.md` §9; dữ liệu và DDL: `docs/research/07-…` §2.8. Không thêm chữ giải thích trên giao diện.
+
+### Engine
+- **Vị trí chứa** = khu + loại (Bồn / Trái / Phuy) + số, theo kho (`D.locs`, 31 vị trí mẫu ở nhà máy: 26 bồn khu A, B, C, 2, 4; `2.Trái`, `5.Trái`; `5.Phuy`, `A.Phuy`, `B.Phuy`). Ký hiệu `A.15`, `5.Trái`, `B.Phuy`; khi khai vị trí mới nhận các biến thể ghi tay (`c. 12`, `2. trái`, `B.phuy`) và chuẩn hoá, chặn bồn thiếu số (`A.`).
+- `valuate` giữ thêm ô số lượng `lcells` theo **(kho, lô, vị trí)**; **tồn âm kiểm theo ô này** (xuất vượt tồn của một bồn bị báo dù cả lô còn hàng). Giá trị vẫn theo ô (kho, lô): vị trí chỉ chia số lượng; giá trị theo vị trí trong bảng tồn = giá trị lô phân bổ theo SL (R1 b), chỉ để hiển thị.
+- Dòng phiếu mang `loc` (CK thêm `locTo`); hàng trả lại về đúng lô và vị trí của dòng hoá đơn gốc. **Chuyển vị trí trong cùng kho** bằng phiếu CK (`whTo = wh`, vị trí đến khác vị trí đi); không bút toán; N-X-T theo kho không tính chuyển nội bộ cùng kho. BTP bắt buộc chọn vị trí ở kho có danh mục vị trí.
+- Một lô nằm ở nhiều vị trí: nhiều dòng cùng mã lô trong một phiếu nhập; lô gộp SL / giá trị các dòng; thẻ giá thành gộp lô nhập kho theo mã lô (trước đây mỗi dòng một lô).
+- **Mã lô** theo sổ kho: `DDMMYY-nn` (ngày + số mẻ trong ngày), tự gợi ý, sửa được, kiểm trùng toàn công ty (cả lô của phiếu đã huỷ), không cấp lại. Dữ liệu mẫu đổi sang định dạng này (`NL-CL-260105-01` → `050126-01`…).
+- **Mã hóa** (theo cập nhật của người dùng: mã tự sinh): hệ thống cấp khi tạo lô (phiếu nhập mua, nhập kho SX, kiểm kê thừa ngoài sổ) = nhóm hàng + YYMM + số thứ tự 4 chữ số (`BTP-2601-0003`, `PG-2601-0005`); duy nhất, không sửa, không đổi khi chuyển kho / chuyển bồn, không cấp lại; sửa phiếu giữ mã hóa cũ. Mọi lô mẫu có mã hóa. Không còn nhập tay hay cảnh báo "kiểm tra mã lot".
+- Vật tư thêm **Mã MISA** (mã giả định) và **Tồn tối thiểu**; số **phiếu kho** `PNK-YYMMnnn` (PN, NK, TL) / `PXK-YYMMnnn` (PX, HD, CK) cấp theo tháng, lưu trên chứng từ; **lý do xuất** suy ra từ loại chứng từ (Sản xuất, Bán hàng, Chuyển kho Bình Tây, Chuyển kho 97, Chuyển vị trí, Khác).
+- Dữ liệu mẫu: tồn đầu lô BTP `261225-01` ở 2 bồn (A.15, A.26); NK0001 vào A.27 + A.28; NK0002 vào A.29; thêm **CK0003** chuyển 400 kg lô `240126-01` từ A.29 sang A.30 (37 chứng từ); muối ở `5.Phuy`, tôm ở `5.Trái`; tên BTP đổi thành "BTP Cá linh ủ thính". Key lưu trữ đổi sang `giagoc-demo-v32` (dữ liệu v3.1 đã lưu bị bỏ qua).
+
+### Giao diện
+- Kho & lô: bảng **Tồn kho chi tiết** (thay "Tồn kho theo kho và lô"): Tên hàng · Mã lô · Mã hóa · Vị trí · Kho · HSD · QC · SL tồn · Số ngày lưu kho · Giá trị; lọc kho (dùng chung với N-X-T), lọc loại vị trí (Tất cả / Bồn / Trái / Phuy / Chưa xếp), ô tìm theo tên, mã lô, mã hóa, vị trí; dòng cộng theo tên hàng.
+- Phiếu xuất SX, hoá đơn, chuyển kho: chọn **"Lô (mã hóa) · Vị trí · tồn"**, gợi ý HSD gần nhất rồi lô cũ nhất, cột "Tồn tại vị trí". Chuyển kho có cột "Vị trí đến", cho phép kho đến = kho đi.
+- Phiếu nhập mua: cột Mã lô (sửa được), Mã hóa (chỉ đọc), Vị trí chứa + nút "+ Vị trí" (cùng lô sang vị trí khác). Nhập kho SX: ô Mã lô, bảng Vị trí chứa / SL đạt + "+ Vị trí", mã hóa hiện trong phần tóm tắt.
+- Kiểm kê theo lô và vị trí: SL sổ, SL kiểm kê, chênh lệch, **% chênh lệch**, giá trị; hàng thừa ngoài sổ chọn vị trí.
+- Chi tiết chứng từ: số phiếu kho, lý do xuất, cột Mã hóa và Vị trí (CK: đi → đến; KK: sổ · đếm · %); nút **In phiếu** (PNK / PXK) in bằng `window.print()`; bản in ở `#printArea` chỉ hiện với `@media print`: "Nhà máy chế biến mắm", PHIẾU NHẬP / XUẤT KHO, ngày, số phiếu, chứng từ, kho, lý do xuất / lệnh SX / đối tượng, bảng STT · Tên hàng · Lot · Mã hóa · Vị trí · ĐVT · Số lượng · Ghi chú, chữ ký Người lập phiếu · Người giao (nhận) hàng · Thủ kho.
+- Danh sách chứng từ hiện số phiếu kho dưới số chứng từ; tìm được theo số phiếu kho, mã hóa, vị trí.
+- Danh mục: cột Mã MISA, Tồn tối thiểu, Tồn hiện tại (+ "Cần đặt thêm"); bảng **Vị trí chứa** (kho, ký hiệu, loại, khu, số, sức chứa, đang chứa lô nào) và form "+ Vị trí chứa" (cũng có trong menu "+ Lập chứng từ"). Tổng quan → Việc cần làm: "**Cần đặt thêm**" khi tồn ≤ tối thiểu (mẫu: đường 50/50 kg, gia vị 7/10 kg).
+- Báo cáo mới: **N-X-T theo lô và vị trí** (khoảng ngày trong kỳ, lọc kho) và **Sổ chi tiết mặt hàng theo lô và vị trí** (tồn theo ô và tồn tổng, cột phiếu kho, mã hóa).
+- Giá xuất kho, truy xuất: hiện vị trí và mã hóa của lô. Tour bước 3 trỏ vào Tồn kho chi tiết.
+
+### Đã kiểm tra (Playwright, Chromium, chặn font)
+- `node --check` phần script: đạt. `__giagoc.selfTest()`: **1.216 tổ hợp, 0 lỗi** (~16 giây) = 2 chế độ × 4 phương pháp × giờ máy 800/1200 × dở dang mặc định/0 × **19 biến thể** × mở/khóa. 4 biến thể mới: `lot2loc` (một lô nhập vào A.16 + A.17, xuất từ một bồn), `move` (chuyển bồn A.30 → A.16 trong cùng kho rồi xuất từ bồn mới), `negLoc` (xuất 500 kg từ A.30 chỉ có 400 kg trong khi lô còn 1.200 kg → phải báo tồn âm đúng bồn, thiếu 100, bước tiếp theo là 4, không khóa được), `kkLoc` (kiểm kê thiếu ở A.29, thừa ở A.30). Bất biến mới ở mọi tổ hợp: Σ SL theo vị trí = SL ô (kho, lô); không vị trí nào âm ở biến thể hợp lệ. Thêm kiểm: form CK chặn vị trí đến trùng vị trí đi; form PN chặn mã lô trùng; mã hóa tự sinh đúng dạng, hai dòng cùng lô cùng mã hóa, lô khác mã hóa khác; mọi lô có mã hóa và không trùng. Bất biến cũ giữ nguyên (Nợ = Có, kho = sổ cái 152/154/155/156, Zt = DDĐK + C − DDCK, Z = Zt − hỏng, Σ lô = Z…).
+- Số chính **không đổi** so với v3.1: doanh thu 225.990.000, giá vốn 154.605.503, z BTP 71.848,61, ML5 44.597,95, MT2 39.371,15, 154 = 23.426.252, tồn kho 284.266.497, lợi nhuận 71.462.497, TH0001 5.898.500.
+- Độ nhạy của selfTest (bản sửa hỏng tạm): kiểm âm theo lô thay vì theo vị trí → 192 lỗi; chuyển bồn ghi về vị trí đi thay vì vị trí đến → 480 lỗi.
+- Thao tác giao diện thật (click / gõ / chọn / phím Enter trên phần tử nhìn thấy; không gọi `__giagoc`), **1366×768 và 390×844, mỗi khung 41/41 bước đạt** + 5 bước bổ sung: Tổng quan thấy "Cần đặt thêm"; lập phiếu nhập kho SX lô `310126-01` vào 2 bồn A.16 (500) và A.17 (300) bằng "+ Vị trí", thấy mã hóa tự sinh `BTP-2601-0003` không có ô sửa; phiếu nhập mua thấy mã hóa `PG-2601-0005` chỉ đọc; phiếu nhập mua một lô vào `5.Phuy` + `A.Phuy` qua "+ Vị trí"; Tồn kho chi tiết thấy 2 dòng cùng lô khác vị trí; tìm tồn theo mã hóa ra đúng 2 dòng của lô; lọc Phuy; chuyển bồn A.16 → A.18 bằng CK (sau đó A.16 = 400, A.17 = 300, A.18 = 100); xuất 250 kg từ A.18 bị chặn với thông báo "Xuất quá tồn … vị trí A.18 … thiếu 150 kg", phiếu không lưu; tìm chứng từ theo mã hóa ra NK0006 và CK0004; kiểm kê A.16 sổ 400 đếm 390 → "thiếu 10 · −2,5%", lưu được; In phiếu NK0006 → với `emulateMedia('print')` chỉ còn bản in PHIẾU NHẬP KHO `PNK-2601014`, 2 dòng A.16 / A.17, mã hóa, chữ ký; 2 báo cáo mới có dữ liệu; "Chạy tất cả" khóa đủ 12 bước; thêm vị trí "c. 12" → `C.12`, "A." bị chặn; sửa tồn tối thiểu hũ 250g = 900 → Tổng quan báo cần đặt thêm. 10 trang trước và sau khóa sổ, 2 báo cáo mới, 15 form: không pageerror / console error, không NaN / undefined, `scrollWidth ≤ innerWidth`.
+- DDL §2.8 của `research/07` chạy trên PostgreSQL 16 với bộ giả lập tối thiểu: 8 phép thử đạt (CHECK bồn thiếu số, UNIQUE ký hiệu, cột `code` sinh ra, FK vị trí đúng kho, bắt buộc vị trí, bộ đếm mã hóa theo tháng, mã hóa bất biến / duy nhất, `stock_balances` theo vị trí, RLS hai tenant).
+
+### Giả định chưa xác minh (chờ khách, §9.7 tài liệu yêu cầu)
+- Ý nghĩa và định dạng mã hóa (đang là đề xuất mã tự sinh); mã lô duy nhất toàn công ty hay theo mặt hàng; quy tắc số phiếu kho (file có cả `PXK-0126-001` và `PNK-2609001`).
+- Danh mục bồn / trái / phuy đầy đủ và sức chứa; "trái" là gì; ký hiệu không dấu chấm (`H1`, `MA1`…); kho Bình Tây / 97 có theo vị trí không (demo: không có vị trí).
+- Chỉ BTP bắt buộc chọn vị trí; NVL, bao bì, thành phẩm để "chưa xếp" được. Mã MISA trong dữ liệu mẫu là mã giả định.
+
 ## v3.1: giao diện gọn
 
 Theo yêu cầu người vận hành: bỏ hết câu chữ giải thích, thiết kế lại cho gọn, dễ thao tác. Engine, công thức tính và `selfTest()` không đổi.

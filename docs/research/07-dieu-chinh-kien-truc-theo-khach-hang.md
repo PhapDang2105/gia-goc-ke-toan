@@ -1,6 +1,6 @@
 # 07 — Điều chỉnh kiến trúc và dữ liệu theo yêu cầu khách hàng
 
-> Phiên bản: 0.1 · Ngày: 2026-10-06 · Trạng thái: đề xuất để review
+> Phiên bản: 0.2 · Ngày: 2026-10-07 · Trạng thái: đề xuất để review · 0.2 thêm §2.8 (vị trí chứa, mã hóa lô) từ file Excel kho BTP của khách
 > Đầu vào: `../YEU-CAU-KHACH-HANG.md` (mã yêu cầu dẫn trong tài liệu này), `../KE-HOACH-DU-AN.md` v0.3, `05-kien-truc-de-xuat.md`.
 > Quan hệ với 05: 05 đang được sửa song song ở vòng này (số CT có `fiscal_year`, FK dòng `ON DELETE RESTRICT`, guard chặn INSERT/UPDATE/DELETE dòng của chứng từ đã ghi sổ, không partition ở Giai đoạn 1, khoá advisory theo cost key khi ghi sổ, khoá kỳ `FOR SHARE`). 07 **chỉ mô tả phần thêm hoặc thay đổi** so với 05 để đáp ứng tài liệu khách; phần không nhắc tới giữ như 05.
 > Kiểm chứng: toàn bộ DDL trong tài liệu này **đã chạy trên PostgreSQL 16.15** cùng một bộ giả lập tối thiểu các bảng của 05 (`uuidv7()` thay bằng `gen_random_uuid()` vì PG16 chưa có), kèm phép thử chức năng: guard dòng/trạng thái, chặn xuất lô chưa Đạt QC, khoá tỷ giá theo ngày, CHECK bảng giá thành, RLS hai tenant, truy vấn truy xuất lô. **Chưa** chạy trên PG18, **chưa** thử hai phiên đồng thời.
@@ -13,7 +13,7 @@
 |---|---|---|---|---|
 | 1 | Phương pháp giá xuất | BQ cuối kỳ / BQ tức thời là chính; FIFO, đích danh ở giai đoạn sau | **Đích danh theo lô là chính**. Cost key = `(company, item, warehouse, lot)`; lô chính là lớp giá, không cần `cst.cost_layers` | GT-07 |
 | 2 | Lô | `inv.lots` tối giản, `lot_id` tuỳ chọn | Lô có loại, NSX/HSD, **trạng thái QC**, nguồn (phiếu nhập / lệnh SX), khu QC; hàng đích danh **bắt buộc lô** | QC-03, QC-05 |
-| 3 | Kiểm âm | Theo `(item, warehouse, lot)` bằng truy vấn trên sổ kho | Giữ nguyên; vì cost key đã gồm lô nên lũy kế vật lý và lũy kế định giá **trùng nhau** | KHO-02 |
+| 3 | Kiểm âm | Theo `(item, warehouse, lot)` bằng truy vấn trên sổ kho | Thêm vị trí chứa: theo `(item, warehouse, lot, location)` (§2.8); vì cost key đã gồm lô nên lũy kế vật lý và lũy kế định giá **trùng nhau** | KHO-02 |
 | 4 | Giá thành | Giản đơn; phân bước tự động qua SCC/BOM đa cấp | **Lệnh SX công đoạn** (lô × giai đoạn) là đối tượng tập hợp chi phí; BTP đi tiếp **bằng giá lô**; dở dang nhiều kỳ = chi phí luỹ kế của lệnh | GT-01..06 |
 | 5 | Hệ phương trình BQ cuối kỳ | Gauss / Gauss–Seidel cho SCC | **Không cần** với đích danh: chuỗi lô là đồ thị có hướng theo thời gian; làm lại (rework) là lệnh mới nên không tạo vòng | — |
 | 6 | Hàng không đạt QC | Không có | Trong định mức dồn vào SL đạt; ngoài định mức ra 632/811/1388; phiếu QC → quyết định xử lý → chứng từ | GT-06, QC-06 |
@@ -22,6 +22,7 @@
 | 9 | Đơn hàng, đề nghị thanh toán | Ngoài phạm vi | Bảng đơn mua/bán, đề nghị thanh toán, luồng duyệt dùng chung | MUA-01, BAN-01, TIEN-01 |
 | 10 | LCTT | Nhắc trong 01 | Mã dòng tiền trên dòng bút toán tiền (trực tiếp) + bảng công thức (gián tiếp) | BC-R4 |
 | 11 | QC | Không có | Điểm kiểm soát theo thao tác, chỉ tiêu, phiếu kiểm, xử lý không đạt | QC-01..08 |
+| 12 | Vị trí chứa, mã hóa | Không có | Bồn / trái / phuy theo kho; **kiểm âm theo `(item, warehouse, lot, location)`**, cost key vẫn theo lô; mã hóa lô tự sinh, bất biến; tồn tối thiểu, mã MISA, số phiếu kho theo tháng (§2.8) | KHO-06..11, KHO-R7..R9 |
 
 ## 1. Quy ước tuân thủ cho mọi bảng mới
 
@@ -269,6 +270,153 @@ JOIN (SELECT tenant_id, production_order_id, lot_id, item_id, sum(qty) AS qty
        GROUP BY 1, 2, 3, 4) o
   ON o.tenant_id = i.tenant_id AND o.production_order_id = i.production_order_id;
 ```
+
+### 2.8 Vị trí chứa (bồn / trái / phuy) và mã hóa lô
+
+Nguồn: file Excel kho BTP của nhà máy Bà Ba Thạo (`../YEU-CAU-KHACH-HANG.md` §9). Sổ kho của khách theo dõi tồn theo **tên hàng + mã lô + mã hóa + bồn/trái/phuy**; một lô BTP nằm ở nhiều bồn (vd một lô mắm nêm ở 6 bồn A.15, A.26…A.30), chuyển bồn là nghiệp vụ thường ngày.
+
+**Quyết định**
+
+| # | Quyết định | Lý do |
+|---|---|---|
+| 1 | Bảng `inv.storage_locations` = khu + loại (`TANK` bồn, `JAR` trái, `DRUM` phuy) + số (tuỳ chọn, bắt buộc với bồn) + sức chứa, **theo kho** | Ký hiệu của khách (`A.15`, `5.Trái`, `B.Phuy`) tách được thành 3 phần; chuẩn hoá cách ghi (`2. trái`, `B.phuy`, `A.` thiếu số) |
+| 2 | `location_id` trên `inv.stock_moves`, `inv.stock_ledger`, `inv.stock_balances`; **NULL = không theo vị trí** (hàng đóng gói, kho Bình Tây / 97 chưa theo bồn) | Không bắt mọi kho phải có danh mục vị trí; hàng `track_location` mới bắt buộc |
+| 3 | **Kiểm âm theo `(item, warehouse, lot, location)`** — thay cấp `(item, warehouse, lot)` của §2.2 / 05 §4.7 | Xuất 250 kg từ bồn chỉ còn 100 kg phải bị chặn dù cả lô còn 1.200 kg |
+| 4 | **Cost key giữ `(company, item, warehouse, lot)`**; vị trí chỉ chia số lượng | Giá trị đích danh thuộc về lô; chuyển bồn không được làm đổi giá lô. Giá trị theo vị trí (nếu cần hiển thị) = giá trị lô tại kho phân bổ theo SL theo R1(b), không ghi sổ |
+| 5 | Khoá advisory vẫn theo cost key (§2.2): một khoá cho mọi vị trí của lô tại kho | Truy vấn kiểm âm theo vị trí chạy **sau** khi đã giữ khoá cost key nên không có hai phiên cùng xuất một bồn; chuyển bồn trong cùng kho chỉ cần **một** khoá |
+| 6 | Chuyển vị trí trong cùng kho = chứng từ chuyển kho có `warehouse_id = to_warehouse_id`, `location_id ≠ to_location_id`; hai dòng `TRANSFER_OUT`/`TRANSFER_IN` `LINKED` cùng giá trị | Tổng giá trị cost key không đổi; không sinh bút toán (cùng TK kho); vẫn có số phiếu kho, in được |
+| 7 | **Mã hóa (`lots.lot_code`) do hệ thống tự sinh** khi tạo lô: nhóm hàng + YYMM + số thứ tự 4 chữ số (`BTP-2601-0003`); duy nhất theo công ty; **không sửa, không cấp lại** khi huỷ phiếu; không đổi khi chuyển kho / chuyển bồn | Theo ý người dùng ("mã hóa có thể là 1 mã tự sinh"). **Đề xuất, chờ khách xác nhận định dạng.** File Excel cũ coi mã hóa = 2 ký tự cuối mã lô (chỉ kiểm khớp, không có nghĩa nghiệp vụ rõ) |
+| 8 | Bộ đếm `inv.lot_code_counters` theo `(company, prefix, yymm)`, cấp bằng `UPDATE … RETURNING` (khoá dòng) trong cùng transaction tạo lô | Liền mạch, không trùng khi nhiều phiên; số đã cấp không quay lại kể cả khi transaction sau đó huỷ chứng từ (chỉ "nhảy số" khi rollback — chấp nhận được, mã hóa không phải số chứng từ kế toán) |
+| 9 | `md.items` thêm `min_stock_qty` (tồn tối thiểu, cảnh báo "Cần đặt thêm") và `misa_code` (mã MISA tương ứng, duy nhất theo công ty, NULL được) | Từ sheet tồn kho và sheet cú pháp tên của file |
+| 10 | Số phiếu kho `PNK-YYMMnnn` / `PXK-YYMMnnn` là cột riêng trên chứng từ kho (cạnh số chứng từ kế toán), bộ đếm theo `(company, slip_kind, yymm)` | File đánh số phiếu kho theo tháng; số chứng từ kế toán theo năm (§1) vẫn giữ |
+
+Mã lô dạng **DDMMYY-nn** (ngày nhập / sản xuất + số mẻ) là mẫu mặc định của cấu hình sinh mã lô (A4); demo kiểm trùng mã lô **toàn công ty** (khách chưa nói trùng theo mặt hàng có được không — câu hỏi D6 ở `../YEU-CAU-KHACH-HANG.md` §9.7), còn `inv.lots` giữ `UNIQUE (tenant_id, company_id, item_id, lot_no)` như §2.7 cho tới khi khách trả lời.
+
+**DDL** (đã chạy trên PostgreSQL 16 cùng bộ giả lập tối thiểu các bảng của 05/07 — xem phép thử cuối mục):
+
+```sql
+CREATE TABLE inv.storage_locations (
+  tenant_id    uuid NOT NULL,
+  id           uuid NOT NULL DEFAULT uuidv7(),
+  company_id   uuid NOT NULL,
+  warehouse_id uuid NOT NULL,
+  zone   text NOT NULL CHECK (zone ~ '^[0-9A-Z]{1,3}$'),       -- khu: A, B, C, 2, 5…
+  kind   text NOT NULL CHECK (kind IN ('TANK','JAR','DRUM')),   -- bồn / trái / phuy
+  no     text CHECK (no ~ '^[1-9][0-9]{0,3}$'),                 -- số; NULL được với trái / phuy
+  code   text GENERATED ALWAYS AS (
+           zone || '.' || CASE kind WHEN 'TANK' THEN coalesce(no, '')
+                                    WHEN 'JAR'  THEN 'Trái' || coalesce('.' || no, '')
+                                    ELSE 'Phuy' || coalesce('.' || no, '') END) STORED,
+  capacity_qty numeric(20,6) CHECK (capacity_qty > 0),          -- sức chứa (ĐVT chính); NULL = chưa khai
+  active boolean NOT NULL DEFAULT true,                          -- ngừng dùng thay vì xoá
+  PRIMARY KEY (tenant_id, id),
+  UNIQUE (tenant_id, warehouse_id, code),
+  UNIQUE (tenant_id, id, warehouse_id),                          -- cho FK kép (vị trí thuộc đúng kho)
+  CHECK (kind <> 'TANK' OR no IS NOT NULL),                      -- "A." thiếu số bị chặn
+  FOREIGN KEY (tenant_id, company_id)   REFERENCES core.companies (tenant_id, id),
+  FOREIGN KEY (tenant_id, warehouse_id) REFERENCES md.warehouses (tenant_id, id)
+);
+
+ALTER TABLE md.items
+  ADD COLUMN track_location boolean NOT NULL DEFAULT false,      -- dòng kho tại kho có vị trí phải ghi vị trí
+  ADD COLUMN min_stock_qty  numeric(20,6) NOT NULL DEFAULT 0 CHECK (min_stock_qty >= 0),
+  ADD COLUMN misa_code      text;
+CREATE UNIQUE INDEX items_misa_code_uq ON md.items (tenant_id, company_id, misa_code) WHERE misa_code IS NOT NULL;
+
+ALTER TABLE inv.lots ADD COLUMN lot_code text;                   -- mã hóa; NOT NULL sau khi cấp cho lô cũ
+ALTER TABLE inv.lots ALTER COLUMN lot_code SET NOT NULL;
+ALTER TABLE inv.lots ADD CONSTRAINT lots_code_uq UNIQUE (tenant_id, company_id, lot_code);
+
+CREATE TABLE inv.lot_code_counters (
+  tenant_id uuid NOT NULL, company_id uuid NOT NULL,
+  prefix text NOT NULL CHECK (prefix ~ '^[A-Z]{2,3}$'), yymm char(4) NOT NULL CHECK (yymm ~ '^[0-9]{4}$'),
+  last_no int NOT NULL DEFAULT 0 CHECK (last_no BETWEEN 0 AND 9999),
+  PRIMARY KEY (tenant_id, company_id, prefix, yymm),
+  FOREIGN KEY (tenant_id, company_id) REFERENCES core.companies (tenant_id, id)
+);
+
+-- Cấp mã hóa trong transaction tạo lô; khoá dòng bộ đếm nên hai phiên không nhận trùng số
+CREATE FUNCTION inv.next_lot_code(p_tenant uuid, p_company uuid, p_prefix text, p_date date)
+RETURNS text LANGUAGE plpgsql AS $$
+DECLARE v_yymm char(4) := to_char(p_date, 'YYMM'); v_no int;
+BEGIN
+  INSERT INTO inv.lot_code_counters (tenant_id, company_id, prefix, yymm) VALUES (p_tenant, p_company, p_prefix, v_yymm)
+    ON CONFLICT DO NOTHING;
+  UPDATE inv.lot_code_counters SET last_no = last_no + 1
+   WHERE tenant_id = p_tenant AND company_id = p_company AND prefix = p_prefix AND yymm = v_yymm
+   RETURNING last_no INTO v_no;
+  RETURN p_prefix || '-' || v_yymm || '-' || lpad(v_no::text, 4, '0');
+END $$;
+
+-- Mã hóa bất biến
+CREATE FUNCTION inv.guard_lot_code() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.lot_code IS DISTINCT FROM OLD.lot_code THEN
+    RAISE EXCEPTION 'Mã hóa của lô % không được sửa', OLD.lot_no USING ERRCODE = '55000';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER lots_code_immutable BEFORE UPDATE OF lot_code ON inv.lots
+  FOR EACH ROW EXECUTE FUNCTION inv.guard_lot_code();
+
+ALTER TABLE inv.stock_moves
+  ADD COLUMN location_id uuid,
+  ADD CONSTRAINT sm_location_fk FOREIGN KEY (tenant_id, location_id, warehouse_id)
+    REFERENCES inv.storage_locations (tenant_id, id, warehouse_id);   -- MATCH SIMPLE: NULL = không theo vị trí
+ALTER TABLE inv.stock_ledger
+  ADD COLUMN location_id uuid,
+  ADD CONSTRAINT sle_location_fk FOREIGN KEY (tenant_id, location_id, warehouse_id)
+    REFERENCES inv.storage_locations (tenant_id, id, warehouse_id);
+ALTER TABLE inv.stock_balances ADD COLUMN location_id uuid;
+ALTER TABLE inv.stock_balances DROP CONSTRAINT stock_balances_tenant_id_item_id_warehouse_id_lot_id_key;
+ALTER TABLE inv.stock_balances ADD CONSTRAINT stock_balances_key
+  UNIQUE NULLS NOT DISTINCT (tenant_id, item_id, warehouse_id, lot_id, location_id);
+-- thay sle_phys_time của 05 §4.7: kiểm âm theo (item, warehouse, lot, location)
+DROP INDEX IF EXISTS inv.sle_phys_time;
+CREATE INDEX sle_phys_time ON inv.stock_ledger
+  (tenant_id, item_id, warehouse_id, lot_id, location_id, posting_date, posting_time, kind_rank, seq) WHERE NOT is_cancelled;
+
+-- Hàng theo vị trí: dòng kho tại kho có danh mục vị trí phải ghi vị trí
+CREATE FUNCTION inv.guard_move_location() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.location_id IS NULL
+     AND (SELECT track_location FROM md.items WHERE tenant_id = NEW.tenant_id AND id = NEW.item_id)
+     AND EXISTS (SELECT 1 FROM inv.storage_locations
+                  WHERE tenant_id = NEW.tenant_id AND warehouse_id = NEW.warehouse_id AND active) THEN
+    RAISE EXCEPTION 'Vật tư % tại kho % theo vị trí: dòng kho bắt buộc có bồn / trái / phuy', NEW.item_id, NEW.warehouse_id
+      USING ERRCODE = '23502';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER stock_moves_location_guard BEFORE INSERT ON inv.stock_moves
+  FOR EACH ROW EXECUTE FUNCTION inv.guard_move_location();
+```
+
+Truy vấn kiểm âm của 05 §4.7 thêm một điều kiện, vẫn chạy sau khi giữ khoá cost key:
+
+```sql
+WHERE tenant_id = $1 AND item_id = $2 AND warehouse_id = $3
+  AND lot_id IS NOT DISTINCT FROM $4 AND location_id IS NOT DISTINCT FROM $9 AND NOT is_cancelled
+```
+
+Bảng mới nằm trong schema `inv` và có `tenant_id`, nên khối RLS ở §11 tự bật `ENABLE` + `FORCE` + policy `tenant_isolation` cho `inv.storage_locations` và `inv.lot_code_counters`. Không FK nào dùng `CASCADE`; vị trí không xoá được khi đã có dòng kho (FK `RESTRICT` mặc định), chỉ đặt `active = false`.
+
+Bất biến bổ sung (property test Phase 0, đã có trong `selfTest` của demo): Σ SL theo vị trí của một `(item, warehouse, lot)` = SL của cost key; chuyển vị trí cùng kho không đổi giá trị cost key; mã hóa duy nhất, không đổi sau chuyển kho.
+
+Phép thử đã chạy (PG16, vai trò không phải superuser):
+
+| Thử | Mong đợi | Kết quả |
+|---|---|---|
+| Thêm bồn `A` không số; thêm `A.15` hai lần cùng kho | Vi phạm CHECK / UNIQUE | Đạt |
+| `code` sinh ra cho (A, TANK, 15), (5, JAR, NULL), (B, DRUM, NULL) | `A.15`, `5.Trái`, `B.Phuy` | Đạt |
+| Dòng kho gắn vị trí của kho khác | Vi phạm FK kép | Đạt |
+| Vật tư `track_location` nhập vào kho có vị trí mà không ghi vị trí; nhập vào kho chưa có danh mục vị trí | Lỗi 23502 / thành công | Đạt |
+| `inv.next_lot_code` gọi 3 lần cùng tháng, 1 lần tháng sau | `BTP-2601-0001..0003`, `BTP-2602-0001` | Đạt |
+| Sửa `lot_code` của lô; tạo lô trùng `lot_code` | Lỗi 55000 / vi phạm UNIQUE | Đạt |
+| Hai dòng `stock_balances` cùng (item, kho, lô) khác vị trí; trùng cả vị trí NULL | Thành công / vi phạm UNIQUE | Đạt |
+| Đọc `inv.storage_locations` của tenant khác | 0 dòng | Đạt |
+
+Chưa thử: hai phiên đồng thời gọi `inv.next_lot_code` (dựa vào khoá dòng của `UPDATE`), hiệu năng truy vấn kiểm âm với khoá 5 cột.
 
 ---
 

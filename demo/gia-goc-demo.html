@@ -230,7 +230,8 @@ dialog[open]{display:flex;flex-direction:column}
 .lines td{padding:5px 6px;vertical-align:middle}
 .lines .inp{min-width:70px}
 .lines select[id$="_item"]{min-width:180px}
-.lines select[id$="_lot"]{min-width:210px}
+.lines select[id$="_lot"]{min-width:260px}
+.lines select[id$="_loc"],.lines select[id$="_locTo"]{min-width:130px}
 .dlg-foot #fNo{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto}
 .check{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--fg)}
 .check input{margin-top:3px;width:16px;height:16px;flex:none}
@@ -323,6 +324,27 @@ td .pill{vertical-align:1px}
   .tbl-wrap tbody tr.click td{padding-block:12px}
   .field select,.field input,.inp{min-height:44px}
 }
+/* Bản in phiếu kho */
+#printArea{display:none}
+.ps{font-family:var(--font-ui);color:#000;background:#fff;font-size:12.5px;line-height:1.45;padding:8px 4px}
+.ps-co{font-weight:700;font-size:13px;text-transform:uppercase}
+.ps h1{text-align:center;font-size:20px;margin:14px 0 8px;letter-spacing:.04em}
+.ps-meta{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 22px;margin:2px 0}
+.ps-desc{text-align:center;margin:4px 0 10px;font-style:italic}
+.ps table{width:100%;border-collapse:collapse;font-size:12px}
+.ps th,.ps td{border:1px solid #000;padding:5px 6px;background:#fff;color:#000;white-space:normal}
+.ps th{font-weight:700;text-align:center}
+.ps tr:last-child td{border-bottom:1px solid #000}
+.ps td.c{text-align:center}.ps td.r{text-align:right}
+.ps-sign{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px;text-align:center}
+.ps-sign div{display:flex;flex-direction:column;gap:2px;min-height:90px}
+.ps-sign span{font-size:11px;font-style:italic}
+@media print{
+  html,body{background:#fff!important;color:#000}
+  .app,.toast,dialog,.tour-ring,.tour-pop,.skip{display:none!important}
+  #printArea{display:block!important}
+  @page{size:A4;margin:12mm}
+}
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }
@@ -379,7 +401,7 @@ td .pill{vertical-align:1px}
           <button role="menuitem" data-new="PN">Phiếu nhập mua</button>
           <button role="menuitem" data-new="PX">Phiếu xuất cho lệnh sản xuất</button>
           <button role="menuitem" data-new="NK">Nhập kho BTP / thành phẩm</button>
-          <button role="menuitem" data-new="CK">Chuyển kho nội bộ</button>
+          <button role="menuitem" data-new="CK">Chuyển kho / chuyển vị trí</button>
           <button role="menuitem" data-new="HD">Hóa đơn bán hàng</button>
           <button role="menuitem" data-new="TL">Hàng bán bị trả lại</button>
           <hr>
@@ -392,6 +414,7 @@ td .pill{vertical-align:1px}
           <hr>
           <button role="menuitem" data-new="LSX">Lệnh sản xuất</button>
           <button role="menuitem" data-new="ITEM">Vật tư, hàng hóa, sản phẩm</button>
+          <button role="menuitem" data-new="LOC">Vị trí chứa (bồn, trái, phuy)</button>
         </div>
       </div>
     </header>
@@ -456,8 +479,10 @@ td .pill{vertical-align:1px}
         <div class="tbl-wrap"><table id="nxt"></table></div>
       </div>
       <div class="panel" id="lotPanel">
-        <div class="panel-head"><h2>Tồn kho theo kho và lô</h2><span class="note" id="lotWh"></span><div class="spacer"></div>
-          <button class="btn sm xl" type="button" data-copy="lotTbl" aria-label="Sao chép bảng tồn kho theo lô cho Excel"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>Excel</button></div>
+        <div class="panel-head"><h2>Tồn kho chi tiết</h2><span class="note" id="lotWh"></span><div class="seg" id="locFilter" role="group" aria-label="Lọc theo loại vị trí"></div><div class="spacer"></div>
+          <button class="btn sm xl" type="button" data-copy="lotTbl" aria-label="Sao chép bảng tồn kho chi tiết cho Excel"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>Excel</button></div>
+        <label class="vh" for="lotSearch">Tìm tồn kho</label>
+        <input type="search" id="lotSearch" class="inp" placeholder="Tìm tên hàng, mã lô, mã hóa, vị trí…">
         <div class="tbl-wrap"><table id="lotTbl"></table></div>
       </div>
     </section>
@@ -496,6 +521,11 @@ td .pill{vertical-align:1px}
         <div class="panel">
           <div class="panel-head"><h2>Kho và người phụ trách</h2></div>
           <div class="tbl-wrap"><table id="whTbl"></table></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Vị trí chứa</h2><span class="note" id="locCount"></span><div class="spacer"></div><button class="btn primary sm" type="button" data-new="LOC">+ Vị trí chứa</button>
+            <button class="btn sm xl" type="button" data-copy="locTbl" aria-label="Sao chép danh mục vị trí chứa cho Excel"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>Excel</button></div>
+          <div class="tbl-wrap"><table id="locTbl"></table></div>
         </div>
       </div>
     </section>
@@ -554,6 +584,7 @@ td .pill{vertical-align:1px}
 </div>
 <dialog id="dlg" aria-labelledby="dlgTitle"></dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div id="printArea" aria-hidden="true"></div>
 <script>
 (function(){
 "use strict";
@@ -624,24 +655,24 @@ const QC_ROLES = ['QC khu thủy sản', 'QC khu nông sản', 'QC khu đóng g�
 const QC_NAME = {pass:'Đạt', hold:'Chờ', fail:'Không đạt'};
 const QC_PILL = {pass:'ok', hold:'warn', fail:'bad'};
 const SEED = {
-  v: 3,
+  v: 4,
   period: {from: '2026-01-01', to: '2026-01-31', label: '01/2026'},
   items: {
-    CL:   {code:'NL-CL',    name:'Cá linh tươi',            uom:'kg',  kind:'NVL', grp:'NL', wh:'BBT', vat:0,  dec:3, shelf:2,   qcRole:'QC khu thủy sản'},
-    TOM:  {code:'NL-TOM',   name:'Tôm, ruốc tươi',          uom:'kg',  kind:'NVL', grp:'NL', wh:'BBT', vat:0,  dec:3, shelf:2,   qcRole:'QC khu thủy sản'},
-    MUOI: {code:'PG-MUOI',  name:'Muối hạt',                uom:'kg',  kind:'NVL', grp:'PG', wh:'BBT', vat:5,  dec:3, shelf:720, qcRole:'QC khu nông sản'},
-    THINH:{code:'PG-THINH', name:'Thính gạo',               uom:'kg',  kind:'NVL', grp:'PG', wh:'BBT', vat:5,  dec:3, shelf:180, qcRole:'QC khu hàng xay'},
-    DUONG:{code:'PG-DUONG', name:'Đường',                   uom:'kg',  kind:'NVL', grp:'PG', wh:'BBT', vat:5,  dec:3, shelf:365, qcRole:'QC khu nông sản'},
-    GV:   {code:'PG-GV',    name:'Gia vị (tỏi, ớt, tiêu)',  uom:'kg',  kind:'NVL', grp:'PG', wh:'BBT', vat:10, dec:3, shelf:180, qcRole:'QC khu hàng xay'},
-    HU5:  {code:'BB-HU5',   name:'Hũ + nhãn 500g',          uom:'cái', kind:'NVL', grp:'BB', wh:'BBT', vat:10, dec:0, shelf:0,   qcRole:'QC khu đóng gói'},
-    HU2:  {code:'BB-HU2',   name:'Hũ + nhãn 250g',          uom:'cái', kind:'NVL', grp:'BB', wh:'BBT', vat:10, dec:0, shelf:0,   qcRole:'QC khu đóng gói'},
-    BTP:  {code:'BTP-CL',   name:'Cá linh ủ thính (BTP)',   uom:'kg',  kind:'BTP', wh:'BBT', vat:10, dec:3, shelf:365, qcRole:'QC khu thủy sản',
+    CL:   {code:'NL-CL',    name:'Cá linh tươi',            uom:'kg',  kind:'NVL', grp:'NL', wh:'BBT', vat:0,  dec:3, shelf:2,   qcRole:'QC khu thủy sản', misa:'CALINH', min:0},
+    TOM:  {code:'NL-TOM',   name:'Tôm, ruốc tươi',          uom:'kg',  kind:'NVL', grp:'NL', wh:'BBT', vat:0,  dec:3, shelf:2,   qcRole:'QC khu thủy sản', misa:'TOMRUOC', min:0},
+    MUOI: {code:'PG-MUOI',  name:'Muối hạt',                uom:'kg',  kind:'NVL', grp:'PG', wh:'BBT', vat:5,  dec:3, shelf:720, qcRole:'QC khu nông sản', misa:'MUOIHAT', min:200},
+    THINH:{code:'PG-THINH', name:'Thính gạo',               uom:'kg',  kind:'NVL', grp:'PG', wh:'BBT', vat:5,  dec:3, shelf:180, qcRole:'QC khu hàng xay', misa:'THINHGAO', min:30},
+    DUONG:{code:'PG-DUONG', name:'Đường',                   uom:'kg',  kind:'NVL', grp:'PG', wh:'BBT', vat:5,  dec:3, shelf:365, qcRole:'QC khu nông sản', misa:'DUONG', min:50},
+    GV:   {code:'PG-GV',    name:'Gia vị (tỏi, ớt, tiêu)',  uom:'kg',  kind:'NVL', grp:'PG', wh:'BBT', vat:10, dec:3, shelf:180, qcRole:'QC khu hàng xay', misa:'GIAVI', min:10},
+    HU5:  {code:'BB-HU5',   name:'Hũ + nhãn 500g',          uom:'cái', kind:'NVL', grp:'BB', wh:'BBT', vat:10, dec:0, shelf:0,   qcRole:'QC khu đóng gói', misa:'HU500', min:500},
+    HU2:  {code:'BB-HU2',   name:'Hũ + nhãn 250g',          uom:'cái', kind:'NVL', grp:'BB', wh:'BBT', vat:10, dec:0, shelf:0,   qcRole:'QC khu đóng gói', misa:'HU250', min:300},
+    BTP:  {code:'BTP-CL',   name:'BTP Cá linh ủ thính',     uom:'kg',  kind:'BTP', wh:'BBT', vat:10, dec:3, shelf:365, qcRole:'QC khu thủy sản', misa:'BTP-CALINH', min:500,
            prod:{stage:'GĐ1', steps:'Tiếp nhận – sơ chế – ủ muối – rửa – ủ thính', loss:3}, bom:[{item:'CL', qty:1}, {item:'MUOI', qty:0.2}, {item:'THINH', qty:0.12}]},
-    ML5:  {code:'TP-ML5',   name:'Mắm cá linh hũ 500g',     uom:'hũ',  kind:'SP',  wh:'BBT', vat:10, dec:0, shelf:365, qcRole:'QC khu đóng gói', price:68000, retail:79000,
+    ML5:  {code:'TP-ML5',   name:'Mắm cá linh hũ 500g',     uom:'hũ',  kind:'SP',  wh:'BBT', vat:10, dec:0, shelf:365, qcRole:'QC khu đóng gói', price:68000, retail:79000, misa:'MCL500', min:300,
            prod:{stage:'GĐ2', steps:'Phân loại – phối trộn – đóng gói, dán nhãn – bảo ôn', loss:1, prev:'BTP'}, bom:[{item:'BTP', qty:0.45}, {item:'DUONG', qty:0.05}, {item:'HU5', qty:1}]},
-    MT2:  {code:'TP-MT2',   name:'Mắm tôm hũ 250g',         uom:'hũ',  kind:'SP',  wh:'BBT', vat:10, dec:0, shelf:365, qcRole:'QC khu thủy sản', price:56000, retail:65000,
+    MT2:  {code:'TP-MT2',   name:'Mắm tôm hũ 250g',         uom:'hũ',  kind:'SP',  wh:'BBT', vat:10, dec:0, shelf:365, qcRole:'QC khu thủy sản', price:56000, retail:65000, misa:'MT250', min:300,
            prod:{stage:'1 GĐ', steps:'Tiếp nhận – ủ chượp – phối trộn – kiểm tra – đóng gói – bảo ôn', loss:2}, bom:[{item:'TOM', qty:0.28}, {item:'MUOI', qty:0.06}, {item:'GV', qty:0.004}, {item:'HU2', qty:1}]},
-    NM:   {code:'HH-NM',    name:'Nước mắm cá cơm chai 500ml (hàng mua)', uom:'chai', kind:'HH', wh:'NTH', vat:10, dec:0, shelf:540, qcRole:'QC khu đóng gói', price:62000, retail:62000}
+    NM:   {code:'HH-NM',    name:'Nước mắm cá cơm chai 500ml (hàng mua)', uom:'chai', kind:'HH', wh:'NTH', vat:10, dec:0, shelf:540, qcRole:'QC khu đóng gói', price:62000, retail:62000, misa:'NMCC500', min:30}
   },
   services: {
     DIEN: {name:'Điện, nước sản xuất',                     vat:10, fixed:false},
@@ -649,19 +680,25 @@ const SEED = {
     THUE: {name:'Thuê bể ủ, kho lạnh',                     vat:10, fixed:true},
     SC:   {name:'Sửa chữa máy xay, máy đóng gói',          vat:10, fixed:false}
   },
-  // Tồn đầu kỳ theo lô (mã lót hàng)
+  // Vị trí chứa (bồn / trái / phuy) theo kho; ký hiệu như sổ kho: A.15 (bồn), 5.Trái, 5.Phuy
+  locs: [].concat(
+    ['15','16','17','18','19','20','26','27','28','29','30','54','81','98','109','110'].map(no => ({wh:'BBT', zone:'A', kind:'TANK', no})),
+    ['12','13'].map(no => ({wh:'BBT', zone:'B', kind:'TANK', no})), ['4','34','48'].map(no => ({wh:'BBT', zone:'C', kind:'TANK', no})),
+    ['197','205','206'].map(no => ({wh:'BBT', zone:'2', kind:'TANK', no})), ['25','43'].map(no => ({wh:'BBT', zone:'4', kind:'TANK', no})),
+    [{wh:'BBT', zone:'2', kind:'JAR', no:''}, {wh:'BBT', zone:'5', kind:'JAR', no:''}, {wh:'BBT', zone:'5', kind:'DRUM', no:''}, {wh:'BBT', zone:'A', kind:'DRUM', no:''}, {wh:'BBT', zone:'B', kind:'DRUM', no:''}]),
+  // Tồn đầu kỳ theo lô (mã lót hàng) và vị trí chứa
   open: {
     CL:[], TOM:[],
-    MUOI:[{lot:'PG-MUOI-251215-01', wh:'BBT', date:'2025-12-15', qty:800, value:3120000}],
-    THINH:[{lot:'PG-THINH-251220-01', wh:'BBT', date:'2025-12-20', qty:100, value:2950000}],
-    DUONG:[{lot:'PG-DUONG-251210-01', wh:'BBT', date:'2025-12-10', qty:150, value:3225000}],
-    GV:[{lot:'PG-GV-251201-01', wh:'BBT', date:'2025-12-01', qty:10, value:1150000}],
-    HU5:[{lot:'BB-HU5-251205-01', wh:'BBT', date:'2025-12-05', qty:1500, value:9600000}],
-    HU2:[{lot:'BB-HU2-251205-01', wh:'BBT', date:'2025-12-05', qty:800, value:3520000}],
-    BTP:[{lot:'BTP-CL-251226-01', wh:'BBT', date:'2025-12-26', qty:300, value:21000000}],
-    ML5:[{lot:'TP-ML5-251215-01', wh:'NTH', date:'2025-12-15', qty:120, value:5520000}, {lot:'TP-ML5-251228-01', wh:'BBT', date:'2025-12-28', qty:200, value:9200000}],
-    MT2:[{lot:'TP-MT2-251220-01', wh:'BT', date:'2025-12-20', qty:300, value:11700000}],
-    NM:[{lot:'HH-NM-251210-01', wh:'NTH', date:'2025-12-10', qty:60, value:2700000}]
+    MUOI:[{lot:'151225-01', wh:'BBT', loc:'5.Phuy', date:'2025-12-15', qty:800, value:3120000}],
+    THINH:[{lot:'201225-01', wh:'BBT', date:'2025-12-20', qty:100, value:2950000}],
+    DUONG:[{lot:'101225-01', wh:'BBT', date:'2025-12-10', qty:150, value:3225000}],
+    GV:[{lot:'011225-01', wh:'BBT', date:'2025-12-01', qty:10, value:1150000}],
+    HU5:[{lot:'051225-01', wh:'BBT', date:'2025-12-05', qty:1500, value:9600000}],
+    HU2:[{lot:'051225-02', wh:'BBT', date:'2025-12-05', qty:800, value:3520000}],
+    BTP:[{lot:'261225-01', wh:'BBT', loc:'A.15', date:'2025-12-26', qty:180, value:12600000}, {lot:'261225-01', wh:'BBT', loc:'A.26', date:'2025-12-26', qty:120, value:8400000}],
+    ML5:[{lot:'151225-02', wh:'NTH', date:'2025-12-15', qty:120, value:5520000}, {lot:'281225-01', wh:'BBT', date:'2025-12-28', qty:200, value:9200000}],
+    MT2:[{lot:'201225-02', wh:'BT', date:'2025-12-20', qty:300, value:11700000}],
+    NM:[{lot:'101225-02', wh:'NTH', date:'2025-12-10', qty:60, value:2700000}]
   },
   wipOpen: {BTP:18000000, ML5:0, MT2:4000000},     // dở dang đầu kỳ (cá, tôm đang ủ), khoản mục NVL
   // Số dư đầu kỳ ngoài kho (Nợ dương, Có âm). 4211 là số cân đối để tổng Nợ = tổng Có.
@@ -692,38 +729,39 @@ const SEED = {
     wipQty:{BTP:350, ML5:0, MT2:150}, price:{}, einv:'1C26TMM', rate:25400
   },
   docs: [
-    {no:'PN0001', type:'PN', date:'2026-01-05', partyId:'S01', pay:'331', wh:'BBT', desc:'Mua cá linh tươi mùa nước nổi', lines:[{item:'CL', qty:2000, value:90000000, vat:0, lot:'NL-CL-260105-01', qc:'pass'}]},
-    {no:'PX0001', type:'PX', date:'2026-01-05', lsx:'LSX01', to:'BTP', wh:'BBT', desc:'Xuất cá linh, muối cho sơ chế – ủ muối (GĐ1)', lines:[{item:'CL', qty:2000, lot:'NL-CL-260105-01'}, {item:'MUOI', qty:400, lot:'PG-MUOI-251215-01'}]},
-    {no:'PN0002', type:'PN', date:'2026-01-06', partyId:'S02', pay:'331', wh:'BBT', desc:'Mua muối hạt, thính gạo', lines:[{item:'MUOI', qty:500, value:2100000, vat:5, lot:'PG-MUOI-260106-01', qc:'pass'}, {item:'THINH', qty:300, value:9300000, vat:5, lot:'PG-THINH-260106-01', qc:'pass'}]},
-    {no:'PN0003', type:'PN', date:'2026-01-07', partyId:'S03', pay:'331', wh:'BBT', desc:'Mua hũ, nhãn 500g và 250g', lines:[{item:'HU5', qty:3000, value:19200000, vat:10, lot:'BB-HU5-260107-01', qc:'pass'}, {item:'HU2', qty:2000, value:9000000, vat:10, lot:'BB-HU2-260107-01', qc:'pass'}]},
-    {no:'PX0002', type:'PX', date:'2026-01-08', lsx:'LSX01', to:'BTP', wh:'BBT', desc:'Xuất thính gạo cho công đoạn ủ thính (GĐ1)', lines:[{item:'THINH', qty:100, lot:'PG-THINH-251220-01'}, {item:'THINH', qty:140, lot:'PG-THINH-260106-01'}]},
-    {no:'PN0004', type:'PN', date:'2026-01-08', partyId:'S04', pay:'331', wh:'BBT', cur:'USD', rate:25350, desc:'Nhập khẩu hũ thủy tinh 500g (USD)', lines:[{item:'HU5', qty:2000, fc:520, value:13182000, vat:0, lot:'BB-HU5-260108-01', qc:'pass'}]},
+    {no:'PN0001', type:'PN', date:'2026-01-05', partyId:'S01', pay:'331', wh:'BBT', desc:'Mua cá linh tươi mùa nước nổi', lines:[{item:'CL', qty:2000, value:90000000, vat:0, lot:'050126-01', qc:'pass'}]},
+    {no:'PX0001', type:'PX', date:'2026-01-05', lsx:'LSX01', to:'BTP', wh:'BBT', desc:'Xuất cá linh, muối cho sơ chế – ủ muối (GĐ1)', lines:[{item:'CL', qty:2000, lot:'050126-01'}, {item:'MUOI', qty:400, lot:'151225-01', loc:'5.Phuy'}]},
+    {no:'PN0002', type:'PN', date:'2026-01-06', partyId:'S02', pay:'331', wh:'BBT', desc:'Mua muối hạt, thính gạo', lines:[{item:'MUOI', qty:500, value:2100000, vat:5, lot:'060126-01', qc:'pass', loc:'5.Phuy'}, {item:'THINH', qty:300, value:9300000, vat:5, lot:'060126-02', qc:'pass'}]},
+    {no:'PN0003', type:'PN', date:'2026-01-07', partyId:'S03', pay:'331', wh:'BBT', desc:'Mua hũ, nhãn 500g và 250g', lines:[{item:'HU5', qty:3000, value:19200000, vat:10, lot:'070126-01', qc:'pass'}, {item:'HU2', qty:2000, value:9000000, vat:10, lot:'070126-02', qc:'pass'}]},
+    {no:'PX0002', type:'PX', date:'2026-01-08', lsx:'LSX01', to:'BTP', wh:'BBT', desc:'Xuất thính gạo cho công đoạn ủ thính (GĐ1)', lines:[{item:'THINH', qty:100, lot:'201225-01'}, {item:'THINH', qty:140, lot:'060126-02'}]},
+    {no:'PN0004', type:'PN', date:'2026-01-08', partyId:'S04', pay:'331', wh:'BBT', cur:'USD', rate:25350, desc:'Nhập khẩu hũ thủy tinh 500g (USD)', lines:[{item:'HU5', qty:2000, fc:520, value:13182000, vat:0, lot:'080126-01', qc:'pass'}]},
     {no:'CP0002', type:'CP', date:'2026-01-10', partyId:'S06', pay:'1111', desc:'Vật tư phụ: găng tay, bao tay, nước rửa', lines:[{name:'Vật tư phụ (găng tay, bao tay, nước rửa)', amt:3500000, fixed:false, vat:10}]},
-    {no:'HD0001', type:'HD', date:'2026-01-10', partyId:'C01', pay:'131', wh:'BBT', inv:1, desc:'Bán mắm cá linh tồn đầu kỳ', lines:[{item:'ML5', lot:'TP-ML5-251228-01', qty:200, price:68000, vat:10}]},
-    {no:'PN0005', type:'PN', date:'2026-01-12', partyId:'S01', pay:'331', wh:'BBT', desc:'Mua cá linh tươi đợt 2', lines:[{item:'CL', qty:1000, value:46000000, vat:0, lot:'NL-CL-260112-01', qc:'pass'}]},
-    {no:'PX0003', type:'PX', date:'2026-01-12', lsx:'LSX01', to:'BTP', wh:'BBT', desc:'Xuất cá linh, muối, thính đợt 2 (GĐ1)', lines:[{item:'CL', qty:1000, lot:'NL-CL-260112-01'}, {item:'MUOI', qty:200, lot:'PG-MUOI-251215-01'}, {item:'THINH', qty:120, lot:'PG-THINH-260106-01'}]},
-    {no:'PN0006', type:'PN', date:'2026-01-14', partyId:'S05', pay:'331', wh:'BBT', desc:'Mua tôm, ruốc tươi', lines:[{item:'TOM', qty:600, value:55200000, vat:0, lot:'NL-TOM-260114-01', qc:'pass'}]},
-    {no:'PX0004', type:'PX', date:'2026-01-14', lsx:'LSX03', to:'MT2', wh:'BBT', desc:'Xuất tôm, muối, gia vị ủ chượp mắm tôm', lines:[{item:'TOM', qty:560, lot:'NL-TOM-260114-01'}, {item:'MUOI', qty:120, lot:'PG-MUOI-251215-01'}, {item:'GV', qty:8, lot:'PG-GV-251201-01'}]},
-    {no:'HD0002', type:'HD', date:'2026-01-15', partyId:'C03', pay:'1111', wh:'NTH', inv:2, desc:'Bán lẻ tại cửa hàng 97 Nguyễn Thái Học', lines:[{item:'ML5', lot:'TP-ML5-251215-01', qty:100, price:79000, vat:10}, {item:'NM', lot:'HH-NM-251210-01', qty:50, price:62000, vat:10}]},
-    {no:'PN0007', type:'PN', date:'2026-01-15', partyId:'S06', pay:'1111', wh:'BBT', desc:'Mua đường, gia vị', lines:[{item:'DUONG', qty:100, value:2150000, vat:5, lot:'PG-DUONG-260115-01', qc:'pass'}, {item:'GV', qty:5, value:590000, vat:10, lot:'PG-GV-260115-01', qc:'pass'}]},
-    {no:'NK0001', type:'NK', date:'2026-01-18', lsx:'LSX01', wh:'BBT', desc:'Nhập kho BTP cá linh ủ thính đợt 1', lines:[{item:'BTP', qty:1400, rej:40, lot:'BTP-CL-260118-01', qc:'pass'}]},
-    {no:'PX0005', type:'PX', date:'2026-01-19', lsx:'LSX02', to:'ML5', wh:'BBT', desc:'Xuất BTP, đường cho phân loại – phối trộn (GĐ2)', lines:[{item:'BTP', qty:300, lot:'BTP-CL-251226-01'}, {item:'BTP', qty:1200, lot:'BTP-CL-260118-01'}, {item:'DUONG', qty:150, lot:'PG-DUONG-251210-01'}]},
-    {no:'PN0008', type:'PN', date:'2026-01-20', partyId:'S07', pay:'331', wh:'NTH', desc:'Mua nước mắm chai về bán tại cửa hàng', lines:[{item:'NM', qty:240, value:10920000, vat:10, lot:'HH-NM-260120-01', qc:'pass'}]},
-    {no:'PX0006', type:'PX', date:'2026-01-22', lsx:'LSX03', to:'MT2', wh:'BBT', desc:'Xuất hũ 250g đóng gói mắm tôm', lines:[{item:'HU2', qty:800, lot:'BB-HU2-251205-01'}, {item:'HU2', qty:1200, lot:'BB-HU2-260107-01'}]},
-    {no:'NK0002', type:'NK', date:'2026-01-24', lsx:'LSX01', wh:'BBT', desc:'Nhập kho BTP cá linh ủ thính đợt 2', lines:[{item:'BTP', qty:1300, rej:20, lot:'BTP-CL-260124-01', qc:'pass'}]},
-    {no:'PX0007', type:'PX', date:'2026-01-25', lsx:'LSX02', to:'ML5', wh:'BBT', desc:'Xuất BTP, đường bổ sung (GĐ2)', lines:[{item:'BTP', qty:200, lot:'BTP-CL-260118-01'}, {item:'BTP', qty:100, lot:'BTP-CL-260124-01'}, {item:'DUONG', qty:50, lot:'PG-DUONG-260115-01'}]},
+    {no:'HD0001', type:'HD', date:'2026-01-10', partyId:'C01', pay:'131', wh:'BBT', inv:1, desc:'Bán mắm cá linh tồn đầu kỳ', lines:[{item:'ML5', lot:'281225-01', qty:200, price:68000, vat:10}]},
+    {no:'PN0005', type:'PN', date:'2026-01-12', partyId:'S01', pay:'331', wh:'BBT', desc:'Mua cá linh tươi đợt 2', lines:[{item:'CL', qty:1000, value:46000000, vat:0, lot:'120126-01', qc:'pass'}]},
+    {no:'PX0003', type:'PX', date:'2026-01-12', lsx:'LSX01', to:'BTP', wh:'BBT', desc:'Xuất cá linh, muối, thính đợt 2 (GĐ1)', lines:[{item:'CL', qty:1000, lot:'120126-01'}, {item:'MUOI', qty:200, lot:'151225-01', loc:'5.Phuy'}, {item:'THINH', qty:120, lot:'060126-02'}]},
+    {no:'PN0006', type:'PN', date:'2026-01-14', partyId:'S05', pay:'331', wh:'BBT', desc:'Mua tôm, ruốc tươi', lines:[{item:'TOM', qty:600, value:55200000, vat:0, lot:'140126-01', qc:'pass', loc:'5.Trái'}]},
+    {no:'PX0004', type:'PX', date:'2026-01-14', lsx:'LSX03', to:'MT2', wh:'BBT', desc:'Xuất tôm, muối, gia vị ủ chượp mắm tôm', lines:[{item:'TOM', qty:560, lot:'140126-01', loc:'5.Trái'}, {item:'MUOI', qty:120, lot:'151225-01', loc:'5.Phuy'}, {item:'GV', qty:8, lot:'011225-01'}]},
+    {no:'HD0002', type:'HD', date:'2026-01-15', partyId:'C03', pay:'1111', wh:'NTH', inv:2, desc:'Bán lẻ tại cửa hàng 97 Nguyễn Thái Học', lines:[{item:'ML5', lot:'151225-02', qty:100, price:79000, vat:10}, {item:'NM', lot:'101225-02', qty:50, price:62000, vat:10}]},
+    {no:'PN0007', type:'PN', date:'2026-01-15', partyId:'S06', pay:'1111', wh:'BBT', desc:'Mua đường, gia vị', lines:[{item:'DUONG', qty:100, value:2150000, vat:5, lot:'150126-01', qc:'pass'}, {item:'GV', qty:5, value:590000, vat:10, lot:'150126-02', qc:'pass'}]},
+    {no:'NK0001', type:'NK', date:'2026-01-18', lsx:'LSX01', wh:'BBT', desc:'Nhập kho BTP cá linh ủ thính đợt 1', lines:[{item:'BTP', qty:800, rej:40, lot:'180126-01', qc:'pass', loc:'A.27'}, {item:'BTP', qty:600, lot:'180126-01', qc:'pass', loc:'A.28'}]},
+    {no:'PX0005', type:'PX', date:'2026-01-19', lsx:'LSX02', to:'ML5', wh:'BBT', desc:'Xuất BTP, đường cho phân loại – phối trộn (GĐ2)', lines:[{item:'BTP', qty:180, lot:'261225-01', loc:'A.15'}, {item:'BTP', qty:120, lot:'261225-01', loc:'A.26'}, {item:'BTP', qty:800, lot:'180126-01', loc:'A.27'}, {item:'BTP', qty:400, lot:'180126-01', loc:'A.28'}, {item:'DUONG', qty:150, lot:'101225-01'}]},
+    {no:'PN0008', type:'PN', date:'2026-01-20', partyId:'S07', pay:'331', wh:'NTH', desc:'Mua nước mắm chai về bán tại cửa hàng', lines:[{item:'NM', qty:240, value:10920000, vat:10, lot:'200126-01', qc:'pass'}]},
+    {no:'PX0006', type:'PX', date:'2026-01-22', lsx:'LSX03', to:'MT2', wh:'BBT', desc:'Xuất hũ 250g đóng gói mắm tôm', lines:[{item:'HU2', qty:800, lot:'051225-02'}, {item:'HU2', qty:1200, lot:'070126-02'}]},
+    {no:'NK0002', type:'NK', date:'2026-01-24', lsx:'LSX01', wh:'BBT', desc:'Nhập kho BTP cá linh ủ thính đợt 2', lines:[{item:'BTP', qty:1300, rej:20, lot:'240126-01', qc:'pass', loc:'A.29'}]},
+    {no:'PX0007', type:'PX', date:'2026-01-25', lsx:'LSX02', to:'ML5', wh:'BBT', desc:'Xuất BTP, đường bổ sung (GĐ2)', lines:[{item:'BTP', qty:200, lot:'180126-01', loc:'A.28'}, {item:'BTP', qty:100, lot:'240126-01', loc:'A.29'}, {item:'DUONG', qty:50, lot:'150126-01'}]},
+    {no:'CK0003', type:'CK', date:'2026-01-26', wh:'BBT', whTo:'BBT', desc:'Chuyển BTP cá linh sang bồn A.30', lines:[{item:'BTP', lot:'240126-01', loc:'A.29', locTo:'A.30', qty:400}]},
     {no:'CT0001', type:'CT', date:'2026-01-25', partyId:'S01', acc:'1121', desc:'Trả tiền cá linh đợt 1', lines:[{amt:90000000}]},
-    {no:'PX0008', type:'PX', date:'2026-01-26', lsx:'LSX02', to:'ML5', wh:'BBT', desc:'Xuất hũ 500g đóng gói mắm cá linh', lines:[{item:'HU5', qty:1500, lot:'BB-HU5-251205-01'}, {item:'HU5', qty:1500, lot:'BB-HU5-260107-01'}, {item:'HU5', qty:1000, lot:'BB-HU5-260108-01'}]},
-    {no:'NK0003', type:'NK', date:'2026-01-27', lsx:'LSX02', wh:'BBT', desc:'Nhập kho mắm cá linh hũ 500g đợt 1', lines:[{item:'ML5', qty:2400, rej:10, lot:'TP-ML5-260127-01', qc:'pass'}]},
-    {no:'NK0004', type:'NK', date:'2026-01-27', lsx:'LSX03', wh:'BBT', desc:'Nhập kho mắm tôm hũ 250g', lines:[{item:'MT2', qty:1940, rej:60, lot:'TP-MT2-260127-01', qc:'pass'}]},
-    {no:'CK0001', type:'CK', date:'2026-01-28', wh:'BBT', whTo:'NTH', desc:'Chuyển thành phẩm ra cửa hàng 97 Nguyễn Thái Học', lines:[{item:'ML5', lot:'TP-ML5-260127-01', qty:600}, {item:'MT2', lot:'TP-MT2-260127-01', qty:300}]},
-    {no:'CK0002', type:'CK', date:'2026-01-28', wh:'BBT', whTo:'BT', desc:'Chuyển thành phẩm về kho Bình Tây', lines:[{item:'ML5', lot:'TP-ML5-260127-01', qty:1200}, {item:'MT2', lot:'TP-MT2-260127-01', qty:800}]},
+    {no:'PX0008', type:'PX', date:'2026-01-26', lsx:'LSX02', to:'ML5', wh:'BBT', desc:'Xuất hũ 500g đóng gói mắm cá linh', lines:[{item:'HU5', qty:1500, lot:'051225-01'}, {item:'HU5', qty:1500, lot:'070126-01'}, {item:'HU5', qty:1000, lot:'080126-01'}]},
+    {no:'NK0003', type:'NK', date:'2026-01-27', lsx:'LSX02', wh:'BBT', desc:'Nhập kho mắm cá linh hũ 500g đợt 1', lines:[{item:'ML5', qty:2400, rej:10, lot:'270126-01', qc:'pass'}]},
+    {no:'NK0004', type:'NK', date:'2026-01-27', lsx:'LSX03', wh:'BBT', desc:'Nhập kho mắm tôm hũ 250g', lines:[{item:'MT2', qty:1940, rej:60, lot:'270126-02', qc:'pass'}]},
+    {no:'CK0001', type:'CK', date:'2026-01-28', wh:'BBT', whTo:'NTH', desc:'Chuyển thành phẩm ra cửa hàng 97 Nguyễn Thái Học', lines:[{item:'ML5', lot:'270126-01', qty:600}, {item:'MT2', lot:'270126-02', qty:300}]},
+    {no:'CK0002', type:'CK', date:'2026-01-28', wh:'BBT', whTo:'BT', desc:'Chuyển thành phẩm về kho Bình Tây', lines:[{item:'ML5', lot:'270126-01', qty:1200}, {item:'MT2', lot:'270126-02', qty:800}]},
     {no:'CT0002', type:'CT', date:'2026-01-28', partyId:'S04', acc:'1122', desc:'Thanh toán hóa đơn hũ nhập khẩu (USD)', lines:[{fc:520, ref:'PN0004'}]},
-    {no:'HD0003', type:'HD', date:'2026-01-29', partyId:'C02', pay:'131', wh:'BT', inv:3, desc:'Bán cho chuỗi siêu thị', lines:[{item:'ML5', lot:'TP-ML5-260127-01', qty:1000, price:68000, vat:10}, {item:'MT2', lot:'TP-MT2-251220-01', qty:300, price:56000, vat:10}, {item:'MT2', lot:'TP-MT2-260127-01', qty:300, price:56000, vat:10}]},
-    {no:'NK0005', type:'NK', date:'2026-01-29', lsx:'LSX02', wh:'BBT', desc:'Nhập kho mắm cá linh hũ 500g đợt 2 (đang bảo ôn)', lines:[{item:'ML5', qty:1570, rej:20, lot:'TP-ML5-260129-01', qc:'hold'}]},
-    {no:'HD0004', type:'HD', date:'2026-01-30', partyId:'C03', pay:'1111', wh:'NTH', inv:4, desc:'Bán lẻ tại cửa hàng 97 Nguyễn Thái Học', lines:[{item:'ML5', lot:'TP-ML5-260127-01', qty:450, price:79000, vat:10}, {item:'MT2', lot:'TP-MT2-260127-01', qty:200, price:65000, vat:10}, {item:'NM', lot:'HH-NM-251210-01', qty:10, price:62000, vat:10}, {item:'NM', lot:'HH-NM-260120-01', qty:110, price:62000, vat:10}]},
+    {no:'HD0003', type:'HD', date:'2026-01-29', partyId:'C02', pay:'131', wh:'BT', inv:3, desc:'Bán cho chuỗi siêu thị', lines:[{item:'ML5', lot:'270126-01', qty:1000, price:68000, vat:10}, {item:'MT2', lot:'201225-02', qty:300, price:56000, vat:10}, {item:'MT2', lot:'270126-02', qty:300, price:56000, vat:10}]},
+    {no:'NK0005', type:'NK', date:'2026-01-29', lsx:'LSX02', wh:'BBT', desc:'Nhập kho mắm cá linh hũ 500g đợt 2 (đang bảo ôn)', lines:[{item:'ML5', qty:1570, rej:20, lot:'290126-01', qc:'hold'}]},
+    {no:'HD0004', type:'HD', date:'2026-01-30', partyId:'C03', pay:'1111', wh:'NTH', inv:4, desc:'Bán lẻ tại cửa hàng 97 Nguyễn Thái Học', lines:[{item:'ML5', lot:'270126-01', qty:450, price:79000, vat:10}, {item:'MT2', lot:'270126-02', qty:200, price:65000, vat:10}, {item:'NM', lot:'101225-02', qty:10, price:62000, vat:10}, {item:'NM', lot:'200126-01', qty:110, price:62000, vat:10}]},
     {no:'TN0001', type:'TN', date:'2026-01-30', partyId:'C01', acc:'1121', desc:'Thu tiền đại lý mắm Châu Đốc', lines:[{amt:50000000}]},
-    {no:'HD0005', type:'HD', date:'2026-01-31', partyId:'C01', pay:'131', wh:'BBT', inv:5, desc:'Bán cho đại lý', lines:[{item:'ML5', lot:'TP-ML5-260127-01', qty:150, price:68000, vat:10}, {item:'MT2', lot:'TP-MT2-260127-01', qty:600, price:56000, vat:10}]},
+    {no:'HD0005', type:'HD', date:'2026-01-31', partyId:'C01', pay:'131', wh:'BBT', inv:5, desc:'Bán cho đại lý', lines:[{item:'ML5', lot:'270126-01', qty:150, price:68000, vat:10}, {item:'MT2', lot:'270126-02', qty:600, price:56000, vat:10}]},
     {no:'BL0001', type:'BL', date:'2026-01-31', contrib:0.235, desc:'Bảng lương tháng 01 và các khoản trích theo lương', lines:[
       {role:'NC', obj:'BTP', amt:20000000}, {role:'NC', obj:'ML5', amt:8000000}, {role:'NC', obj:'MT2', amt:7000000},
       {role:'SXC', name:'Lương trưởng QC và QC các khu', amt:12000000, fixed:true}]},
@@ -734,6 +772,39 @@ const SEED = {
   audit: []
 };
 SEED.docs.forEach(d => { d.origin = 'seed'; d.status = 'posted'; });
+// Số phiếu kho theo tháng như sổ kho: PNK-YYMMnnn (nhập), PXK-YYMMnnn (xuất); số chứng từ kế toán giữ nguyên
+const SLIP = {PN:'PNK', NK:'PNK', TL:'PNK', PX:'PXK', HD:'PXK', CK:'PXK'};
+function nextKno(D, d){
+  const p = SLIP[d.type]; if(!p) return '';
+  const pre = p + '-' + d.date.slice(2, 4) + d.date.slice(5, 7); let m = 0;
+  D.docs.forEach(x => { if(x.kno && x.kno.indexOf(pre) === 0){ const n = parseInt(x.kno.slice(pre.length), 10); if(n > m) m = n; } });
+  return pre + String(m + 1).padStart(3, '0');
+}
+SEED.docs.slice().sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.no < b.no ? -1 : 1)).forEach(d => { const k = nextKno(SEED, d); if(k) d.kno = k; });
+assignMh(SEED);   // mã hóa cho mọi lô mẫu
+// Lý do xuất (theo sổ kho): suy ra từ loại chứng từ
+function outReason(d){
+  if(d.type === 'PX') return 'Sản xuất';
+  if(d.type === 'HD') return 'Bán hàng';
+  if(d.type === 'CK') return d.wh === d.whTo ? 'Chuyển vị trí' : d.whTo === 'BT' ? 'Chuyển kho Bình Tây' : d.whTo === 'NTH' ? 'Chuyển kho 97' : 'Khác';
+  return '';
+}
+// Vị trí chứa: khu + loại (bồn / trái / phuy) + số
+const LOC_KIND = {TANK:'Bồn', JAR:'Trái', DRUM:'Phuy'};
+function locCode(z){ return z.kind === 'TANK' ? z.zone + '.' + z.no : z.zone + '.' + LOC_KIND[z.kind] + (z.no ? '.' + z.no : ''); }
+function foldVN(s){ return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D'); }
+// Nhận các biến thể ghi tay (A.15, A. 98, 5.trái, 2. trái, B.phuy) và chuẩn hóa
+function parseLoc(raw){
+  const s = foldVN(raw).replace(/\s+/g, '').toUpperCase();
+  const m = /^([0-9A-Z]{1,3})\.(?:(TRAI|PHUY|BON)\.?)?(\d{1,4})?$/.exec(s);
+  if(!m) return {err:'Ký hiệu dạng Khu.Số (A.15) hoặc Khu.Trái, Khu.Phuy (5.Trái, B.Phuy).'};
+  const kind = m[2] === 'TRAI' ? 'JAR' : m[2] === 'PHUY' ? 'DRUM' : 'TANK';
+  if(kind === 'TANK' && !m[3]) return {err:'Bồn cần có số sau khu (ví dụ A.15).'};
+  return {zone:m[1], kind, no: m[3] ? String(+m[3]) : ''};
+}
+const locsOf = (D, wh) => (D.locs || []).filter(z => z.wh === wh);
+function locKind(D, wh, code){ const z = (D.locs || []).find(x => x.wh === wh && locCode(x) === code); return z ? z.kind : ''; }
+const needLoc = (D, item, wh) => D.items[item] && D.items[item].kind === 'BTP' && locsOf(D, wh).length > 0;
 // Lịch sử 5 tháng trước (triệu đồng): số mẫu cố định, biên lãi gộp ~30–31%.
 const HIST = [['08/25',188.4,57.9],['09/25',201.7,62.3],['10/25',196.2,60.0],['11/25',214.9,66.8],['12/25',238.5,74.6]];
 
@@ -768,29 +839,60 @@ function openOf(D, k){ const L = D.open[k] || []; return {qty: rq(sum(L, o => o.
 function whName(w){ return WH[w] ? WH[w].name : w; }
 
 // ================= Lô (mã lót hàng) =================
-function allLotCodes(D){
+// Mã lô theo sổ kho: DDMMYY-nn (ngày nhập / sản xuất + số mẻ trong ngày), duy nhất toàn nhà máy, không cấp lại
+const ddmmyy = d => d.slice(8, 10) + d.slice(5, 7) + d.slice(2, 4);
+function allLotCodes(D, exceptNo){
   const s = {};
-  Object.keys(D.open).forEach(k => (D.open[k] || []).forEach(o => s[o.lot] = 1));
-  D.docs.forEach(d => (d.lines || []).forEach(l => { if(l.lot && (d.type === 'PN' || d.type === 'NK' || d.type === 'KK')) s[l.lot] = 1; }));
+  Object.keys(D.open).forEach(k => (D.open[k] || []).forEach(o => s[o.lot] = k));
+  D.docs.forEach(d => { if(d.no === exceptNo) return; (d.lines || []).forEach(l => { if(l.lot && (d.type === 'PN' || d.type === 'NK' || (d.type === 'KK' && l.newLot))) s[l.lot] = l.item; }); });
   return s;
 }
 function nextLot(D, item, date, taken){
-  const base = D.items[item].code + '-' + yymmdd(date) + '-', s = Object.assign(allLotCodes(D), taken || {});
+  const base = ddmmyy(date) + '-', s = Object.assign(allLotCodes(D), taken || {});
   let n = 1; while(s[base + String(n).padStart(2, '0')]) n++;
   return base + String(n).padStart(2, '0');
 }
+const LOT_RE = /^[0-9A-Za-z][0-9A-Za-z.-]{2,19}$/;
+// Mã hóa: hệ thống tự sinh khi tạo lô = nhóm hàng + YYMM + số thứ tự 4 chữ số (BTP-2601-0002); duy nhất, không đổi khi chuyển kho / vị trí, không cấp lại
+function mhGroup(it){ return it.kind === 'NVL' ? (it.grp || 'NL') : it.kind === 'SP' ? 'TP' : it.kind; }
+function allMh(D){
+  const s = {};
+  Object.keys(D.open).forEach(k => (D.open[k] || []).forEach(o => { if(o.mh) s[o.mh] = o.lot; }));
+  D.docs.forEach(d => (d.lines || []).forEach(l => { if(l.mh) s[l.mh] = l.lot; }));
+  return s;
+}
+function nextMh(D, item, date, taken){
+  const it = D.items[item]; if(!it) return '';
+  const pre = mhGroup(it) + '-' + date.slice(2, 4) + date.slice(5, 7) + '-', s = Object.assign(allMh(D), taken || {});
+  let n = 1; while(s[pre + String(n).padStart(4, '0')]) n++;
+  return pre + String(n).padStart(4, '0');
+}
+// Cấp mã hóa cho các lô chưa có (dữ liệu mẫu): theo ngày tạo lô
+function assignMh(D){
+  const open = []; Object.keys(D.open).forEach(k => (D.open[k] || []).forEach(o => open.push({k, o})));
+  open.sort((a, b) => (a.o.date || '') < (b.o.date || '') ? -1 : (a.o.date || '') > (b.o.date || '') ? 1 : 0);
+  const byLot = {};
+  open.forEach(({k, o}) => { if(o.mh){ byLot[o.lot] = o.mh; return; } o.mh = byLot[o.lot] || (byLot[o.lot] = nextMh(D, k, o.date || '2025-12-31')); });
+  D.docs.slice().sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.no < b.no ? -1 : 1)).forEach(d => (d.lines || []).forEach(l => {
+    if(!l.lot || !(d.type === 'PN' || d.type === 'NK' || (d.type === 'KK' && l.newLot))) return;
+    if(l.mh){ byLot[l.lot] = l.mh; return; }
+    l.mh = byLot[l.lot] || (byLot[l.lot] = nextMh(D, l.item, d.date)); }));
+}
+const mhOf = (code, mh) => mh || '';
 function buildLots(D, docs){
   const L = {};
   const mk = (code, k, o) => { const it = D.items[k]; if(!it) return;
+    const y = L[code]; if(y){ if(y.item === k && y.src === o.src && y.doc === o.doc){ y.inQty = rq(y.inQty + o.inQty); y.inValue += o.inValue || 0; if(o.loc && y.locs.indexOf(o.loc) < 0) y.locs.push(o.loc); } return; }
     const x = Object.assign({code, item:k, qcRole:it.qcRole || ''}, o);
+    x.mh = mhOf(code, o.mh); x.locs = o.loc ? [o.loc] : [];
     x.qc = (D.qc && D.qc[code] && D.qc[code].status) || x.qc || 'pass';
     x.hsd = it.shelf ? addDays(x.date, it.shelf) : null; L[code] = x; };
-  Object.keys(D.open).forEach(k => (D.open[k] || []).forEach(o => mk(o.lot, k, {date:o.date || '2025-12-31', wh:o.wh, src:'open', doc:null, inQty:o.qty, inValue:o.value, qc:o.qc})));
+  Object.keys(D.open).forEach(k => (D.open[k] || []).forEach(o => mk(o.lot, k, {date:o.date || '2025-12-31', wh:o.wh, loc:o.loc || '', src:'open', doc:null, inQty:o.qty, inValue:o.value, qc:o.qc, mh:o.mh})));
   docs.forEach(d => (d.lines || []).forEach((l, i) => {
-    if(!l.lot || L[l.lot]) return;
-    if(d.type === 'PN') mk(l.lot, l.item, {date:d.date, wh:d.wh, src:'PN', doc:d.no, line:i, partyId:d.partyId, inQty:l.qty, inValue:l.value, qc:l.qc, cur:d.cur, fc:l.fc});
-    else if(d.type === 'NK') mk(l.lot, l.item, {date:d.date, wh:d.wh, src:'NK', doc:d.no, line:i, lsx:d.lsx, inQty:l.qty, inValue:0, rej:l.rej || 0, qc:l.qc});
-    else if(d.type === 'KK' && l.qty > 0 && l.newLot) mk(l.lot, l.item, {date:d.date, wh:d.wh, src:'KK', doc:d.no, line:i, inQty:l.qty, inValue:l.value, qc:'pass'});
+    if(!l.lot) return;
+    if(d.type === 'PN') mk(l.lot, l.item, {date:d.date, wh:d.wh, loc:l.loc || '', src:'PN', doc:d.no, line:i, partyId:d.partyId, inQty:l.qty, inValue:l.value, qc:l.qc, cur:d.cur, fc:l.fc, mh:l.mh});
+    else if(d.type === 'NK') mk(l.lot, l.item, {date:d.date, wh:d.wh, loc:l.loc || '', src:'NK', doc:d.no, line:i, lsx:d.lsx, inQty:l.qty, inValue:0, rej:l.rej || 0, qc:l.qc, mh:l.mh});
+    else if(d.type === 'KK' && l.qty > 0 && l.newLot) mk(l.lot, l.item, {date:d.date, wh:d.wh, loc:l.loc || '', src:'KK', doc:d.no, line:i, inQty:l.qty, inValue:l.value, qc:'pass', mh:l.mh});
   }));
   return L;
 }
@@ -809,19 +911,19 @@ function deriveMoves(D, docs){
   const byNo = {}; D.docs.forEach(d => byNo[d.no] = d);
   docs.forEach(d => (d.lines || []).forEach((l, i) => {
     if(!l.item || !mv[l.item]) return;
-    const b = {id: moveId(d, i), doc: d.no, line: i, date: d.date, desc: d.desc, type: d.type, user: d.origin === 'user', wh: d.wh, lot: l.lot};
+    const b = {id: moveId(d, i), doc: d.no, line: i, date: d.date, desc: d.desc, type: d.type, user: d.origin === 'user', wh: d.wh, lot: l.lot, loc: l.loc || ''};
     switch(d.type){
       case 'PN': mv[l.item].push(Object.assign(b, {kind:'in', qty:l.qty, value:l.value, partyId:d.partyId})); break;
       case 'PX': mv[l.item].push(Object.assign(b, {kind:'out', qty:l.qty, to:d.to, lsx:d.lsx})); break;
       case 'NK': mv[l.item].push(Object.assign(b, {kind:'in', qty:l.qty, value:0, fromCard:true, rej:l.rej || 0, lsx:d.lsx})); break;
       case 'HD': mv[l.item].push(Object.assign(b, {kind:'out', qty:l.qty, to:'sale'})); break;
       case 'TL': { const hd = byNo[d.ref], hl = hd && hd.lines[l.refLine];
-        mv[l.item].push(Object.assign(b, {kind:'ret', qty:l.qty, ref:d.ref, wh: hd ? hd.wh : d.wh, lot: hl ? hl.lot : l.lot, refId: hd ? moveId(hd, l.refLine) : null})); break; }
+        mv[l.item].push(Object.assign(b, {kind:'ret', qty:l.qty, ref:d.ref, wh: hd ? hd.wh : d.wh, lot: hl ? hl.lot : l.lot, loc: hl ? hl.loc || '' : l.loc || '', refId: hd ? moveId(hd, l.refLine) : null})); break; }
       case 'KK':
         if(l.qty < 0) mv[l.item].push(Object.assign(b, {kind:'out', qty:-l.qty, to:'loss'}));
         else if(l.qty > 0) mv[l.item].push(Object.assign(b, {kind:'in', qty:l.qty, value:l.value}));
         break;
-      case 'CK': mv[l.item].push(Object.assign(b, {kind:'trf', qty:l.qty, whTo:d.whTo})); break;
+      case 'CK': mv[l.item].push(Object.assign(b, {kind:'trf', qty:l.qty, whTo:d.whTo, locTo:l.locTo || ''})); break;
     }
   }));
   return mv;
@@ -833,20 +935,22 @@ function sortMoves(ms){
 }
 
 // ================= Engine giá xuất kho =================
-// Số lượng luôn theo dõi theo ô (kho, lô) ở mọi phương pháp; tồn âm báo theo ô (neg).
+// Số lượng theo dõi theo ô (kho, lô, vị trí chứa) ở mọi phương pháp; tồn âm báo theo ô đó (neg).
+// Giá trị theo ô (kho, lô): vị trí chứa chỉ chia số lượng, không là nguồn giá.
 // Thực tế đích danh: nguồn giá là lô tại kho (R1 c). BQ cuối kỳ / BQ tức thời / FIFO: nguồn giá là cả mặt hàng, lô chỉ để đếm số lượng và truy xuất.
-// Chuyển kho không đổi tổng giá trị mặt hàng; giá trị chuyển = giá của nguồn (đích danh: lô) để báo cáo theo kho.
+// Chuyển kho / chuyển vị trí không đổi tổng giá trị mặt hàng; giá trị chuyển = giá của nguồn (đích danh: lô) để báo cáo theo kho.
 function valuate(open, moves, method, lots){
-  const ms = sortMoves(moves), rows = [], neg = [], byId = {}, cells = {};
+  const ms = sortMoves(moves), rows = [], neg = [], byId = {}, cells = {}, lcells = {};
   const cell = (wh, lot) => { const k = wh + '|' + lot; return cells[k] || (cells[k] = {wh, lot, q:0, v:0}); };
+  const lcell = (wh, lot, loc) => { const k = wh + '|' + lot + '|' + (loc || ''); return lcells[k] || (lcells[k] = {wh, lot, loc: loc || '', q:0}); };
   const op = (open || []).slice().sort((a, b) => (a.date || '') < (b.date || '') ? -1 : (a.date || '') > (b.date || '') ? 1 : 0);
   let Q = 0, V = 0;
-  op.forEach(o => { const c = cell(o.wh, o.lot); c.q = rq(c.q + o.qty); c.v += o.value; Q = rq(Q + o.qty); V += o.value; });
+  op.forEach(o => { const c = cell(o.wh, o.lot), l = lcell(o.wh, o.lot, o.loc); c.q = rq(c.q + o.qty); c.v += o.value; l.q = rq(l.q + o.qty); Q = rq(Q + o.qty); V += o.value; });
   const openQ = Q, openV = V;
   let lastUnit = Q > EPS ? V / Q : 0;
   const lotUnit = lot => { const L = lots && lots[lot]; return L && L.inQty > EPS && L.inValue > 0 ? L.inValue / L.inQty : lastUnit; };
   const push = r => { rows.push(r); byId[r.id] = r; };
-  const chk = (m, c) => { if(c.q < -EPS) neg.push({id:m.id, doc:m.doc, date:m.date, short:rq(-c.q), wh:c.wh, lot:c.lot}); };
+  const chk = (m, c) => { if(c.q < -EPS) neg.push({id:m.id, doc:m.doc, date:m.date, short:rq(-c.q), wh:c.wh, lot:c.lot, loc:c.loc}); };
   let P = null;
   if(method === 'periodic'){
     let PQ = Q, PV = V; const srcs = op.map(o => ({src:'Tồn đầu kỳ', lot:o.lot, doc:null, qty:o.qty, value:o.value}));
@@ -869,7 +973,7 @@ function valuate(open, moves, method, lots){
   };
   ms.forEach(m => {
     if(m.kind === 'in'){
-      const c = cell(m.wh, m.lot); c.q = rq(c.q + m.qty); c.v += m.value; Q = rq(Q + m.qty); V += m.value;
+      const c = cell(m.wh, m.lot), l = lcell(m.wh, m.lot, m.loc); c.q = rq(c.q + m.qty); c.v += m.value; l.q = rq(l.q + m.qty); Q = rq(Q + m.qty); V += m.value;
       const u = m.qty > EPS ? m.value / m.qty : 0; if(m.qty > EPS && m.value > 0) lastUnit = u;
       if(layers) layers.push({src:m.id, lot:m.lot, doc:m.doc, date:m.date, qty:m.qty, unit:u, rem:m.value, partyId:m.partyId});
       seen.push({src:m.id, lot:m.lot, doc:m.doc, qty:m.qty, partyId:m.partyId});
@@ -879,15 +983,17 @@ function valuate(open, moves, method, lots){
       if(method === 'periodic') a = P.val[m.id];
       else if(s && s.qty > EPS) a = Math.round(m.qty * s.value / s.qty);
       else a = Math.round(m.qty * lotUnit(m.lot));
-      const c = cell(m.wh, m.lot); c.q = rq(c.q + m.qty); c.v += a; Q = rq(Q + m.qty); V += a;
+      const c = cell(m.wh, m.lot), l = lcell(m.wh, m.lot, m.loc); c.q = rq(c.q + m.qty); c.v += a; l.q = rq(l.q + m.qty); Q = rq(Q + m.qty); V += a;
       if(layers) layers.push({src:m.id, lot:m.lot, doc:m.doc, date:m.date, qty:m.qty, unit:a / m.qty, rem:a, ret:true});
       push(Object.assign({}, m, {value:a, unit:a / m.qty, balQ:Q, balV:V, ex:{type:'ret', ref:m.ref, unit:a / m.qty, periodic: method === 'periodic', lot:m.lot, wh:m.wh}}));
     } else if(m.kind === 'trf'){
       const c = cell(m.wh, m.lot), bq = c.q, bv = c.v; let a, ex;
       if(method === 'specific'){ const f = fromCell(c, m.qty, m.lot); a = f.a; ex = {type:'trf', from:m.wh, to:m.whTo, lot:m.lot, bq, bv, unit:f.unit, short:f.short, specific:true}; }
       else { const u = method === 'periodic' ? P.unit : (Q > EPS ? V / Q : lastUnit); a = Math.round(m.qty * u); ex = {type:'trf', from:m.wh, to:m.whTo, lot:m.lot, unit:u}; }
-      c.q = rq(c.q - m.qty); c.v -= a; chk(m, c);
+      c.q = rq(c.q - m.qty); c.v -= a;
+      const lf = lcell(m.wh, m.lot, m.loc); lf.q = rq(lf.q - m.qty); chk(m, lf);
       const t = cell(m.whTo, m.lot); t.q = rq(t.q + m.qty); t.v += a;
+      const lt = lcell(m.whTo, m.lot, m.locTo); lt.q = rq(lt.q + m.qty);
       push(Object.assign({}, m, {value:a, unit:a / m.qty, balQ:Q, balV:V, ex}));
     } else {
       const c = cell(m.wh, m.lot), bq = c.q, bv = c.v, BQ = Q, BV = V; let a, ex;
@@ -908,11 +1014,12 @@ function valuate(open, moves, method, lots){
         if(need > EPS){ const part = Math.round(need * lastUnit);
           parts.push({src:'Thiếu hàng (tồn âm)', doc:null, date:m.date, qty:need, unit:lastUnit, amt:part, short:true}); a += part; }
         ex = {type:'fifo', parts}; }
-      Q = rq(Q - m.qty); V -= a; c.q = rq(c.q - m.qty); c.v -= a; chk(m, c);
+      Q = rq(Q - m.qty); V -= a; c.q = rq(c.q - m.qty); c.v -= a;
+      const lc = lcell(m.wh, m.lot, m.loc); lc.q = rq(lc.q - m.qty); chk(m, lc);
       push(Object.assign({}, m, {value:a, unit:a / m.qty, balQ:Q, balV:V, ex}));
     }
   });
-  return {rows, byId, closeQ:Q, closeV:V, neg, method, cells, openQ, openV, unit: P ? P.unit : null};
+  return {rows, byId, closeQ:Q, closeV:V, neg, method, cells, lcells, openQ, openV, unit: P ? P.unit : null};
 }
 
 // ================= Bút toán =================
@@ -1081,10 +1188,14 @@ function compute(D){
     const Z = Zt - abn;                                            // giá thành sản phẩm đạt (gồm hao hụt trong định mức)
     const nks = sortMoves(mv[o].filter(m => m.fromCard));
     const zv = allocate(Z, nks.map(m => m.qty)), av = abn ? allocate(abn, nks.map(m => m.rej || 0)) : nks.map(() => 0);
-    nks.forEach((m, i) => { m.value = zv[i]; m.abn = av[i]; if(lots[m.lot]) lots[m.lot].inValue = zv[i]; });
+    // một lô nhập kho có thể nằm ở nhiều vị trí (nhiều dòng): giá lô = tổng các dòng
+    const agg = {}, lotList = [];
+    nks.forEach((m, i) => { m.value = zv[i]; m.abn = av[i];
+      let a = agg[m.lot]; if(!a){ a = agg[m.lot] = {no:m.doc, id:m.id, lot:m.lot, qty:0, rej:0, value:0, abn:0, date:m.date, lsx:m.lsx, locs:[]}; lotList.push(a); if(lots[m.lot]) lots[m.lot].inValue = 0; }
+      a.qty = rq(a.qty + m.qty); a.rej = rq(a.rej + (m.rej || 0)); a.value += zv[i]; a.abn += av[i]; if(m.loc) a.locs.push(m.loc);
+      if(lots[m.lot]) lots[m.lot].inValue += zv[i]; });
     return {o, ddk, nvl, btp, nc:nc[o], sxc:sxc[o], C, dd, ddck, Zt, km, good, rej, done, wipQ, lossPct, allowed, excess, abn, abnBy, Z,
-      qty:good, z: good > EPS ? Z / good : 0, zt: done > EPS ? Zt / done : 0, nvlBy, rowsIn, inputs:inputsOf(o),
-      lots: nks.map((m, i) => ({no:m.doc, id:m.id, lot:m.lot, qty:m.qty, rej:m.rej || 0, value:zv[i], abn:av[i], date:m.date, lsx:m.lsx}))};
+      qty:good, z: good > EPS ? Z / good : 0, zt: done > EPS ? Zt / done : 0, nvlBy, rowsIn, inputs:inputsOf(o), lots: lotList};
   };
   const pending = PRODK.slice();
   while(pending.length){
@@ -1156,7 +1267,7 @@ function reconcile(R){
   if(!R.tt133) ['621','622','627'].forEach(a => rows.push({acc:a, stock:0, gl:g[a] || 0, note:'đã kết chuyển sang 154 (KC0001)'}));
   return {rows, ok: rows.every(r => Math.round(r.stock) === Math.round(r.gl))};
 }
-function negText(D, f){ const it = D.items[f.item]; return it.name + ' lô ' + f.lot + ' tại ' + whName(f.wh) + ', ' + f.doc + ' ngày ' + ddmm(f.date) + ': thiếu ' + fmtQ(f.short) + ' ' + it.uom; }
+function negText(D, f){ const it = D.items[f.item]; return it.name + ' lô ' + f.lot + (f.loc ? ' vị trí ' + f.loc : '') + ' tại ' + whName(f.wh) + ', ' + f.doc + ' ngày ' + ddmm(f.date) + ': thiếu ' + fmtQ(f.short) + ' ' + it.uom; }
 function balanceCheck(R){
   const dr = sum(R.posts, p => p.dr), cr = sum(R.posts, p => p.cr);
   const bad = R.posts.filter(p => p.dr !== p.cr);
@@ -1173,7 +1284,7 @@ const STEPS = [
   t => 'Ghi sổ toàn bộ chứng từ tháng 01',
   t => 'Kiểm kê 3 kho theo lô, xử lý thừa thiếu',
   t => 'Lương, khấu hao, phân bổ ' + (t ? 'chi phí trả trước' : 'chi phí chờ phân bổ') + ' (242)',
-  t => 'Kiểm tra tồn âm theo vật tư, kho, lô',
+  t => 'Kiểm tra tồn âm theo vật tư, kho, lô, vị trí',
   t => 'Tính giá xuất kho NVL, bao bì, phụ gia',
   t => 'Tập hợp và phân bổ chi phí sản xuất chung (KC0001)',
   t => 'Tính giá thành phân bước: GĐ1 → lô BTP → GĐ2, giá nhập kho ' + (t ? 'thành phẩm' : 'sản phẩm'),
@@ -1195,7 +1306,7 @@ function stepText(i, R){
       let thieu = 0, thua = 0; kk.forEach(d => d.lines.forEach((l, j) => { if(l.qty < 0) thieu += valOf(R, d, j); else thua += l.value; }));
       return kk.length + ' phiếu kiểm kê: thiếu ' + fmt(thieu) + ' đ, thừa ' + fmt(thua) + ' đ'; }
     case 2: return 'Nhân công trực tiếp ' + fmt(sum(R.PRODK, o => R.nc[o])) + ' đ (gồm trích theo lương); quỹ SXC ' + fmt(sum(R.pool, p => p.amt)) + ' đ; TK 242 không phát sinh';
-    case 3: { const h = Object.values(R.lots).filter(l => l.qc !== 'pass').length; return 'Không có tồn âm theo (vật tư, kho, lô)' + (h ? '; ' + h + ' lô chờ / không đạt QC không được bán' : ''); }
+    case 3: { const h = Object.values(R.lots).filter(l => l.qc !== 'pass').length; return 'Không có tồn âm theo (vật tư, kho, lô, vị trí)' + (h ? '; ' + h + ' lô chờ / không đạt QC không được bán' : ''); }
     case 4: return 'Chốt giá ' + sum(R.active.filter(d => d.type === 'PX'), d => d.lines.filter(l => D.items[l.item] && D.items[l.item].kind === 'NVL').length) + ' dòng xuất NVL theo ' + METHOD_NAME[D.settings.method].toLowerCase();
     case 5: return 'Phân bổ ' + fmt(sum(R.PRODK, o => R.sxc[o])) + ' đ SXC; ' + fmt(R.toCogs) + ' đ dưới công suất vào 632 · KC0001 ' + fmt(R.postByNo.KC0001 ? R.postByNo.KC0001.dr : 0) + ' đ';
     case 6: return R.order.map(o => D.items[o].code + ' (' + ((D.items[o].prod || {}).stage || '') + '): ' + fmt2(c[o].z) + ' đ/' + unitOf(D, o)).join(' · ') + (sum(R.PRODK, o => c[o].abn) ? ' · hỏng ngoài định mức ' + fmt(sum(R.PRODK, o => c[o].abn)) + ' đ vào 632' : '');
@@ -1241,16 +1352,17 @@ function nextNo(D, type){
 }
 
 // ================= Trạng thái giao diện & lưu trữ =================
-const KEY = 'giagoc-demo-v3', THEME_KEY = 'giagoc-theme', SIDE_KEY = 'giagoc-side';
+const KEY = 'giagoc-demo-v32', THEME_KEY = 'giagoc-theme', SIDE_KEY = 'giagoc-side';
 const ACTOR = 'Người dùng';
 function load(){
   try{ const s = localStorage.getItem(KEY); if(!s) return null; const o = JSON.parse(s);
-    if(o && o.v === 3 && Array.isArray(o.docs) && o.closing && Array.isArray(o.closing.done) && o.settings && o.items && o.open && o.lsx && o.openGL) return o; }catch(_){}
+    if(o && o.v === 4 && Array.isArray(o.locs) && Array.isArray(o.docs) && o.closing && Array.isArray(o.closing.done) && o.settings && o.items && o.open && o.lsx && o.openGL) return o; }catch(_){}
   return null;
 }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S.data)); }catch(_){} }
 function clearSaved(){ try{ localStorage.removeItem(KEY); }catch(_){} }
-const UI0 = {view:'dash', item:'CL', sel:null, doc:'PX0001', lot:null, filter:'all', q:'', wh:'all', rep:'nkc', repAcc:'1111', repDebt:'331', repCash:'1111',
+const UI0 = {view:'dash', item:'CL', sel:null, doc:'PX0001', lot:null, filter:'all', q:'', wh:'all', lk:'all', sq:'', rep:'nkc', repAcc:'1111', repDebt:'331', repCash:'1111',
+  repFrom:'2026-01-01', repTo:'2026-01-31', repItem:'BTP', repWh:'all',
   impact:null, fail:null, refocus:null};
 const S = {data: load() || freshData(), ui:clone(UI0)};
 let R = null;
@@ -1415,6 +1527,8 @@ RENDER.dash = function(){
   if(holdStock.length) items.push(li('warn', holdStock.length + ' lô chờ / không đạt QC', holdStock.slice(0, 3).map(l => l.code + ' (' + QC_NAME[l.qc] + ')').join(', '), gotoBtn('stock', 'Xem lô')));
   const exp = cellsAll.filter(c => { const L = R.lots[c.lot]; return L && L.hsd && L.hsd < D.period.to; });
   if(exp.length) items.push(li('warn', exp.length + ' lô quá HSD', exp.slice(0, 3).map(c => c.lot + ' ' + fmtQ(c.q) + ' ' + D.items[c.item].uom + ' tại ' + c.wh).join(', '), gotoBtn('stock', 'Xem lô')));
+  const low = Object.keys(D.items).filter(k => D.items[k].min > 0 && R.items[k] && R.items[k].closeQ <= D.items[k].min + EPS);
+  if(low.length) items.push(li('warn', 'Cần đặt thêm', low.map(k => D.items[k].name + ': tồn ' + fmtQ(R.items[k].closeQ) + ' / tối thiểu ' + fmtQ(D.items[k].min) + ' ' + D.items[k].uom).join('; '), gotoBtn('items', 'Danh mục')));
   const di = st.dirty.findIndex(x => x);
   if(di >= 0) items.push(li('bad', 'Cần chạy lại', 'Khóa sổ từ bước ' + (di + 1), gotoBtn('close', 'Khóa sổ')));
   if(R.toCogs > 0) items.push(li('info', 'Dưới công suất', fmt(D.settings.hours) + '/' + fmt(D.settings.normalHours) + ' giờ máy · ' + fmt(R.toCogs) + ' đ SXC cố định vào 632', gotoBtn('cost', 'Giá thành')));
@@ -1447,7 +1561,7 @@ function docList(){
     if(f === 'prov' && !(s.indexOf('prov') === 0 || s === 'dirty')) return false;
     if(f === 'mine' && p.d.origin !== 'user') return false;
     if(f === 'void' && s !== 'void') return false;
-    if(q){ const hay = (p.d.no + ' ' + p.d.desc + ' ' + partyName(S.data, p.d.partyId) + ' ' + (p.d.to || '') + ' ' + (p.d.wh || '') + ' ' + (p.d.lines || []).map(l => (l.lot || '') + ' ' + (l.item ? itCode(l.item) : '')).join(' ')).toLowerCase(); if(hay.indexOf(q) < 0) return false; }
+    if(q){ const hay = (p.d.no + ' ' + (p.d.kno || '') + ' ' + p.d.desc + ' ' + partyName(S.data, p.d.partyId) + ' ' + (p.d.to || '') + ' ' + (p.d.wh || '') + ' ' + (p.d.lines || []).map(l => (l.lot || '') + ' ' + (R.lots[l.lot] ? R.lots[l.lot].mh : '') + ' ' + (l.loc || '') + ' ' + (l.locTo || '') + ' ' + (l.item ? itCode(l.item) : '')).join(' ')).toLowerCase(); if(hay.indexOf(q) < 0) return false; }
     return true; });
 }
 function docAmount(p){ if(p.d.status === 'void') return p.d.lastAmt || 0; if(p.d.type === 'CK') return sum(p.d.lines.map((l, i) => valOf(R, p.d, i))); return p.dr; }
@@ -1458,7 +1572,7 @@ RENDER.docs = function(){
   $('docFilter').innerHTML = FILTERS.map(([k, l]) => '<button type="button" data-filter="' + k + '" aria-pressed="' + (S.ui.filter === k) + '">' + l + '</button>').join('');
   if(document.activeElement !== $('docSearch')) $('docSearch').value = S.ui.q;
   $('docList').innerHTML = list.length ? list.map(p => { const d = p.d, sel = d.no === S.ui.doc, v = d.status === 'void';
-    return '<tr class="click' + (sel ? ' sel' : '') + (v ? ' void' : '') + '" data-doc="' + d.no + '" tabindex="0"' + (sel ? ' aria-current="true"' : '') + '><td class="acc strike">' + d.no + '</td><td>' + ddmm(d.date) + '</td><td class="wrap strike">' + esc(d.desc) + (d.partyId ? ' – ' + esc(partyName(D, d.partyId)) : '') + badges(d) + '</td><td class="n">' + fmt(docAmount(p)) + '</td><td>' + statusPill(p) + '</td></tr>'; }).join('')
+    return '<tr class="click' + (sel ? ' sel' : '') + (v ? ' void' : '') + '" data-doc="' + d.no + '" tabindex="0"' + (sel ? ' aria-current="true"' : '') + '><td class="acc strike">' + d.no + (d.kno ? '<br><span class="note mono">' + d.kno + '</span>' : '') + '</td><td>' + ddmm(d.date) + '</td><td class="wrap strike">' + esc(d.desc) + (d.partyId ? ' – ' + esc(partyName(D, d.partyId)) : '') + badges(d) + '</td><td class="n">' + fmt(docAmount(p)) + '</td><td>' + statusPill(p) + '</td></tr>'; }).join('')
     : '<tr><td colspan="5" class="muted">Không có chứng từ phù hợp bộ lọc.</td></tr>';
   renderDocDetail();
 };
@@ -1468,6 +1582,8 @@ function renderDocDetail(){
   let h = '<div class="panel-head"><h2><span class="acc">' + d.no + '</span> · ' + dmy(d.date) + '</h2><div class="spacer"></div>' + statusPill(p) + badges(d) + '</div>';
   h += '<p style="margin:0">' + esc(TYPE_NAME[d.type]) + ': ' + esc(d.desc) + '</p>';
   const meta = [];
+  if(d.kno) meta.push('Phiếu kho <span class="acc">' + d.kno + '</span>');
+  if(outReason(d)) meta.push('Lý do xuất: ' + outReason(d));
   if(d.partyId) meta.push((D.parties[d.partyId] && D.parties[d.partyId].type === 'SUP' ? 'Nhà cung cấp: ' : 'Khách hàng: ') + esc(partyName(D, d.partyId)));
   if(d.type === 'HD' && d.inv) meta.push('Hóa đơn điện tử ' + D.settings.einv + ' · số ' + String(d.inv).padStart(7, '0'));
   if(d.wh) meta.push((d.type === 'CK' ? 'Từ ' : 'Kho: ') + esc(whName(d.wh)) + (d.whTo ? ' → ' + esc(whName(d.whTo)) : ''));
@@ -1485,10 +1601,11 @@ function renderDocDetail(){
   if(kcDirty) h += '<div class="msg warn">Đã chốt ở bước 6: ' + fmt(st.snap[5].kc) + ' đ → hiện tại: ' + fmt(p.dr) + ' đ. Cần chạy lại khóa sổ.</div>';
   // dòng hàng theo lô
   if(d.status !== 'void' && (d.lines || []).some(l => l.item)){
-    h += '<div class="tbl-wrap"><table id="lineTbl"><thead><tr><th>Vật tư</th><th>Lô</th><th>Kho</th><th class="n">SL</th><th class="n">Giá trị kho</th><th>QC</th></tr></thead><tbody>' +
-      d.lines.map((l, i) => { const L = R.lots[d.type === 'TL' ? ((D.docs.find(x => x.no === d.ref) || {lines:[]}).lines[l.refLine] || {}).lot : l.lot] || null, it = D.items[l.item];
-        const wh = d.type === 'TL' ? (D.docs.find(x => x.no === d.ref) || {}).wh : d.wh;
-        return '<tr><td>' + esc(it ? it.code + ' · ' + it.name : l.item) + '</td><td class="acc">' + esc(L ? L.code : (l.lot || '')) + '</td><td>' + esc(wh || '') + (d.whTo ? ' → ' + d.whTo : '') + '</td><td class="n">' + fmtQ(l.qty) + (l.rej ? '<br><span class="note">loại ' + fmtQ(l.rej) + '</span>' : '') + '</td><td class="n">' + fmt(valOf(R, d, i)) + '</td><td>' + (L ? qcPill(L.qc) : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    h += '<div class="tbl-wrap"><table id="lineTbl"><thead><tr><th>Vật tư</th><th>Lô</th><th>Mã hóa</th><th>Vị trí</th><th>Kho</th><th class="n">SL</th><th class="n">Giá trị kho</th><th>QC</th></tr></thead><tbody>' +
+      d.lines.map((l, i) => { const hl = d.type === 'TL' ? ((D.docs.find(x => x.no === d.ref) || {lines:[]}).lines[l.refLine] || {}) : l, L = R.lots[hl.lot] || null, it = D.items[l.item];
+        const wh = d.type === 'TL' ? (D.docs.find(x => x.no === d.ref) || {}).wh : d.wh, loc = (hl.loc || '—') + (d.type === 'CK' ? ' → ' + (l.locTo || '—') : '');
+        const kk = d.type === 'KK' && l.book != null ? '<br><span class="note">sổ ' + fmtQ(l.book) + ' · đếm ' + fmtQ(l.counted) + (l.book > EPS ? ' · ' + (l.qty > 0 ? '+' : '') + pct(l.qty / l.book * 100) : '') + '</span>' : '';
+        return '<tr><td>' + esc(it ? it.code + ' · ' + it.name : l.item) + '</td><td class="acc">' + esc(L ? L.code : (l.lot || '')) + '</td><td class="acc">' + esc(L ? L.mh : '') + '</td><td class="acc">' + esc(loc) + '</td><td>' + esc(wh || '') + (d.whTo ? ' → ' + d.whTo : '') + '</td><td class="n">' + fmtQ(l.qty) + (l.rej ? '<br><span class="note">loại ' + fmtQ(l.rej) + '</span>' : '') + kk + '</td><td class="n">' + fmt(valOf(R, d, i)) + '</td><td>' + (L ? qcPill(L.qc) : '') + '</td></tr>'; }).join('') + '</tbody></table></div>';
   }
   if(d.status === 'void' || d.type === 'CK'){}
   else {
@@ -1507,6 +1624,7 @@ function renderDocDetail(){
     btns.push('<button class="btn sm" type="button" data-edit="' + d.no + '"' + (lk ? ' aria-disabled="true" title="' + esc(why) + '"' : '') + '>Sửa</button>');
     btns.push('<button class="btn sm danger" type="button" data-void="' + d.no + '"' + (lk ? ' aria-disabled="true" title="' + esc(why) + '"' : '') + '>Hủy chứng từ</button>');
   }
+  if(d.status !== 'void' && d.kno) btns.push('<button class="btn sm" type="button" data-print="' + d.no + '">In phiếu</button>');
   if(d.status !== 'void' && d.type !== 'CK') btns.push(xlBtn('postTbl', 'bút toán ' + d.no));
   h = h.replace('<!--acts-->', btns.length ? '<div class="btn-row">' + btns.join('') + '</div>' : '');
   $('docDetail').innerHTML = h;
@@ -1514,7 +1632,18 @@ function renderDocDetail(){
 
 // ================= Báo cáo =================
 const REPORTS = [['nkc','Sổ nhật ký chung'], ['ledger','Sổ cái (chọn TK)'], ['tb','Bảng cân đối số phát sinh'], ['pl','Báo cáo kết quả kinh doanh'],
-  ['debt','Công nợ phải thu / phải trả theo đối tượng'], ['cash','Sổ quỹ tiền mặt / sổ tiền gửi'], ['prog','Tiến độ sản xuất theo lệnh'], ['lsxout','Tổng hợp xuất kho theo lệnh sản xuất']];
+  ['debt','Công nợ phải thu / phải trả theo đối tượng'], ['cash','Sổ quỹ tiền mặt / sổ tiền gửi'], ['prog','Tiến độ sản xuất theo lệnh'], ['lsxout','Tổng hợp xuất kho theo lệnh sản xuất'],
+  ['nxtloc','N-X-T theo lô và vị trí'], ['lotcard','Sổ chi tiết mặt hàng theo lô và vị trí']];
+// Biến động số lượng theo ô (kho, lô, vị trí) của một mặt hàng; chuyển kho / chuyển vị trí sinh 2 dòng
+function qtyEvents(k){
+  const ev = [], r = R.items[k]; if(!r) return ev;
+  r.rows.forEach(x => { const b = {date:x.date, doc:x.doc, id:x.id, desc:x.desc, lot:x.lot};
+    if(x.kind === 'in' || x.kind === 'ret') ev.push(Object.assign({wh:x.wh, loc:x.loc || '', dq:x.qty}, b));
+    else if(x.kind === 'out') ev.push(Object.assign({wh:x.wh, loc:x.loc || '', dq:-x.qty}, b));
+    else if(x.kind === 'trf'){ ev.push(Object.assign({wh:x.wh, loc:x.loc || '', dq:-x.qty, trf:1}, b)); ev.push(Object.assign({wh:x.whTo, loc:x.locTo || '', dq:x.qty, trf:1}, b)); } });
+  return ev;
+}
+const docKno = no => { const d = S.data.docs.find(x => x.no === no); return d && d.kno ? d.kno : ''; };
 const tblH = (id, head, body, foot) => '<div class="tbl-wrap"><table id="' + id + '"><thead>' + head + '</thead><tbody>' + body + '</tbody>' + (foot ? '<tfoot>' + foot + '</tfoot>' : '') + '</table></div>';
 const td = (v, cls) => '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + v + '</td>';
 const nz = v => Math.round(v) ? fmt(v) : '';
@@ -1530,6 +1659,12 @@ RENDER.reports = function(){
   if(u.rep === 'ledger') ctl += '<label class="field" for="repAcc">Tài khoản <select id="repAcc">' + accs.map(a => opt(a, a + ' – ' + accName(a, t), u.repAcc)).join('') + '</select></label>';
   if(u.rep === 'debt') ctl += '<label class="field" for="repDebt">Loại <select id="repDebt">' + opt('131', '131 · Phải thu khách hàng', u.repDebt) + opt('331', '331 · Phải trả nhà cung cấp', u.repDebt) + '</select></label>';
   if(u.rep === 'cash') ctl += '<label class="field" for="repCash">Sổ <select id="repCash">' + CASH_ACC.map(a => opt(a, a + ' – ' + accName(a, t), u.repCash)).join('') + '</select></label>';
+  if(u.rep === 'nxtloc' || u.rep === 'lotcard'){
+    if(!D.items[u.repItem]) u.repItem = Object.keys(D.items)[0];
+    if(u.rep === 'lotcard') ctl += '<label class="field" for="repItem">Mặt hàng <select id="repItem">' + Object.keys(D.items).map(k => opt(k, D.items[k].code + ' · ' + D.items[k].name, u.repItem)).join('') + '</select></label>';
+    ctl += '<label class="field" for="repWh">Kho <select id="repWh">' + opt('all', 'Tất cả', u.repWh) + WHK.map(w => opt(w, w, u.repWh)).join('') + '</select></label>' +
+      '<label class="field" for="repFrom">Từ <input type="date" id="repFrom" min="2026-01-01" max="2026-01-31" value="' + u.repFrom + '"></label>' +
+      '<label class="field" for="repTo">Đến <input type="date" id="repTo" min="2026-01-01" max="2026-01-31" value="' + u.repTo + '"></label>'; }
   ctl += '<span class="spacer" style="flex:1"></span>' + xlBtn('repTbl', 'báo cáo');
   const a = document.activeElement, aid = a && $('repCtl').contains(a) ? a.id : null;
   $('repCtl').innerHTML = ctl; if(aid && $(aid)) $(aid).focus();
@@ -1603,6 +1738,34 @@ RENDER.reports = function(){
     h = '<h2>Tổng hợp xuất kho theo lệnh sản xuất</h2>' + tblH('repTbl', '<tr><th>Lệnh</th><th>Vật tư</th><th>ĐVT</th><th class="n">SL xuất</th><th class="n">Giá trị</th><th>Phiếu xuất</th></tr>', body || '<tr><td colspan="6" class="muted">Chưa có phiếu xuất theo lệnh.</td></tr>',
       '<tr><td colspan="4">Tổng cộng</td>' + td(fmt(tv), 'n') + '<td></td></tr>');
   }
+  if(u.rep === 'nxtloc' || u.rep === 'lotcard'){
+    let f0 = u.repFrom || D.period.from, t0 = u.repTo || D.period.to; if(f0 > t0){ const x = f0; f0 = t0; t0 = x; }
+    const okW = w => u.repWh === 'all' || w === u.repWh, rng = '(' + dmy(f0) + ' – ' + dmy(t0) + ')';
+    if(u.rep === 'nxtloc'){ let body = '';
+      Object.keys(D.items).forEach(k => { const it = D.items[k], m = {}, cellOf = (wh, lot, loc) => { const key = wh + '|' + lot + '|' + loc; return m[key] || (m[key] = {wh, lot, loc, o:0, i:0, x:0}); };
+        (D.open[k] || []).forEach(o => { if(okW(o.wh)) { const c = cellOf(o.wh, o.lot, o.loc || ''); c.o = rq(c.o + o.qty); } });
+        qtyEvents(k).forEach(e => { if(!okW(e.wh) || e.date > t0) return; const c = cellOf(e.wh, e.lot, e.loc);
+          if(e.date < f0) c.o = rq(c.o + e.dq); else if(e.dq > 0) c.i = rq(c.i + e.dq); else c.x = rq(c.x - e.dq); });
+        const rows = Object.values(m).filter(c => Math.abs(c.o) > EPS || c.i > EPS || c.x > EPS).sort((a, b) => a.lot < b.lot ? -1 : a.lot > b.lot ? 1 : (a.wh + a.loc < b.wh + b.loc ? -1 : 1));
+        if(!rows.length) return; const s = {o:0, i:0, x:0, c:0};
+        rows.forEach(c => { const cl = rq(c.o + c.i - c.x), L = R.lots[c.lot]; s.o += c.o; s.i += c.i; s.x += c.x; s.c += cl;
+          body += '<tr>' + td(esc(it.name)) + td(esc(c.lot), 'acc') + td(esc(L ? L.mh : ''), 'acc') + td(esc(c.loc || '—'), 'acc') + td(c.wh) + td(esc(it.uom)) + td(fmtQ(c.o), 'n') + td(fmtQ(c.i), 'n') + td(fmtQ(c.x), 'n') + td(fmtQ(cl) + (cl < -EPS ? ' ' + pill('bad', 'Tồn âm') : ''), 'n') + '</tr>'; });
+        body += '<tr class="sub"><td colspan="6">Cộng ' + esc(it.name) + ' · ' + rows.length + ' dòng</td>' + td(fmtQ(rq(s.o)), 'n') + td(fmtQ(rq(s.i)), 'n') + td(fmtQ(rq(s.x)), 'n') + td(fmtQ(rq(s.c)), 'n') + '</tr>'; });
+      h = '<h2>Nhập – xuất – tồn theo lô và vị trí ' + rng + '</h2>' + tblH('repTbl', '<tr><th>Tên hàng</th><th>Lô</th><th>Mã hóa</th><th>Vị trí</th><th>Kho</th><th>ĐVT</th><th class="n">Tồn đầu</th><th class="n">Nhập</th><th class="n">Xuất</th><th class="n">Tồn cuối</th></tr>',
+        body || '<tr><td colspan="10" class="muted">Không có phát sinh.</td></tr>');
+    } else { const k = u.repItem, it = D.items[k], run = {}; let tot = 0, body = '';
+      const key = e => e.wh + '|' + e.lot + '|' + e.loc;
+      (D.open[k] || []).forEach(o => { if(okW(o.wh)){ const kk = o.wh + '|' + o.lot + '|' + (o.loc || ''); run[kk] = rq((run[kk] || 0) + o.qty); tot = rq(tot + o.qty); } });
+      const ev = qtyEvents(k).filter(e => okW(e.wh) && e.date <= t0);
+      ev.filter(e => e.date < f0).forEach(e => { run[key(e)] = rq((run[key(e)] || 0) + e.dq); tot = rq(tot + e.dq); });
+      let ti = 0, tx = 0;
+      body = '<tr>' + td(dmy(f0)) + '<td colspan="7">Tồn đầu</td><td></td><td></td><td></td>' + td(fmtQ(tot), 'n') + '</tr>' +
+        ev.filter(e => e.date >= f0).map(e => { run[key(e)] = rq((run[key(e)] || 0) + e.dq); tot = rq(tot + e.dq); if(e.dq > 0) ti += e.dq; else tx -= e.dq; const L = R.lots[e.lot];
+          return '<tr>' + td(ddmm(e.date)) + td(e.doc, 'acc') + td(docKno(e.doc), 'acc') + td(esc(e.desc), 'wrap') + td(e.wh) + td(esc(e.lot), 'acc') + td(esc(L ? L.mh : ''), 'acc') + td(esc(e.loc || '—'), 'acc') + td(e.dq > 0 ? fmtQ(e.dq) : '', 'n') + td(e.dq < 0 ? fmtQ(-e.dq) : '', 'n') + td(fmtQ(run[key(e)]), 'n') + td(fmtQ(tot), 'n') + '</tr>'; }).join('');
+      h = '<h2>Sổ chi tiết ' + esc(it.name) + ' theo lô và vị trí ' + rng + '</h2>' + tblH('repTbl', '<tr><th>Ngày</th><th>Số CT</th><th>Phiếu kho</th><th>Diễn giải</th><th>Kho</th><th>Lô</th><th>Mã hóa</th><th>Vị trí</th><th class="n">Nhập</th><th class="n">Xuất</th><th class="n">Tồn lô · vị trí</th><th class="n">Tồn tổng</th></tr>', body,
+        '<tr><td colspan="8">Cộng · tồn cuối (' + esc(it.uom) + ')</td>' + td(fmtQ(rq(ti)), 'n') + td(fmtQ(rq(tx)), 'n') + '<td></td>' + td(fmtQ(tot), 'n') + '</tr>');
+    }
+  }
   $('repOut').innerHTML = h;
 };
 
@@ -1612,7 +1775,7 @@ function whMoves(r, w){ // tổng hợp nhập / xuất theo kho (w = 'all' thì
   r.rows.forEach(x => {
     if(x.kind === 'in' || x.kind === 'ret'){ if(w === 'all' || x.wh === w){ iQ += x.qty; iV += x.value; } }
     else if(x.kind === 'out'){ if(w === 'all' || x.wh === w){ xQ += x.qty; xV += x.value; } }
-    else if(x.kind === 'trf' && w !== 'all'){ if(x.whTo === w){ iQ += x.qty; iV += x.value; } if(x.wh === w){ xQ += x.qty; xV += x.value; } }
+    else if(x.kind === 'trf' && w !== 'all' && x.wh !== x.whTo){ if(x.whTo === w){ iQ += x.qty; iV += x.value; } if(x.wh === w){ xQ += x.qty; xV += x.value; } }
   });
   return {iQ:rq(iQ), iV, xQ:rq(xQ), xV};
 }
@@ -1634,14 +1797,28 @@ RENDER.stock = function(){
   $('nxt').innerHTML = '<thead><tr><th rowspan="2">Mã</th><th rowspan="2">Tên vật tư, ' + prodWord() + '</th><th rowspan="2">ĐVT</th><th rowspan="2">TK</th><th colspan="2" class="n">Tồn đầu kỳ</th><th colspan="2" class="n">Nhập trong kỳ</th><th colspan="2" class="n">Xuất trong kỳ</th><th colspan="2" class="n">Tồn cuối kỳ</th></tr>' +
     '<tr><th class="n">SL</th><th class="n">Giá trị</th><th class="n">SL</th><th class="n">Giá trị</th><th class="n">SL</th><th class="n">Giá trị</th><th class="n">SL</th><th class="n">Giá trị</th></tr></thead><tbody>' + body +
     '</tbody><tfoot><tr><td>Tổng</td><td colspan="3">Tổng cộng ' + (w === 'all' ? '3 kho' : w) + '</td><td></td><td class="n">' + fmt(tot.o) + '</td><td></td><td class="n">' + fmt(tot.i) + '</td><td></td><td class="n">' + fmt(tot.x) + '</td><td></td><td class="n">' + fmt(tot.c) + '</td></tr></tfoot>';
-  // tồn theo kho và lô
-  const rows = []; Object.keys(R.items).forEach(k => Object.values(R.items[k].cells).forEach(c => { if((w === 'all' || c.wh === w) && Math.abs(c.q) > EPS) rows.push(Object.assign({item:k}, c)); }));
-  rows.sort((a, b) => a.wh < b.wh ? -1 : a.wh > b.wh ? 1 : (itCode(a.item) < itCode(b.item) ? -1 : itCode(a.item) > itCode(b.item) ? 1 : (a.lot < b.lot ? -1 : 1)));
-  const src = L => !L ? '' : L.src === 'open' ? 'Tồn đầu kỳ' : L.src === 'PN' ? L.doc + ' · ' + partyName(D, L.partyId) : L.src === 'NK' ? L.doc + ' · ' + (D.lsx[L.lsx] ? D.lsx[L.lsx].no : '') : L.doc + ' · thừa kiểm kê';
-  $('lotTbl').innerHTML = '<thead><tr><th>Kho</th><th>Mã lô</th><th>Vật tư</th><th>ĐVT</th><th>Nguồn</th><th>Ngày</th><th>HSD</th><th>QC</th><th>Người QC (vai trò)</th><th class="n">SL tồn</th><th class="n">Giá trị</th><th>Thao tác</th></tr></thead><tbody>' +
-    (rows.length ? rows.map(c => { const L = R.lots[c.lot], it = D.items[c.item];
-      return '<tr><td>' + c.wh + '</td><td class="acc">' + esc(c.lot) + '</td><td>' + esc(it.code + ' · ' + it.name) + '</td><td>' + it.uom + '</td><td class="wrap small">' + esc(src(L)) + '</td><td>' + (L ? dmy(L.date) : '') + '</td><td>' + (L && L.hsd ? hsdPill(L) : '<span class="muted">—</span>') + '</td><td>' + (L ? qcPill(L.qc) : '') + '</td><td class="small">' + esc(L ? ((D.qc[c.lot] && D.qc[c.lot].role) || L.qcRole) : '') + '</td><td class="n">' + fmtQ(c.q) + (c.q < -EPS ? ' ' + pill('bad', 'Tồn âm') : '') + '</td><td class="n">' + (spec ? fmt(c.v) : '<span class="muted">—</span>') + '</td><td><button class="btn sm" type="button" data-qc="' + esc(c.lot) + '">QC lô</button></td></tr>'; }).join('')
-      : '<tr><td colspan="12" class="muted">Kho này không có tồn.</td></tr>') + '</tbody>';
+  // tồn kho chi tiết: tên hàng × lô × vị trí × kho; giá trị theo vị trí = giá trị lô tại kho phân bổ theo SL (R1 b), chỉ để hiển thị
+  const lk = S.ui.lk, q = (S.ui.sq || '').trim().toLowerCase();
+  $('locFilter').innerHTML = [['all', 'Tất cả'], ['TANK', 'Bồn'], ['JAR', 'Trái'], ['DRUM', 'Phuy'], ['none', 'Chưa xếp']].map(([k, l]) => '<button type="button" data-lk="' + k + '" aria-pressed="' + (lk === k) + '">' + l + '</button>').join('');
+  if(document.activeElement !== $('lotSearch')) $('lotSearch').value = S.ui.sq || '';
+  const end = D.period.to, days = d => Math.round((Date.parse(end + 'T00:00:00Z') - Date.parse(d + 'T00:00:00Z')) / 864e5);
+  let lbody = '', gv = 0, nRows = 0;
+  Object.keys(D.items).forEach(k => { const r = R.items[k], it = D.items[k]; if(!r) return;
+    const rows = [];
+    Object.values(r.cells).forEach(c => { if(w !== 'all' && c.wh !== w) return;
+      const ls = Object.values(r.lcells).filter(x => x.wh === c.wh && x.lot === c.lot && Math.abs(x.q) > EPS); if(!ls.length) return;
+      const vs = allocate(c.v, ls.map(x => x.q)); ls.forEach((x, i) => rows.push(Object.assign({v: vs[i]}, x))); });
+    const shown = rows.filter(x => { const kd = x.loc ? locKind(D, x.wh, x.loc) : '';
+      if(lk !== 'all' && (lk === 'none' ? !!x.loc : kd !== lk)) return false;
+      if(q){ const L = R.lots[x.lot]; if((it.name + ' ' + it.code + ' ' + (it.misa || '') + ' ' + x.lot + ' ' + (L ? L.mh : '') + ' ' + x.loc + ' ' + x.wh).toLowerCase().indexOf(q) < 0) return false; }
+      return true; }).sort((a, b) => a.lot < b.lot ? -1 : a.lot > b.lot ? 1 : (a.wh + '|' + a.loc < b.wh + '|' + b.loc ? -1 : 1));
+    if(!shown.length) return; let sq = 0, sv = 0;
+    shown.forEach(x => { const L = R.lots[x.lot]; sq = rq(sq + x.q); sv += x.v; nRows++;
+      lbody += '<tr><td>' + esc(it.name) + '</td><td class="acc">' + esc(x.lot) + '</td><td class="acc">' + esc(L ? L.mh : '') + '</td><td class="acc">' + esc(x.loc || '—') + (x.loc ? ' <span class="muted small">' + esc(LOC_KIND[locKind(D, x.wh, x.loc)] || '') + '</span>' : '') + '</td><td>' + x.wh + '</td><td>' + (L && L.hsd ? hsdPill(L) : '<span class="muted">—</span>') + '</td><td>' + (L ? qcPill(L.qc) : '') + '</td><td class="n">' + fmtQ(x.q) + ' ' + esc(it.uom) + (x.q < -EPS ? ' ' + pill('bad', 'Tồn âm') : '') + '</td><td class="n">' + (L ? days(L.date) : '') + '</td><td class="n">' + (spec ? fmt(x.v) : '<span class="muted">—</span>') + '</td><td><button class="btn sm" type="button" data-qc="' + esc(x.lot) + '">QC lô</button></td></tr>'; });
+    gv += sv;
+    lbody += '<tr class="sub"><td colspan="7">Cộng ' + esc(it.name) + ' · ' + new Set(shown.map(x => x.lot)).size + ' lô · ' + shown.length + ' dòng</td><td class="n">' + fmtQ(sq) + ' ' + esc(it.uom) + '</td><td></td><td class="n">' + (spec ? fmt(sv) : '') + '</td><td></td></tr>'; });
+  $('lotTbl').innerHTML = '<thead><tr><th>Tên hàng</th><th>Mã lô</th><th>Mã hóa</th><th>Vị trí</th><th>Kho</th><th>HSD</th><th>QC</th><th class="n">SL tồn</th><th class="n">Số ngày lưu kho</th><th class="n">Giá trị</th><th>Thao tác</th></tr></thead><tbody>' +
+    (nRows ? lbody : '<tr><td colspan="11" class="muted">Không có tồn phù hợp.</td></tr>') + '</tbody>' + (nRows && spec ? '<tfoot><tr><td colspan="9">Tổng giá trị</td><td class="n">' + fmt(gv) + '</td><td></td></tr></tfoot>' : '');
 };
 
 // ================= Giá xuất kho =================
@@ -1660,7 +1837,7 @@ function srcParty(s){
   return '—';
 }
 function lotLine(code){ const L = R.lots[code]; if(!L) return esc(code || '');
-  return '<span class="acc">' + esc(code) + '</span> · ' + esc(L.src === 'open' ? 'tồn đầu kỳ' : L.src === 'PN' ? L.doc + ' – ' + partyName(S.data, L.partyId) : L.src === 'NK' ? L.doc + ' – giá thành ' + itCode(L.item) : L.doc + ' – thừa kiểm kê') + ' · ' + qcPill(L.qc) + (L.hsd ? ' · HSD ' + dmy(L.hsd) : ''); }
+  return '<span class="acc">' + esc(code) + '</span>' + (L.mh ? ' (<span class="acc">' + esc(L.mh) + '</span>)' : '') + ' · ' + esc(L.src === 'open' ? 'tồn đầu kỳ' : L.src === 'PN' ? L.doc + ' – ' + partyName(S.data, L.partyId) : L.src === 'NK' ? L.doc + ' – giá thành ' + itCode(L.item) : L.doc + ' – thừa kiểm kê') + ' · ' + qcPill(L.qc) + (L.hsd ? ' · HSD ' + dmy(L.hsd) : ''); }
 RENDER.cogs = function(){
   const D = S.data; if(!D.items[S.ui.item]) S.ui.item = Object.keys(D.items)[0];
   const k = S.ui.item, it = D.items[k], r = R.items[k], t = isTT133();
@@ -1675,7 +1852,7 @@ RENDER.cogs = function(){
     const d = D.docs.find(z => z.no === x.doc), bd = d && d.backdated ? ' ' + pill('warn', 'Lùi ngày') : '';
     const qv = (q, v) => '<td class="n">' + fmtQ(q) + '</td><td class="n">' + fmt(v) + '</td>';
     const mid = x.kind === 'trf' ? qv(x.qty, x.value) + qv(x.qty, x.value) : isIn ? qv(x.qty, x.value) + '<td></td><td></td>' : '<td></td><td></td>' + qv(x.qty, x.value);
-    return '<tr class="' + cls + '"' + (cls.indexOf('click') >= 0 ? ' data-sel="' + x.id + '" tabindex="0"' + (x.id === S.ui.sel ? ' aria-current="true"' : '') : '') + '><td class="acc">' + x.id + '</td><td>' + ddmm(x.date) + '</td><td class="wrap">' + esc(x.desc) + (x.kind === 'ret' ? ' (nhập lại)' : '') + (x.kind === 'trf' ? ' (chuyển kho)' : '') + (x.user ? ' ' + pill('info', 'Do bạn lập') : '') + bd + (x.kind === 'out' && prov ? ' ' + pill('warn', 'tạm') : '') + '</td><td>' + esc(x.wh + (x.whTo ? ' → ' + x.whTo : '')) + '</td><td class="acc">' + esc(x.lot || '') + '</td><td class="acc">' + contraAcc(Object.assign({item:k}, x)) + '</td><td class="n">' + fmt2(x.unit) + '</td>' + mid +
+    return '<tr class="' + cls + '"' + (cls.indexOf('click') >= 0 ? ' data-sel="' + x.id + '" tabindex="0"' + (x.id === S.ui.sel ? ' aria-current="true"' : '') : '') + '><td class="acc">' + x.id + '</td><td>' + ddmm(x.date) + '</td><td class="wrap">' + esc(x.desc) + (x.kind === 'ret' ? ' (nhập lại)' : '') + (x.kind === 'trf' ? ' (chuyển kho)' : '') + (x.user ? ' ' + pill('info', 'Do bạn lập') : '') + bd + (x.kind === 'out' && prov ? ' ' + pill('warn', 'tạm') : '') + '</td><td>' + esc(x.wh + (x.whTo ? ' → ' + x.whTo : '')) + '</td><td class="acc">' + esc(x.lot || '') + (x.loc || x.locTo ? ' · ' + esc((x.loc || '—') + (x.kind === 'trf' ? ' → ' + (x.locTo || '—') : '')) : '') + '</td><td class="acc">' + contraAcc(Object.assign({item:k}, x)) + '</td><td class="n">' + fmt2(x.unit) + '</td>' + mid +
       '<td class="n">' + fmtQ(x.balQ) + '</td><td class="n">' + fmt(x.balV) + '</td></tr>'; };
   const sumK = (f, g) => sum(r.rows.filter(f), g);
   $('ledger').innerHTML = '<thead><tr><th rowspan="2">Số CT</th><th rowspan="2">Ngày</th><th rowspan="2">Diễn giải</th><th rowspan="2">Kho</th><th rowspan="2">Lô</th><th rowspan="2">TK đối ứng</th><th rowspan="2" class="n">Đơn giá</th><th colspan="2" class="n">Nhập</th><th colspan="2" class="n">Xuất</th><th colspan="2" class="n">Tồn</th></tr><tr><th class="n">SL</th><th class="n">Thành tiền</th><th class="n">SL</th><th class="n">Thành tiền</th><th class="n">SL</th><th class="n">Thành tiền</th></tr></thead>' +
@@ -1690,7 +1867,7 @@ RENDER.cogs = function(){
   if(!x){ ex.innerHTML = '<h2>Nguồn gốc đơn giá</h2><p class="muted" style="margin:0">Chưa có phiếu xuất trong kỳ.</p>'; return; }
   const e = x.ex; let h = '<div class="panel-head"><h2>Nguồn gốc đơn giá · <span class="acc">' + x.id + '</span></h2></div>';
   h += '<dl class="kv"><dt>Diễn giải</dt><dd>' + esc(x.desc) + '</dd><dt>' + (x.kind === 'ret' ? 'Nhập lại' : x.kind === 'trf' ? 'Chuyển' : 'Xuất') + '</dt><dd><b>' + fmtQ(x.qty) + ' ' + it.uom + '</b></dd><dt>Giá trị</dt><dd><b>' + fmt(x.value) + '</b> đ</dd><dt>Đơn giá</dt><dd><b>' + fmt4(x.unit) + '</b> đ/' + it.uom + '</dd></dl>';
-  h += '<div class="meta"><span>Lô: ' + lotLine(x.lot) + '</span><span>Kho: ' + esc(whName(x.wh)) + (x.whTo ? ' → ' + esc(whName(x.whTo)) : '') + '</span></div>';
+  h += '<div class="meta"><span>Lô: ' + lotLine(x.lot) + '</span><span>Kho: ' + esc(whName(x.wh)) + (x.whTo ? ' → ' + esc(whName(x.whTo)) : '') + '</span>' + (x.loc || x.locTo ? '<span>Vị trí: ' + esc((x.loc || '—') + (x.kind === 'trf' ? ' → ' + (x.locTo || '—') : '')) + '</span>' : '') + '</div>';
   if(prov && x.kind === 'out') h += '<p style="margin:0">' + pill('warn', 'Giá tạm · chốt ở bước ' + (FINAL_STEP[it.kind] + 1)) + '</p>';
   const srcTbl = list => '<div class="tbl-wrap"><table><thead><tr><th>Nguồn</th><th>Lô</th><th>Nhà cung cấp / nguồn gốc</th><th class="n">SL</th><th class="n">Giá trị</th></tr></thead><tbody>' + list.map(s => '<tr><td class="acc">' + s.src + '</td><td class="acc">' + esc(s.lot || '') + '</td><td class="muted">' + esc(srcParty(s)) + '</td><td class="n">' + fmtQ(s.qty) + '</td><td class="n">' + (s.value != null ? fmt(s.value) : '') + '</td></tr>').join('') + '</tbody></table></div>';
   if(e.type === 'specific' || (e.type === 'trf' && e.specific)){
@@ -1725,10 +1902,11 @@ function itemUsage(D, k){
 }
 RENDER.items = function(){
   const D = S.data;
-  $('itemTbl').innerHTML = '<thead><tr><th>Mã</th><th>Tên</th><th>Loại</th><th>ĐVT</th><th>Kho</th><th>QC phụ trách</th><th class="n">HSD (ngày)</th><th class="n">Thuế GTGT</th><th class="n">Tồn đầu SL</th><th class="n">Tồn đầu GT</th><th>Định mức / 1 đơn vị</th><th class="n">Phát sinh</th><th>Thao tác</th></tr></thead><tbody>' +
+  $('itemTbl').innerHTML = '<thead><tr><th>Mã</th><th>Mã MISA</th><th>Tên</th><th>Loại</th><th>ĐVT</th><th>Kho</th><th class="n">Tồn tối thiểu</th><th class="n">Tồn hiện tại</th><th>QC phụ trách</th><th class="n">HSD (ngày)</th><th class="n">Thuế GTGT</th><th class="n">Tồn đầu SL</th><th class="n">Tồn đầu GT</th><th>Định mức / 1 đơn vị</th><th class="n">Phát sinh</th><th>Thao tác</th></tr></thead><tbody>' +
     Object.keys(D.items).map(k => { const it = D.items[k], u = itemUsage(D, k), o = openOf(D, k);
       const bom = (it.bom || []).map(b => D.items[b.item] ? D.items[b.item].code + ' ' + fmtQ(b.qty) + ' ' + D.items[b.item].uom : '').join(', ');
-      return '<tr><td class="acc">' + esc(it.code) + '</td><td>' + esc(it.name) + (it.user ? ' ' + pill('info', 'Do bạn thêm') : '') + (it.prod ? '<br><span class="note">' + esc(it.prod.stage + (it.prod.steps ? ': ' + it.prod.steps : '') + ' · hao hụt định mức ' + fmtD(it.prod.loss || 0, 2) + '%') + '</span>' : '') + '</td><td>' + KIND_NAME[it.kind] + (it.grp ? ' · ' + GRP_NAME[it.grp] : '') + '</td><td>' + esc(it.uom) + '</td><td>' + it.wh + '</td><td class="small">' + esc(it.qcRole || '') + '</td><td class="n">' + (it.shelf || '—') + '</td><td class="n">' + it.vat + '%</td><td class="n">' + fmtQ(o.qty) + '</td><td class="n">' + fmt(o.value) + ((D.open[k] || []).length > 1 ? '<br><span class="note">' + D.open[k].length + ' lô</span>' : '') + '</td><td class="wrap small">' + (isProd(D, k) ? esc(bom || 'chưa khai') : '—') + '</td><td class="n">' + u.docs.length + ' CT</td>' +
+      const cq = R.items[k] ? R.items[k].closeQ : 0, lowS = it.min > 0 && cq <= it.min + EPS;
+      return '<tr><td class="acc">' + esc(it.code) + '</td><td class="acc">' + esc(it.misa || '') + '</td><td>' + esc(it.name) + (it.user ? ' ' + pill('info', 'Do bạn thêm') : '') + (it.prod ? '<br><span class="note">' + esc(it.prod.stage + (it.prod.steps ? ': ' + it.prod.steps : '') + ' · hao hụt định mức ' + fmtD(it.prod.loss || 0, 2) + '%') + '</span>' : '') + '</td><td>' + KIND_NAME[it.kind] + (it.grp ? ' · ' + GRP_NAME[it.grp] : '') + '</td><td>' + esc(it.uom) + '</td><td>' + it.wh + '</td><td class="n">' + (it.min ? fmtQ(it.min) : '—') + '</td><td class="n">' + fmtQ(cq) + (lowS ? ' ' + pill('warn', 'Cần đặt thêm') : '') + '</td><td class="small">' + esc(it.qcRole || '') + '</td><td class="n">' + (it.shelf || '—') + '</td><td class="n">' + it.vat + '%</td><td class="n">' + fmtQ(o.qty) + '</td><td class="n">' + fmt(o.value) + ((D.open[k] || []).length > 1 ? '<br><span class="note">' + D.open[k].length + ' lô</span>' : '') + '</td><td class="wrap small">' + (isProd(D, k) ? esc(bom || 'chưa khai') : '—') + '</td><td class="n">' + u.docs.length + ' CT</td>' +
         '<td><div class="btn-row"><button class="btn sm" type="button" data-item-edit="' + k + '">Sửa</button><button class="btn sm danger" type="button" data-item-del="' + k + '"' + (u.used ? ' aria-disabled="true" title="Đã có phát sinh (' + esc(u.docs.slice(0, 3).concat(u.boms.map(b => 'định mức ' + b), u.lsx.map(x => D.lsx[x].no)).join(', ')) + '), không xóa được"' : '') + '>Xóa</button></div></td></tr>'; }).join('') + '</tbody>';
   $('lsxTbl').innerHTML = '<thead><tr><th>Số lệnh</th><th>Sản phẩm · giai đoạn</th><th>Kho</th><th>Ngày</th><th class="n">Kế hoạch</th><th class="n">Đã nhập đạt</th><th>Thao tác</th></tr></thead><tbody>' +
     Object.keys(D.lsx).map(k => { const x = D.lsx[k], it = D.items[x.item] || {name:x.item, uom:''}, g = sum(R.active.filter(d => d.type === 'NK' && d.lsx === k), d => sum(d.lines, l => l.qty));
@@ -1736,6 +1914,12 @@ RENDER.items = function(){
   $('whTbl').innerHTML = '<thead><tr><th>Mã</th><th>Kho</th><th>Phụ trách (vai trò)</th><th>Nội dung</th></tr></thead><tbody>' +
     WHK.map(k => '<tr><td class="acc">' + k + '</td><td>' + esc(WH[k].name) + '</td><td>' + esc(WH[k].role) + '</td><td class="wrap small">' + esc(WH[k].note) + '</td></tr>').join('') +
     '<tr><td class="acc">QC</td><td>Theo khu</td><td>' + esc(QC_ROLES.join(', ')) + '; trưởng QC</td><td class="wrap small">Quản lý chất lượng, lập mã lót hàng (mã lô), sản xuất theo lệnh sản xuất.</td></tr></tbody>';
+  // vị trí chứa: đang chứa lô nào
+  const occ = {}; Object.keys(R.items).forEach(k => Object.values(R.items[k].lcells).forEach(c => { if(c.loc && c.q > EPS){ const key = c.wh + '|' + c.loc; (occ[key] = occ[key] || []).push(c.lot + ' · ' + fmtQ(c.q) + ' ' + D.items[k].uom); } }));
+  const LS = (D.locs || []).slice().sort((a, b) => a.wh < b.wh ? -1 : a.wh > b.wh ? 1 : a.kind < b.kind ? 1 : a.kind > b.kind ? -1 : a.zone < b.zone ? -1 : a.zone > b.zone ? 1 : (+a.no || 0) - (+b.no || 0));
+  $('locCount').textContent = LS.length + ' vị trí';
+  $('locTbl').innerHTML = '<thead><tr><th>Kho</th><th>Ký hiệu</th><th>Loại</th><th>Khu</th><th>Số</th><th class="n">Sức chứa</th><th>Đang chứa</th></tr></thead><tbody>' +
+    LS.map(z => { const o = occ[z.wh + '|' + locCode(z)]; return '<tr><td>' + z.wh + '</td><td class="acc">' + esc(locCode(z)) + '</td><td>' + LOC_KIND[z.kind] + '</td><td>' + esc(z.zone) + '</td><td>' + esc(z.no || '—') + '</td><td class="n">' + (z.cap ? fmtQ(z.cap) : '—') + '</td><td class="wrap small">' + (o ? esc(o.join(', ')) : '<span class="muted">Trống</span>') + '</td></tr>'; }).join('') + '</tbody>';
 };
 
 // ================= Giá thành =================
@@ -1787,7 +1971,7 @@ RENDER.trace = function(){
   if(!S.ui.lot || !lots.find(l => l.lot === S.ui.lot)) S.ui.lot = lots[0].lot;
   $('lotSeg').innerHTML = lots.map(l => '<button type="button" data-lot="' + esc(l.lot) + '" aria-pressed="' + (l.lot === S.ui.lot) + '">' + esc(l.lot) + '</button>').join('');
   const lot = lots.find(l => l.lot === S.ui.lot), o = lot.o, c = R.card[o], k = c.qty, it = D.items[o], u = it.uom, L = R.lots[lot.lot];
-  $('traceHead').innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px 28px;align-items:baseline"><div><span class="muted">Lô</span> <b class="acc">' + esc(lot.lot) + '</b> · ' + dmy(lot.date) + ' · ' + esc(lot.no) + '</div><div><span class="muted">' + esc(it.name) + '</span> <b>' + fmtQ(lot.qty) + ' ' + u + '</b></div><div><span class="muted">Giá trị lô</span> <b>' + fmt(lot.value) + '</b></div><div><span class="muted">Mỗi ' + u + '</span> <b style="font-size:18px">' + fmt2(c.z) + ' đ</b></div><div>' + (L ? qcPill(L.qc) + ' <span class="muted">' + esc(L.qcRole) + '</span>' : '') + '</div><div><span class="muted">Z kỳ</span> <b>' + fmt(c.Z) + '</b> / ' + fmtQ(k) + ' ' + u + '</div></div>';
+  $('traceHead').innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px 28px;align-items:baseline"><div><span class="muted">Lô</span> <b class="acc">' + esc(lot.lot) + '</b>' + (L && L.mh ? ' · <span class="muted">mã hóa</span> <b class="acc">' + esc(L.mh) + '</b>' : '') + (lot.locs && lot.locs.length ? ' · ' + esc(lot.locs.join(', ')) : '') + ' · ' + dmy(lot.date) + ' · ' + esc(lot.no) + '</div><div><span class="muted">' + esc(it.name) + '</span> <b>' + fmtQ(lot.qty) + ' ' + u + '</b></div><div><span class="muted">Giá trị lô</span> <b>' + fmt(lot.value) + '</b></div><div><span class="muted">Mỗi ' + u + '</span> <b style="font-size:18px">' + fmt2(c.z) + ' đ</b></div><div>' + (L ? qcPill(L.qc) + ' <span class="muted">' + esc(L.qcRole) + '</span>' : '') + '</div><div><span class="muted">Z kỳ</span> <b>' + fmt(c.Z) + '</b> / ' + fmtQ(k) + ' ' + u + '</div></div>';
   const node = (color, title, sub, amt, kids, open) => '<details class="node"' + (open ? ' open' : '') + '><summary><span class="caret" aria-hidden="true">▸</span><span><span class="dot" style="background:' + color + '"></span><b>' + title + '</b> <span class="muted">' + sub + '</span></span><span class="n muted">' + fmt2(k ? amt / k : 0) + ' đ/' + u + '</span><b class="n">' + fmt(amt) + '</b></summary><div class="kids">' + kids + '</div></details>';
   const leaf = (t, src, a, mine) => '<div class="leaf' + (mine ? ' mine' : '') + '"><span>' + t + '<br><span class="src">' + src + '</span></span><span class="n">' + fmt(a) + '</span></div>';
   const g = x => c.km[x] - c.abnBy[x];
@@ -1874,7 +2058,7 @@ function runSteps(all){
 }
 
 // ================= Nhật ký =================
-const ACTION = {create:'Lập chứng từ', void:'Hủy chứng từ', edit:'Sửa (hủy + lập lại)', unlock:'Mở khóa kỳ', lock:'Khóa sổ', config:'Đổi cấu hình', item:'Danh mục vật tư', lsx:'Lệnh sản xuất', qc:'Trạng thái QC lô'};
+const ACTION = {create:'Lập chứng từ', void:'Hủy chứng từ', edit:'Sửa (hủy + lập lại)', unlock:'Mở khóa kỳ', lock:'Khóa sổ', config:'Đổi cấu hình', item:'Danh mục vật tư', lsx:'Lệnh sản xuất', qc:'Trạng thái QC lô', loc:'Vị trí chứa'};
 RENDER.audit = function(){
   const A = S.data.audit.slice().reverse();
   $('auditTbl').innerHTML = '<thead><tr><th>Thời gian</th><th>Người thực hiện</th><th>Hành động</th><th>Chứng từ / lô</th><th>Lý do</th><th>Chi tiết (trước → sau)</th></tr></thead><tbody>' +
@@ -1939,37 +2123,61 @@ function stockAt(Rx, item, date){
   (Rx.items[item] ? Rx.items[item].rows : []).forEach(x => { if(x.date <= date){ q = x.balQ; v = x.balV; } });
   return {q, v};
 }
-// Tồn theo ô (kho, lô) tại ngày, tính từ kết quả Rx (trước khi có chứng từ đang lập)
-function cellsAt(Rx, item, wh, date){
-  const m = {}; const add = (lot, q, v) => { const x = m[lot] || (m[lot] = {lot, q:0, v:0}); x.q = rq(x.q + q); x.v += v; };
-  (Rx.D.open[item] || []).forEach(o => { if(o.wh === wh) add(o.lot, o.qty, o.value); });
+// Tồn tại ngày, tính từ kết quả Rx (trước khi có chứng từ đang lập): theo ô (kho, lô), hoặc (kho, lô, vị trí) khi byLoc
+function cellsAt(Rx, item, wh, date, byLoc){
+  const m = {}; const add = (lot, loc, q, v) => { const k = byLoc ? lot + '|' + (loc || '') : lot; const x = m[k] || (m[k] = {lot, loc: byLoc ? loc || '' : '', q:0, v:0}); x.q = rq(x.q + q); x.v += v; };
+  (Rx.D.open[item] || []).forEach(o => { if(o.wh === wh) add(o.lot, o.loc, o.qty, o.value); });
   const r = Rx.items[item]; if(r) r.rows.forEach(x => { if(x.date > date) return;
-    if(x.kind === 'in' || x.kind === 'ret'){ if(x.wh === wh) add(x.lot, x.qty, x.value); }
-    else if(x.kind === 'out'){ if(x.wh === wh) add(x.lot, -x.qty, -x.value); }
-    else if(x.kind === 'trf'){ if(x.wh === wh) add(x.lot, -x.qty, -x.value); if(x.whTo === wh) add(x.lot, x.qty, x.value); } });
+    if(x.kind === 'in' || x.kind === 'ret'){ if(x.wh === wh) add(x.lot, x.loc, x.qty, x.value); }
+    else if(x.kind === 'out'){ if(x.wh === wh) add(x.lot, x.loc, -x.qty, -x.value); }
+    else if(x.kind === 'trf'){ if(x.wh === wh) add(x.lot, x.loc, -x.qty, -x.value); if(x.whTo === wh) add(x.lot, x.locTo, x.qty, x.value); } });
   return m;
 }
+const llKey = l => (l.lot || '') + '|' + (l.loc || '');
+// Lựa chọn (lô, vị trí) còn tồn: gợi ý HSD gần nhất, rồi lô cũ nhất
 function lotChoices(Rx, item, wh, date, purpose){
-  const m = cellsAt(Rx, item, wh, date || '2026-01-31'), key = c => (c.info.hsd || '9999-12-31') + '|' + c.info.date + '|' + c.lot;
-  return Object.values(m).filter(c => c.q > EPS).map(c => { const L = Rx.lots[c.lot] || {code:c.lot, qc:'pass', date:'2025-12-31', hsd:null};
+  const m = cellsAt(Rx, item, wh, date || '2026-01-31', true), key = c => (c.info.hsd || '9999-12-31') + '|' + c.info.date + '|' + c.lot + '|' + c.loc;
+  return Object.values(m).filter(c => c.q > EPS).map(c => { const L = Rx.lots[c.lot] || {code:c.lot, qc:'pass', date:'2025-12-31', hsd:null, mh:''};
     return Object.assign({}, c, {info:L, allowed: lotAllowed(L, purpose).ok}); }).sort((a, b) => key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0);
 }
 function lotSel(id, k, Rx, item, wh, date, purpose, cur, a){
-  const ch = lotChoices(Rx, item, wh, date, purpose), uom = S.data.items[item] ? S.data.items[item].uom : '';
-  let o = ch.map(c => opt(c.lot, c.lot + ' · tồn ' + fmtQ(c.q) + ' ' + uom + ' · ' + (c.info.hsd ? 'HSD ' + dmy(c.info.hsd) : 'không HSD') + (c.info.qc !== 'pass' ? ' · QC ' + QC_NAME[c.info.qc] + (c.allowed ? '' : ' (không dùng được)') : ''), cur, !c.allowed)).join('');
-  if(cur && !ch.some(c => c.lot === cur)) o = opt(cur, cur + ' · không còn tồn tại kho này', cur) + o;
+  const ch = lotChoices(Rx, item, wh, date, purpose), uom = S.data.items[item] ? S.data.items[item].uom : '', curK = llKey(cur);
+  let o = ch.map(c => opt(c.lot + '|' + c.loc, c.lot + (c.info.mh ? ' (' + c.info.mh + ')' : '') + ' · ' + (c.loc || 'chưa xếp') + ' · tồn ' + fmtQ(c.q) + ' ' + uom + (c.info.hsd ? ' · HSD ' + dmy(c.info.hsd) : '') + (c.info.qc !== 'pass' ? ' · QC ' + QC_NAME[c.info.qc] + (c.allowed ? '' : ' (không dùng được)') : ''), curK, !c.allowed)).join('');
+  if(cur.lot && !ch.some(c => c.lot === cur.lot && c.loc === (cur.loc || ''))) o = opt(curK, cur.lot + ' · ' + (cur.loc || 'chưa xếp') + ' · không còn tồn tại vị trí này', curK) + o;
   if(!o) o = opt('', '— Không có lô còn tồn —', '');
   return selx(id, k, o, a);
+}
+function locSel(id, k, wh, cur, a, item){
+  const L = locsOf(S.data, wh), it = item && S.data.items[item];
+  let o = opt('', L.length ? '— Chưa xếp vị trí' : '— Kho không theo vị trí', cur) + L.map(z => { const c = locCode(z); return opt(c, c + ' · ' + LOC_KIND[z.kind], cur); }).join('');
+  return selx(id, k, o, (a || '') + (it ? '' : ''));
 }
 // Gợi ý lô: lô cũ nhất / HSD gần nhất còn tồn và được phép dùng
 function fixLots(dr, purpose, changed){
   const Rx = (F && F.Rb) || R;
   (dr.lines || []).forEach((l, i) => {
-    if(changed === 'lines.' + i + '.item') l.lot = '';
+    if(changed === 'lines.' + i + '.item'){ l.lot = ''; l.loc = ''; }
     const ch = lotChoices(Rx, l.item, dr.wh, dr.date, purpose);
-    const okLot = ch.find(c => c.lot === l.lot && c.allowed);
-    if(!okLot && !(F && F.edit && l.lot && l.keep)){ const s = ch.find(c => c.allowed); l.lot = s ? s.lot : ''; }
+    const okLot = ch.find(c => c.lot === l.lot && c.loc === (l.loc || '') && c.allowed);
+    if(!okLot && !(F && F.edit && l.lot && l.keep)){ const s = ch.find(c => c.allowed); l.lot = s ? s.lot : ''; l.loc = s ? s.loc : ''; }
   });
+}
+// Mã lô tự sinh cho dòng chưa gõ mã; dòng cùng mã lô (cùng mặt hàng) là một lô ở nhiều vị trí
+function autoLots(dr){
+  const taken = {}; dr.lines.forEach(l => { const c = (l.lot || '').trim(); if(c) taken[c] = 1; });
+  return dr.lines.map(l => { const c = (l.lot || '').trim(); if(c) return c; const x = nextLot(S.data, l.item, dr.date || '2026-01-31', taken); taken[x] = 1; return x; });
+}
+// Kiểm mã lô: định dạng, trùng với lô đã có, một mã cho 2 mặt hàng; trả về mã hóa cho từng mã lô (lô cũ của phiếu đang sửa giữ mã hóa)
+function checkLots(pairs, E, oldDoc, date){
+  const D = S.data, exist = allLotCodes(D, oldDoc ? oldDoc.no : null), seen = {}, mh = {}, takenMh = {};
+  const oldMh = {}; if(oldDoc) (oldDoc.lines || []).forEach(l => { if(l.mh) oldMh[l.lot] = l.mh; });
+  pairs.forEach(p => {
+    if(!LOT_RE.test(p.lot)){ E.push({id:p.id, msg:'Mã lô ' + p.lot + ': 3–20 ký tự chữ, số, "-" hoặc ".".'}); return; }
+    if(exist[p.lot]){ E.push({id:p.id, msg:'Mã lô ' + p.lot + ' đã có, nhập mã khác.'}); return; }
+    if(seen[p.lot] && seen[p.lot] !== p.item){ E.push({id:p.id, msg:'Mã lô ' + p.lot + ' đang dùng cho mặt hàng khác trong phiếu.'}); return; }
+    seen[p.lot] = p.item;
+    if(!mh[p.lot]){ mh[p.lot] = oldMh[p.lot] || nextMh(D, p.item, date || '2026-01-31', takenMh); takenMh[mh[p.lot]] = 1; } });
+  return mh;
 }
 function latestLotUnit(Rx, item){ const L = Object.values(Rx.lots).filter(x => x.item === item && x.inQty > EPS && x.inValue > 0).sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : 0)[0]; return L ? {unit: L.inValue / L.inQty, lot: L.code} : null; }
 function partyBal(Rx, acc, pid){ const D = Rx.D; let b = acc === '131' ? (D.openAR[pid] || 0) : -(D.openAP[pid] || 0);
@@ -2002,33 +2210,37 @@ const PURPOSE = {PX:'use', HD:'sale', CK:'move'};
 const FORMS = {
   PN: {
     title:'Phiếu nhập mua NVL, bao bì, hàng hóa',
-    blank: () => ({date:'2026-01-31', partyId:'S02', pay:'331', wh:'BBT', cur:'VND', rate:fmtInput(S.data.settings.rate), desc:'', lines:[{item:'MUOI', qty:'', price:'', vat:'5', qc:'pass'}]}),
-    newLine: () => ({item:'MUOI', qty:'', price:'', vat:'5', qc:'pass'}),
+    blank: () => ({date:'2026-01-31', partyId:'S02', pay:'331', wh:'BBT', cur:'VND', rate:fmtInput(S.data.settings.rate), desc:'', lines:[{item:'MUOI', qty:'', price:'', vat:'5', qc:'pass', lot:'', loc:''}]}),
+    newLine: () => ({item:'MUOI', qty:'', price:'', vat:'5', qc:'pass', lot:'', loc:''}),
     fromDoc: d => ({date:d.date, partyId:d.partyId, pay:d.pay, wh:d.wh || 'BBT', cur:d.cur || 'VND', rate:fmtInput(d.rate || S.data.settings.rate), desc:d.desc,
-      lines:d.lines.map(l => ({item:l.item, qty:fmtInput(l.qty), price: d.cur ? fmtInput2(l.fc / l.qty) : fmtInput2(l.value / l.qty), vat:String(l.vat), qc:l.qc || 'pass', lot:l.lot}))}),
+      lines:d.lines.map(l => ({item:l.item, qty:fmtInput(l.qty), price: d.cur ? fmtInput2(l.fc / l.qty) : fmtInput2(l.value / l.qty), vat:String(l.vat), qc:l.qc || 'pass', lot:l.lot, loc:l.loc || ''}))}),
     body(dr){ const n = dr.lines.length, usd = dr.cur === 'USD';
       return '<div class="frm">' + fDate(dr) + fParty(dr, 'SUP') + lab('Thanh toán', selx('f_pay', 'pay', opt('331', '331 · Chưa trả người bán', dr.pay) + opt('1111', '1111 · Tiền mặt', dr.pay))) +
-        lab('Kho nhập', whSel('f_wh', 'wh', dr.wh)) + lab('Tiền tệ', selx('f_cur', 'cur', opt('VND', 'VND', dr.cur) + opt('USD', 'USD (nhập khẩu)', dr.cur), 'data-rerender="1"')) +
+        lab('Kho nhập', whSel('f_wh', 'wh', dr.wh, 'data-rerender="1"')) + lab('Tiền tệ', selx('f_cur', 'cur', opt('VND', 'VND', dr.cur) + opt('USD', 'USD (nhập khẩu)', dr.cur), 'data-rerender="1"')) +
         (usd ? lab('Tỷ giá ghi sổ (đ/USD)', inp('f_rate', 'rate', dr.rate, 'inputmode="decimal"')) : '') +
         lab('Diễn giải', inp('f_desc', 'desc', dr.desc, 'placeholder="Tự gợi ý nếu để trống"'), 'wide') + '</div>' +
-        linesHead([['Vật tư'], ['SL', 1], ['Đơn giá (' + (usd ? 'USD' : 'đ') + ')', 1], ['Thành tiền (đ)', 1], ['Thuế suất'], ['QC'], ['Mã lô sẽ cấp'], ['Tồn tại ngày', 1], ['']]) +
-        dr.lines.map((l, i) => '<tr><td>' + selx('f_l' + i + '_item', 'lines.' + i + '.item', itemOpts(['NVL', 'HH'], l.item), 'aria-label="Vật tư dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="decimal" aria-label="Số lượng dòng ' + (i + 1) + '" style="width:90px"') + '</td><td>' + inp('f_l' + i + '_price', 'lines.' + i + '.price', l.price, 'inputmode="decimal" aria-label="Đơn giá dòng ' + (i + 1) + '" style="width:110px"') + '</td><td class="n" id="f_l' + i + '_amt"></td><td>' + vatSel('f_l' + i + '_vat', 'lines.' + i + '.vat', usd ? 0 : l.vat, usd ? 'disabled' : '') + '</td><td>' + selx('f_l' + i + '_qc', 'lines.' + i + '.qc', QC_OPTS(l.qc), 'aria-label="QC dòng ' + (i + 1) + '"') + '</td><td class="acc small" id="f_l' + i + '_lot"></td><td class="n muted" id="f_l' + i + '_stk"></td><td>' + delBtn(i, n) + '</td></tr>').join('') +
+        linesHead([['Vật tư'], ['SL', 1], ['Đơn giá (' + (usd ? 'USD' : 'đ') + ')', 1], ['Thành tiền (đ)', 1], ['Thuế suất'], ['QC'], ['Mã lô'], ['Mã hóa'], ['Vị trí chứa'], ['Tồn tại ngày', 1], ['']]) +
+        dr.lines.map((l, i) => '<tr><td>' + selx('f_l' + i + '_item', 'lines.' + i + '.item', itemOpts(['NVL', 'HH'], l.item), 'aria-label="Vật tư dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="decimal" aria-label="Số lượng dòng ' + (i + 1) + '" style="width:90px"') + '</td><td>' + inp('f_l' + i + '_price', 'lines.' + i + '.price', l.price, 'inputmode="decimal" aria-label="Đơn giá dòng ' + (i + 1) + '" style="width:110px"') + '</td><td class="n" id="f_l' + i + '_amt"></td><td>' + vatSel('f_l' + i + '_vat', 'lines.' + i + '.vat', usd ? 0 : l.vat, usd ? 'disabled' : '') + '</td><td>' + selx('f_l' + i + '_qc', 'lines.' + i + '.qc', QC_OPTS(l.qc), 'aria-label="QC dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_lot', 'lines.' + i + '.lot', l.lot, 'autocomplete="off" aria-label="Mã lô dòng ' + (i + 1) + '" style="width:110px"') + '</td><td class="acc small" id="f_l' + i + '_mh"></td><td><div class="btn-row" style="flex-wrap:nowrap">' + locSel('f_l' + i + '_loc', 'lines.' + i + '.loc', dr.wh, l.loc, 'aria-label="Vị trí chứa dòng ' + (i + 1) + '"') + '<button class="btn sm" type="button" data-act="splitLine" data-i="' + i + '" aria-label="Thêm vị trí cho lô dòng ' + (i + 1) + '">+ Vị trí</button></div></td><td class="n muted" id="f_l' + i + '_stk"></td><td>' + delBtn(i, n) + '</td></tr>').join('') +
         '</tbody></table></div>' + addBtn; },
     onField(k, dr){ const D = S.data, m = /^lines\.(\d+)\.item$/.exec(k);
       if(m){ const l = dr.lines[+m[1]]; l.vat = String(D.items[l.item].vat); l.lot = ''; }
+      if(k === 'wh') dr.lines.forEach(l => { if(l.loc && !locsOf(D, dr.wh).some(z => locCode(z) === l.loc)) l.loc = ''; });
       if(k === 'partyId' && D.parties[dr.partyId]){ dr.cur = D.parties[dr.partyId].cur || 'VND'; if(dr.cur === 'USD') dr.pay = '331'; }
       if(k === 'cur' && dr.cur === 'USD') dr.pay = '331'; },
     build(dr, Rb){ const E = [], W = [], I = [], D = S.data; chkDate(dr, E); chkParty(dr, E);
       const usd = dr.cur === 'USD', rate = usd ? parseNum(dr.rate) : 1;
       if(usd && !(rate > 1000 && rate < 100000)) E.push({id:'f_rate', msg:'Tỷ giá USD không hợp lệ (1.000–100.000).'});
       if(usd && dr.pay !== '331') E.push({id:'f_pay', msg:'Mua bằng USD ghi công nợ 331, trả sau bằng phiếu chi TK 1122.'});
-      const lines = [], later = {}, taken = {}, idx = [];
+      const lines = [], later = {}, idx = [], codes = autoLots(dr), oldDoc = F && F.edit ? D.docs.find(x => x.no === F.edit) : null;
+      const mh = checkLots(dr.lines.map((l, i) => ({lot:codes[i], item:l.item, id:'f_l' + i + '_lot'})), E, oldDoc, dr.date);
+      const seenLoc = {};
       dr.lines.forEach((l, i) => { const it = D.items[l.item], q = parseNum(l.qty), p = parseNum(l.price);
         if(chkQty(q, it, 'f_l' + i + '_qty', E) && !(p > 0 && p < (usd ? 1e6 : 1e10))) E.push({id:'f_l' + i + '_price', msg:'Đơn giá phải lớn hơn 0.'});
+        const lk = codes[i] + '|' + (l.loc || ''); if(seenLoc[lk]) E.push({id:'f_l' + i + '_loc', msg:'Dòng ' + (i + 1) + ': lô ' + codes[i] + ' đã có dòng ở vị trí ' + (l.loc || 'chưa xếp') + '.'}); seenLoc[lk] = 1;
+        if(needLoc(D, l.item, dr.wh) && !l.loc) E.push({id:'f_l' + i + '_loc', msg:'Dòng ' + (i + 1) + ': chọn vị trí chứa (bồn, trái, phuy).'});
         if(q > 0 && p > 0 && rate > 0){
           const fc = usd ? r2(q * p) : 0, value = usd ? Math.round(fc * rate) : Math.round(q * p);
-          const lot = l.lot || nextLot(D, l.item, dr.date || '2026-01-31', taken); taken[lot] = 1;
-          const ln = {item:l.item, qty:q, value, vat: usd ? 0 : +l.vat, lot, qc:l.qc || 'pass'}; if(usd) ln.fc = fc;
+          const ln = {item:l.item, qty:q, value, vat: usd ? 0 : +l.vat, lot:codes[i], mh:mh[codes[i]] || '', qc:l.qc || 'pass', loc:l.loc || ''}; if(usd) ln.fc = fc;
           lines.push(ln); idx.push(i);
           const prev = Rb.items[l.item].rows.filter(x => x.kind === 'in' && x.type === 'PN'), last = prev[prev.length - 1], u = value / q;
           if(last && last.unit > 0 && Math.abs(u / last.unit - 1) > 0.5) W.push('Đơn giá ' + it.name.toLowerCase() + ' ' + fmt2(u) + ' đ lệch ' + fmtD(Math.abs(u / last.unit - 1) * 100, 0) + '% so với lần nhập gần nhất (' + fmt2(last.unit) + ' đ, ' + last.doc + '). Có gõ nhầm số 0?');
@@ -2037,27 +2249,28 @@ const FORMS = {
       const spec = D.settings.method === 'specific';
       Object.keys(later).forEach(k => I.push('Phiếu này lùi ngày so với ' + later[k].join(', ') + ' (' + D.items[k].name + '). ' + (spec ? 'Thực tế đích danh: các phiếu đó đã chọn lô cụ thể nên giá xuất không đổi; lô mới chỉ làm tăng tồn. Đổi "Giá xuất kho" sang bình quân hoặc FIFO để thấy các phiếu sau được tính lại.' : 'Hệ thống sẽ tính lại giá của các phiếu đó, giá thành và giá vốn.')));
       if(D.settings.method === 'periodic' && lines.length) I.push('Đang dùng bình quân cuối kỳ: đơn giá bình quân cả kỳ của vật tư này sẽ thay đổi.');
-      const doc = {type:'PN', date:dr.date, partyId:dr.partyId, pay:dr.pay, wh:dr.wh, desc:dr.desc.trim() || 'Mua ' + lines.map(l => D.items[l.item].name.toLowerCase()).join(', '), lines, backdated:Object.keys(later).length > 0};
+      const doc = {type:'PN', date:dr.date, partyId:dr.partyId, pay:dr.pay, wh:dr.wh, desc:dr.desc.trim() || 'Mua ' + lines.map(l => D.items[l.item].name.toLowerCase()).filter((x, j, a) => a.indexOf(x) === j).join(', '), lines, backdated:Object.keys(later).length > 0};
       if(usd){ doc.cur = 'USD'; doc.rate = rate; }
-      return {idx, doc: lines.length ? doc : null, E, W, I}; },
-    live(b, Rs, Rb, dr){ dr.lines.forEach((l, i) => { const a = $('f_l' + i + '_amt'), s = $('f_l' + i + '_stk'), lo = $('f_l' + i + '_lot'), j = b.idx ? b.idx.indexOf(i) : -1, ln = j >= 0 && b.doc ? b.doc.lines[j] : null;
-      if(a) a.textContent = ln ? fmt(ln.value) + (ln.fc ? ' (' + fmtFC(ln.fc) + ' USD)' : '') : ''; if(lo) lo.textContent = ln ? ln.lot : '';
+      return {idx, doc: lines.length ? doc : null, E, W, I, codes, mh}; },
+    live(b, Rs, Rb, dr){ dr.lines.forEach((l, i) => { const a = $('f_l' + i + '_amt'), s = $('f_l' + i + '_stk'), lo = $('f_l' + i + '_lot'), mh = $('f_l' + i + '_mh'), j = b.idx ? b.idx.indexOf(i) : -1, ln = j >= 0 && b.doc ? b.doc.lines[j] : null;
+      if(a) a.textContent = ln ? fmt(ln.value) + (ln.fc ? ' (' + fmtFC(ln.fc) + ' USD)' : '') : '';
+      if(lo && b.codes) lo.placeholder = b.codes[i]; if(mh) mh.textContent = b.mh && b.codes ? b.mh[b.codes[i]] || '' : '';
       if(s){ const x = stockAt(Rb, l.item, dr.date || '2026-01-31'); s.textContent = fmtQ(x.q) + ' ' + S.data.items[l.item].uom; } }); }
   },
   PX: {
     title:'Phiếu xuất cho lệnh sản xuất',
     blank(){ const k = firstLsx(), x = S.data.lsx[k] || {}, bom = (S.data.items[x.item] || {}).bom || [];
-      const dr = {date:'2026-01-31', lsx:k, wh:x.wh || 'BBT', desc:'', lines:[{item: bom[0] ? bom[0].item : 'MUOI', qty:'', lot:''}]}; fixLots(dr, 'use'); return dr; },
-    newLine: () => ({item:'MUOI', qty:'', lot:''}),
-    fromDoc: d => ({date:d.date, lsx:d.lsx, wh:d.wh, desc:d.desc, lines:d.lines.map(l => ({item:l.item, qty:fmtInput(l.qty), lot:l.lot, keep:true}))}),
+      const dr = {date:'2026-01-31', lsx:k, wh:x.wh || 'BBT', desc:'', lines:[{item: bom[0] ? bom[0].item : 'MUOI', qty:'', lot:'', loc:''}]}; fixLots(dr, 'use'); return dr; },
+    newLine: () => ({item:'MUOI', qty:'', lot:'', loc:''}),
+    fromDoc: d => ({date:d.date, lsx:d.lsx, wh:d.wh, desc:d.desc, lines:d.lines.map(l => ({item:l.item, qty:fmtInput(l.qty), lot:l.lot, loc:l.loc || '', keep:true}))}),
     body(dr){ const n = dr.lines.length, D = S.data, x = D.lsx[dr.lsx], to = x ? x.item : null, bom = to ? (D.items[to].bom || []) : [];
       return '<div class="frm">' + fDate(dr, true) + lab('Lệnh sản xuất', selx('f_lsx', 'lsx', lsxOpts(dr.lsx), 'data-rerender="1"')) + lab('Kho xuất', whSel('f_wh', 'wh', dr.wh, 'data-rerender="1"')) +
         lab('Diễn giải', inp('f_desc', 'desc', dr.desc, 'placeholder="Tự gợi ý nếu để trống"'), 'wide') + '</div>' +
         (to ? '<p class="note">Đối tượng tập hợp chi phí: <b>' + esc(D.items[to].code + ' · ' + D.items[to].name) + '</b> (' + esc((D.items[to].prod || {}).stage || '') + ': ' + esc((D.items[to].prod || {}).steps || '') + ')</p>' : '') +
         (bom.length ? '<div class="frm"><label>Điền theo định mức: số ' + esc(D.items[to].uom) + ' định sản xuất' + inp('f_bomN', 'bomN', dr.bomN, 'inputmode="numeric" placeholder="Ví dụ 500"') + '</label><div style="align-self:end"><button class="btn sm" type="button" data-act="bomFill">Điền vật tư và lô theo định mức</button></div>' +
           '<p class="note wide">Định mức ' + esc(D.items[to].code) + ' / 1 ' + esc(D.items[to].uom) + ': ' + bom.map(b => D.items[b.item] ? esc(D.items[b.item].name) + ' ' + fmtQ(b.qty) + ' ' + D.items[b.item].uom : '').join(', ') + '</p></div>' : '') +
-        linesHead([['Vật tư'], ['Lô'], ['SL xuất', 1], ['Tồn lô tại kho', 1], ['Giá trị', 1], ['']]) +
-        dr.lines.map((l, i) => '<tr><td>' + selx('f_l' + i + '_item', 'lines.' + i + '.item', itemOpts(['NVL', 'BTP'], l.item, to), 'aria-label="Vật tư dòng ' + (i + 1) + '"') + '</td><td>' + lotSel('f_l' + i + '_lot', 'lines.' + i + '.lot', F ? F.Rb : R, l.item, dr.wh, dr.date, 'use', l.lot, 'aria-label="Lô dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="decimal" aria-label="Số lượng dòng ' + (i + 1) + '" style="width:100px"') + '</td><td class="n" id="f_l' + i + '_stk"></td><td class="n" id="f_l' + i + '_val"></td><td>' + delBtn(i, n) + '</td></tr>').join('') +
+        linesHead([['Vật tư'], ['Lô · vị trí'], ['SL xuất', 1], ['Tồn tại vị trí', 1], ['Giá trị', 1], ['']]) +
+        dr.lines.map((l, i) => '<tr><td>' + selx('f_l' + i + '_item', 'lines.' + i + '.item', itemOpts(['NVL', 'BTP'], l.item, to), 'aria-label="Vật tư dòng ' + (i + 1) + '"') + '</td><td>' + lotSel('f_l' + i + '_lot', 'lines.' + i + '.ll', F ? F.Rb : R, l.item, dr.wh, dr.date, 'use', l, 'aria-label="Lô dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="decimal" aria-label="Số lượng dòng ' + (i + 1) + '" style="width:100px"') + '</td><td class="n" id="f_l' + i + '_stk"></td><td class="n" id="f_l' + i + '_val"></td><td>' + delBtn(i, n) + '</td></tr>').join('') +
         '</tbody></table></div>' + addBtn; },
     onField(k, dr){ fixLots(dr, 'use', k); },
     build(dr, Rb){ const E = [], D = S.data; chkDate(dr, E); const lines = [], idx = [];
@@ -2066,21 +2279,21 @@ const FORMS = {
         if(l.item === x.item){ E.push({id:'f_l' + i + '_item', msg:'Không xuất chính sản phẩm của lệnh cho lệnh đó.'}); return; }
         if(!l.lot){ E.push({id:'f_l' + i + '_lot', msg:'Dòng ' + (i + 1) + ': chọn lô.'}); return; }
         const la = lotAllowed(Rb.lots[l.lot] || {code:l.lot, qc:'pass'}, 'use'); if(!la.ok){ E.push({id:'f_l' + i + '_lot', msg:la.why}); return; }
-        if(chkQty(q, D.items[l.item], 'f_l' + i + '_qty', E)){ lines.push({item:l.item, qty:q, lot:l.lot}); idx.push(i); } });
+        if(chkQty(q, D.items[l.item], 'f_l' + i + '_qty', E)){ lines.push({item:l.item, qty:q, lot:l.lot, loc:l.loc || ''}); idx.push(i); } });
       return {idx, doc: lines.length ? {type:'PX', date:dr.date, lsx:dr.lsx, to:x.item, wh:dr.wh, desc:dr.desc.trim() || 'Xuất ' + lines.map(l => D.items[l.item].name.toLowerCase()).join(', ') + ' cho ' + x.no, lines} : null, E, W:[], I:[]}; },
-    live(b, Rs, Rb, dr){ dr.lines.forEach((l, i) => { const s = $('f_l' + i + '_stk'), v = $('f_l' + i + '_val'), c = cellsAt(Rb, l.item, dr.wh, dr.date || '2026-01-31')[l.lot], q = parseNum(l.qty), cq = c ? c.q : 0;
+    live(b, Rs, Rb, dr){ dr.lines.forEach((l, i) => { const s = $('f_l' + i + '_stk'), v = $('f_l' + i + '_val'), c = cellsAt(Rb, l.item, dr.wh, dr.date || '2026-01-31', true)[llKey(l)], q = parseNum(l.qty), cq = c ? c.q : 0;
       if(s){ s.textContent = fmtQ(cq) + ' ' + S.data.items[l.item].uom; s.style.color = q > cq + EPS ? 'var(--stamp)' : ''; }
       const j = b.idx ? b.idx.indexOf(i) : -1; if(v) v.textContent = Rs && b.doc && j >= 0 ? fmt(valOfSim(Rs, j)) : ''; }); }
   },
   HD: {
     title:'Hóa đơn bán hàng',
-    blank(){ const dr = {date:'2026-01-31', partyId:'C01', pay:'131', wh:'BBT', lines:[{item:'ML5', lot:'', qty:'', price:fmtInput(priceOf('ML5', 'BBT')), vat:'10'}]}; fixLots(dr, 'sale'); return dr; },
-    newLine: () => ({item:'MT2', lot:'', qty:'', price:fmtInput(priceOf('MT2', F ? F.dr.wh : 'BBT')), vat:'10'}),
-    fromDoc: d => ({date:d.date, partyId:d.partyId, pay:d.pay, wh:d.wh, lines:d.lines.map(l => ({item:l.item, lot:l.lot, qty:fmtInput(l.qty), price:fmtInput(l.price), vat:String(l.vat), keep:true}))}),
+    blank(){ const dr = {date:'2026-01-31', partyId:'C01', pay:'131', wh:'BBT', lines:[{item:'ML5', lot:'', loc:'', qty:'', price:fmtInput(priceOf('ML5', 'BBT')), vat:'10'}]}; fixLots(dr, 'sale'); return dr; },
+    newLine: () => ({item:'MT2', lot:'', loc:'', qty:'', price:fmtInput(priceOf('MT2', F ? F.dr.wh : 'BBT')), vat:'10'}),
+    fromDoc: d => ({date:d.date, partyId:d.partyId, pay:d.pay, wh:d.wh, lines:d.lines.map(l => ({item:l.item, lot:l.lot, loc:l.loc || '', qty:fmtInput(l.qty), price:fmtInput(l.price), vat:String(l.vat), keep:true}))}),
     body(dr){ const n = dr.lines.length;
       return '<div class="frm">' + fDate(dr, true) + fParty(dr, 'CUS') + lab('Thanh toán', selx('f_pay', 'pay', opt('131', '131 · Bán chịu', dr.pay) + opt('1111', '1111 · Thu tiền mặt', dr.pay))) + lab('Kho xuất', whSel('f_wh', 'wh', dr.wh, 'data-rerender="1"')) + '</div>' +
-        linesHead([['Hàng bán'], ['Lô'], ['SL', 1], ['Giá bán chưa thuế', 1], ['Thuế suất'], ['Tồn lô', 1], ['Giá vốn dự kiến', 1], ['Lãi gộp dòng', 1], ['']]) +
-        dr.lines.map((l, i) => '<tr><td>' + selx('f_l' + i + '_item', 'lines.' + i + '.item', itemOpts(['SP', 'HH'], l.item), 'aria-label="Hàng bán dòng ' + (i + 1) + '"') + '</td><td>' + lotSel('f_l' + i + '_lot', 'lines.' + i + '.lot', F ? F.Rb : R, l.item, dr.wh, dr.date, 'sale', l.lot, 'aria-label="Lô dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="numeric" aria-label="Số lượng dòng ' + (i + 1) + '" style="width:80px"') + '</td><td>' + inp('f_l' + i + '_price', 'lines.' + i + '.price', l.price, 'inputmode="decimal" aria-label="Giá bán dòng ' + (i + 1) + '" style="width:110px"') + '</td><td>' + vatSel('f_l' + i + '_vat', 'lines.' + i + '.vat', l.vat) + '</td><td class="n" id="f_l' + i + '_stk"></td><td class="n" id="f_l' + i + '_cost"></td><td class="n" id="f_l' + i + '_gp"></td><td>' + delBtn(i, n) + '</td></tr>').join('') +
+        linesHead([['Hàng bán'], ['Lô · vị trí'], ['SL', 1], ['Giá bán chưa thuế', 1], ['Thuế suất'], ['Tồn tại vị trí', 1], ['Giá vốn dự kiến', 1], ['Lãi gộp dòng', 1], ['']]) +
+        dr.lines.map((l, i) => '<tr><td>' + selx('f_l' + i + '_item', 'lines.' + i + '.item', itemOpts(['SP', 'HH'], l.item), 'aria-label="Hàng bán dòng ' + (i + 1) + '"') + '</td><td>' + lotSel('f_l' + i + '_lot', 'lines.' + i + '.ll', F ? F.Rb : R, l.item, dr.wh, dr.date, 'sale', l, 'aria-label="Lô dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="numeric" aria-label="Số lượng dòng ' + (i + 1) + '" style="width:80px"') + '</td><td>' + inp('f_l' + i + '_price', 'lines.' + i + '.price', l.price, 'inputmode="decimal" aria-label="Giá bán dòng ' + (i + 1) + '" style="width:110px"') + '</td><td>' + vatSel('f_l' + i + '_vat', 'lines.' + i + '.vat', l.vat) + '</td><td class="n" id="f_l' + i + '_stk"></td><td class="n" id="f_l' + i + '_cost"></td><td class="n" id="f_l' + i + '_gp"></td><td>' + delBtn(i, n) + '</td></tr>').join('') +
         '</tbody></table></div>' + addBtn; },
     onField(k, dr){ const m = /^lines\.(\d+)\.item$/.exec(k); if(m){ const l = dr.lines[+m[1]]; l.vat = String(S.data.items[l.item].vat); l.price = fmtInput(priceOf(l.item, dr.wh)); }
       if(k === 'wh') dr.lines.forEach(l => l.price = fmtInput(priceOf(l.item, dr.wh)));
@@ -2090,10 +2303,10 @@ const FORMS = {
         if(!l.lot){ E.push({id:'f_l' + i + '_lot', msg:'Dòng ' + (i + 1) + ': chọn lô còn tồn và đạt QC.'}); return; }
         const la = lotAllowed(Rb.lots[l.lot] || {code:l.lot, qc:'pass'}, 'sale'); if(!la.ok){ E.push({id:'f_l' + i + '_lot', msg:la.why}); return; }
         if(chkQty(q, D.items[l.item], 'f_l' + i + '_qty', E) && !(p > 0 && p < 1e10)) E.push({id:'f_l' + i + '_price', msg:'Giá bán phải lớn hơn 0.'});
-        if(q > 0 && p > 0){ lines.push({item:l.item, lot:l.lot, qty:q, price:p, vat:+l.vat}); idx.push(i); } });
+        if(q > 0 && p > 0){ lines.push({item:l.item, lot:l.lot, loc:l.loc || '', qty:q, price:p, vat:+l.vat}); idx.push(i); } });
       return {idx, doc: lines.length ? {type:'HD', date:dr.date, partyId:dr.partyId, pay:dr.pay, wh:dr.wh, desc:'Bán ' + lines.map(l => D.items[l.item].name).join(', '), lines} : null, E, W:[], I:[]}; },
     live(b, Rs, Rb, dr){ const W = [];
-      dr.lines.forEach((l, i) => { const s = $('f_l' + i + '_stk'), c = $('f_l' + i + '_cost'), g = $('f_l' + i + '_gp'), cl = cellsAt(Rb, l.item, dr.wh, dr.date || '2026-01-31')[l.lot];
+      dr.lines.forEach((l, i) => { const s = $('f_l' + i + '_stk'), c = $('f_l' + i + '_cost'), g = $('f_l' + i + '_gp'), cl = cellsAt(Rb, l.item, dr.wh, dr.date || '2026-01-31', true)[llKey(l)];
         if(s) s.textContent = fmtQ(cl ? cl.q : 0) + ' ' + S.data.items[l.item].uom;
         const q = parseNum(l.qty), p = parseNum(l.price), j = b.idx ? b.idx.indexOf(i) : -1;
         if(Rs && b.doc && j >= 0){ const cost = valOfSim(Rs, j), rev = Math.round(q * p);
@@ -2105,14 +2318,14 @@ const FORMS = {
   TL: {
     title:'Hàng bán bị trả lại',
     blank(){ const hd = R.active.filter(d => d.type === 'HD'); const ref = hd.length ? hd[hd.length - 1].no : ''; return FORMS.TL.withRef({date:'2026-01-31', ref, desc:''}); },
-    withRef(dr){ const hd = S.data.docs.find(d => d.no === dr.ref); dr.lines = hd ? hd.lines.map((l, i) => ({refLine:i, item:l.item, lot:l.lot, qty:''})) : []; return dr; },
+    withRef(dr){ const hd = S.data.docs.find(d => d.no === dr.ref); dr.lines = hd ? hd.lines.map((l, i) => ({refLine:i, item:l.item, lot:l.lot, loc:l.loc || '', qty:''})) : []; return dr; },
     fromDoc: d => ({date:d.date, ref:d.ref, desc:d.desc, lines:S.data.docs.find(h => h.no === d.ref).lines.map((l, i) => { const x = d.lines.find(z => z.refLine === i); return {refLine:i, item:l.item, lot:l.lot, qty: x ? fmtInput(x.qty) : ''}; })}),
     body(dr){ const D = S.data, hds = R.active.filter(d => d.type === 'HD'), hd = D.docs.find(d => d.no === dr.ref);
       if(!hds.length) return '<p class="msg warn">Chưa có hóa đơn bán nào còn hiệu lực.</p>';
       return '<div class="frm">' + fDate(dr) + lab('Hóa đơn gốc', selx('f_ref', 'ref', hds.map(d => opt(d.no, d.no + ' · ' + ddmm(d.date) + ' · ' + d.wh + ' · ' + partyName(D, d.partyId), dr.ref)).join(''), 'data-rerender="1"')) +
         lab('Lý do trả lại', inp('f_desc', 'desc', dr.desc, 'placeholder="Ví dụ: hũ nứt, móp nắp"'), 'wide') + '</div>' +
-        (hd ? linesHead([['Hàng'], ['Về lô gốc'], ['Đã bán', 1], ['Đã trả trước đó', 1], ['SL trả lại', 1], ['Giá bán', 1], ['Giá vốn nhập lại', 1]]) +
-          dr.lines.map((l, i) => { const hl = hd.lines[l.refLine]; return '<tr><td>' + esc(D.items[l.item].name) + '</td><td class="acc">' + esc(hl.lot) + '</td><td class="n">' + fmtQ(hl.qty) + '</td><td class="n">' + fmtQ(returned(dr.ref, l.refLine)) + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="numeric" aria-label="SL trả dòng ' + (i + 1) + '" style="width:80px"') + '</td><td class="n">' + fmt(hl.price) + '</td><td class="n" id="f_l' + i + '_cost"></td></tr>'; }).join('') + '</tbody></table></div>' : '') +
+        (hd ? linesHead([['Hàng'], ['Về lô · vị trí gốc'], ['Đã bán', 1], ['Đã trả trước đó', 1], ['SL trả lại', 1], ['Giá bán', 1], ['Giá vốn nhập lại', 1]]) +
+          dr.lines.map((l, i) => { const hl = hd.lines[l.refLine]; return '<tr><td>' + esc(D.items[l.item].name) + '</td><td class="acc">' + esc(hl.lot + ' · ' + (hl.loc || 'chưa xếp')) + '</td><td class="n">' + fmtQ(hl.qty) + '</td><td class="n">' + fmtQ(returned(dr.ref, l.refLine)) + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="numeric" aria-label="SL trả dòng ' + (i + 1) + '" style="width:80px"') + '</td><td class="n">' + fmt(hl.price) + '</td><td class="n" id="f_l' + i + '_cost"></td></tr>'; }).join('') + '</tbody></table></div>' : '') +
         ''; },
     onField(k, dr){ if(k === 'ref') FORMS.TL.withRef(dr); },
     build(dr, Rb){ const E = [], D = S.data; chkDate(dr, E); const hd = D.docs.find(d => d.no === dr.ref && d.status !== 'void');
@@ -2122,83 +2335,93 @@ const FORMS = {
       dr.lines.forEach((l, i) => { const q = l.qty === '' ? 0 : parseNum(l.qty), hl = hd.lines[l.refLine], left = hl.qty - returned(dr.ref, l.refLine);
         if(!chkQty(q, D.items[l.item], 'f_l' + i + '_qty', E, true)) return;
         if(q > left + EPS) E.push({id:'f_l' + i + '_qty', msg:'Dòng ' + (i + 1) + ': trả tối đa ' + fmtQ(left) + ' ' + D.items[l.item].uom + '.'});
-        if(q > 0) lines.push({refLine:l.refLine, item:l.item, lot:hl.lot, qty:q, price:hl.price, vat:hl.vat}); });
+        if(q > 0) lines.push({refLine:l.refLine, item:l.item, lot:hl.lot, loc:hl.loc || '', qty:q, price:hl.price, vat:hl.vat}); });
       if(!lines.length && !E.length) E.push({id:'f_l0_qty', msg:'Nhập số lượng trả lại cho ít nhất 1 dòng.'});
       return {doc: lines.length ? {type:'TL', date:dr.date, ref:dr.ref, partyId:hd.partyId, desc:'Hàng bán bị trả lại theo ' + dr.ref + (dr.desc.trim() ? ': ' + dr.desc.trim() : ''), lines} : null, E, W:[], I:[]}; },
     live(b, Rs, Rb, dr){ if(!b.doc) return; b.doc.lines.forEach((l, j) => { const i = dr.lines.findIndex(z => z.refLine === l.refLine), c = $('f_l' + i + '_cost'); if(c) c.textContent = Rs ? fmt(valOfSim(Rs, j)) : ''; }); }
   },
   CK: {
-    title:'Phiếu chuyển kho nội bộ',
-    blank(){ const dr = {date:'2026-01-31', wh:'BBT', whTo:'NTH', desc:'', lines:[{item:'ML5', lot:'', qty:''}]}; fixLots(dr, 'move'); return dr; },
-    newLine: () => ({item:'MT2', lot:'', qty:''}),
-    fromDoc: d => ({date:d.date, wh:d.wh, whTo:d.whTo, desc:d.desc, lines:d.lines.map(l => ({item:l.item, lot:l.lot, qty:fmtInput(l.qty), keep:true}))}),
+    title:'Phiếu chuyển kho / chuyển vị trí',
+    blank(){ const dr = {date:'2026-01-31', wh:'BBT', whTo:'NTH', desc:'', lines:[{item:'ML5', lot:'', loc:'', qty:'', locTo:''}]}; fixLots(dr, 'move'); return dr; },
+    newLine: () => ({item:'MT2', lot:'', loc:'', qty:'', locTo:''}),
+    fromDoc: d => ({date:d.date, wh:d.wh, whTo:d.whTo, desc:d.desc, lines:d.lines.map(l => ({item:l.item, lot:l.lot, loc:l.loc || '', qty:fmtInput(l.qty), locTo:l.locTo || '', keep:true}))}),
     body(dr){ const n = dr.lines.length;
-      return '<div class="frm">' + fDate(dr, true) + lab('Từ kho', whSel('f_wh', 'wh', dr.wh, 'data-rerender="1"')) + lab('Đến kho', whSel('f_whTo', 'whTo', dr.whTo)) +
+      return '<div class="frm">' + fDate(dr, true) + lab('Từ kho', whSel('f_wh', 'wh', dr.wh, 'data-rerender="1"')) + lab('Đến kho', whSel('f_whTo', 'whTo', dr.whTo, 'data-rerender="1"')) +
         lab('Diễn giải', inp('f_desc', 'desc', dr.desc, 'placeholder="Tự gợi ý nếu để trống"'), 'wide') + '</div>' +
-        linesHead([['Mặt hàng'], ['Lô'], ['SL chuyển', 1], ['Tồn lô tại kho đi', 1], ['Giá trị', 1], ['']]) +
-        dr.lines.map((l, i) => '<tr><td>' + selx('f_l' + i + '_item', 'lines.' + i + '.item', itemOpts(['SP', 'BTP', 'HH', 'NVL'], l.item), 'aria-label="Mặt hàng dòng ' + (i + 1) + '"') + '</td><td>' + lotSel('f_l' + i + '_lot', 'lines.' + i + '.lot', F ? F.Rb : R, l.item, dr.wh, dr.date, 'move', l.lot, 'aria-label="Lô dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="decimal" aria-label="SL chuyển dòng ' + (i + 1) + '" style="width:90px"') + '</td><td class="n" id="f_l' + i + '_stk"></td><td class="n" id="f_l' + i + '_val"></td><td>' + delBtn(i, n) + '</td></tr>').join('') +
+        linesHead([['Mặt hàng'], ['Lô · vị trí đi'], ['SL chuyển', 1], ['Tồn tại vị trí', 1], ['Vị trí đến'], ['Giá trị', 1], ['']]) +
+        dr.lines.map((l, i) => '<tr><td>' + selx('f_l' + i + '_item', 'lines.' + i + '.item', itemOpts(['SP', 'BTP', 'HH', 'NVL'], l.item), 'aria-label="Mặt hàng dòng ' + (i + 1) + '"') + '</td><td>' + lotSel('f_l' + i + '_lot', 'lines.' + i + '.ll', F ? F.Rb : R, l.item, dr.wh, dr.date, 'move', l, 'aria-label="Lô và vị trí dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="decimal" aria-label="SL chuyển dòng ' + (i + 1) + '" style="width:90px"') + '</td><td class="n" id="f_l' + i + '_stk"></td><td>' + locSel('f_l' + i + '_locTo', 'lines.' + i + '.locTo', dr.whTo, l.locTo, 'aria-label="Vị trí đến dòng ' + (i + 1) + '"') + '</td><td class="n" id="f_l' + i + '_val"></td><td>' + delBtn(i, n) + '</td></tr>').join('') +
         '</tbody></table></div>' + addBtn; },
-    onField(k, dr){ fixLots(dr, 'move', k); },
-    build(dr, Rb){ const E = [], D = S.data; chkDate(dr, E); const lines = [], idx = [];
-      if(dr.wh === dr.whTo) E.push({id:'f_whTo', msg:'Kho đến phải khác kho đi.'});
+    onField(k, dr){ if(k === 'whTo') dr.lines.forEach(l => { if(l.locTo && !locsOf(S.data, dr.whTo).some(z => locCode(z) === l.locTo)) l.locTo = ''; }); fixLots(dr, 'move', k); },
+    build(dr, Rb){ const E = [], D = S.data; chkDate(dr, E); const lines = [], idx = [], same = dr.wh === dr.whTo;
+      if(same && !locsOf(D, dr.wh).length) E.push({id:'f_whTo', msg:'Kho đến phải khác kho đi.'});
       dr.lines.forEach((l, i) => { const q = parseNum(l.qty);
         if(!l.lot){ E.push({id:'f_l' + i + '_lot', msg:'Dòng ' + (i + 1) + ': chọn lô.'}); return; }
+        if(same && (l.locTo || '') === (l.loc || '')){ E.push({id:'f_l' + i + '_locTo', msg:'Dòng ' + (i + 1) + ': vị trí đến phải khác vị trí đi (' + (l.loc || 'chưa xếp') + ').'}); return; }
+        if(needLoc(D, l.item, dr.whTo) && !l.locTo){ E.push({id:'f_l' + i + '_locTo', msg:'Dòng ' + (i + 1) + ': chọn vị trí đến (bồn, trái, phuy).'}); return; }
         const la = lotAllowed(Rb.lots[l.lot] || {code:l.lot, qc:'pass'}, 'move'); if(!la.ok){ E.push({id:'f_l' + i + '_lot', msg:la.why}); return; }
-        if(chkQty(q, D.items[l.item], 'f_l' + i + '_qty', E)){ lines.push({item:l.item, lot:l.lot, qty:q}); idx.push(i); } });
-      return {idx, doc: lines.length ? {type:'CK', date:dr.date, wh:dr.wh, whTo:dr.whTo, desc:dr.desc.trim() || 'Chuyển ' + lines.map(l => D.items[l.item].code).join(', ') + ' từ ' + dr.wh + ' sang ' + dr.whTo, lines} : null, E, W:[], I:[]}; },
-    live(b, Rs, Rb, dr){ dr.lines.forEach((l, i) => { const s = $('f_l' + i + '_stk'), v = $('f_l' + i + '_val'), c = cellsAt(Rb, l.item, dr.wh, dr.date || '2026-01-31')[l.lot], q = parseNum(l.qty), cq = c ? c.q : 0;
+        if(chkQty(q, D.items[l.item], 'f_l' + i + '_qty', E)){ lines.push({item:l.item, lot:l.lot, loc:l.loc || '', locTo:l.locTo || '', qty:q}); idx.push(i); } });
+      const dsc = same ? 'Chuyển vị trí ' + lines.map(l => D.items[l.item].code + ' lô ' + l.lot + ' ' + (l.loc || 'chưa xếp') + ' → ' + (l.locTo || 'chưa xếp')).join(', ') : 'Chuyển ' + lines.map(l => D.items[l.item].code).join(', ') + ' từ ' + dr.wh + ' sang ' + dr.whTo;
+      return {idx, doc: lines.length ? {type:'CK', date:dr.date, wh:dr.wh, whTo:dr.whTo, desc:dr.desc.trim() || dsc, lines} : null, E, W:[], I:[]}; },
+    live(b, Rs, Rb, dr){ dr.lines.forEach((l, i) => { const s = $('f_l' + i + '_stk'), v = $('f_l' + i + '_val'), c = cellsAt(Rb, l.item, dr.wh, dr.date || '2026-01-31', true)[llKey(l)], q = parseNum(l.qty), cq = c ? c.q : 0;
       if(s){ s.textContent = fmtQ(cq); s.style.color = q > cq + EPS ? 'var(--stamp)' : ''; }
       const j = b.idx ? b.idx.indexOf(i) : -1; if(v) v.textContent = Rs && b.doc && j >= 0 ? fmt(valOfSim(Rs, j)) : ''; }); }
   },
   KK: {
-    title:'Phiếu kiểm kê kho theo lô',
+    title:'Phiếu kiểm kê kho theo lô và vị trí',
     blank: () => FORMS.KK.withWh({date:'2026-01-31', wh:'BBT', treat:'1381', extra:[]}),
-    withWh(dr){ const old = {}; (dr.lines || []).forEach(l => old[l.item + '|' + l.lot] = l.counted);
+    withWh(dr){ const old = {}; (dr.lines || []).forEach(l => old[l.item + '|' + l.lot + '|' + (l.loc || '')] = l.counted);
       const Rx = (F && F.Rb) || R, out = [];
-      Object.keys(S.data.items).forEach(k => lotChoices(Rx, k, dr.wh, dr.date, 'any').forEach(c => out.push({item:k, lot:c.lot, counted: old[k + '|' + c.lot] || ''})));
+      Object.keys(S.data.items).forEach(k => lotChoices(Rx, k, dr.wh, dr.date, 'any').forEach(c => out.push({item:k, lot:c.lot, loc:c.loc, counted: old[k + '|' + c.lot + '|' + c.loc] || ''})));
       dr.lines = out; if(!dr.extra) dr.extra = []; return dr; },
     fromDoc: d => { const dr = {date:d.date, wh:d.wh, treat:d.treat || '1381', lines:[], extra:[]};
-      d.lines.filter(l => l.newLot).forEach(l => dr.extra.push({item:l.item, qty:fmtInput(l.qty), price:fmtInput2(l.value / l.qty)}));
-      FORMS.KK.withWh(dr); dr.lines.forEach(l => { const x = d.lines.find(z => !z.newLot && z.item === l.item && z.lot === l.lot); if(x) l.counted = fmtInput(x.counted); }); return dr; },
+      d.lines.filter(l => l.newLot).forEach(l => dr.extra.push({item:l.item, loc:l.loc || '', qty:fmtInput(l.qty), price:fmtInput2(l.value / l.qty), lot:l.lot}));
+      FORMS.KK.withWh(dr); dr.lines.forEach(l => { const x = d.lines.find(z => !z.newLot && z.item === l.item && z.lot === l.lot && (z.loc || '') === l.loc); if(x) l.counted = fmtInput(x.counted); }); return dr; },
     body(dr){ const D = S.data, Rx = (F && F.Rb) || R, ne = dr.extra.length;
       return '<div class="frm">' + fDate(dr, true) + lab('Kho', whSel('f_wh', 'wh', dr.wh, 'data-rerender="1"')) +
         lab('Xử lý hàng thiếu', selx('f_treat', 'treat', opt('1381', '1381 · Chờ xử lý', dr.treat) + opt('632', '632 · Hao hụt trong định mức', dr.treat))) + '</div>' +
-        linesHead([['Mặt hàng'], ['Lô'], ['SL sổ sách', 1], ['SL thực tế', 1], ['Chênh lệch', 1], ['Giá trị', 1]]) +
-        (dr.lines.length ? dr.lines.map((l, i) => '<tr><td>' + esc(D.items[l.item].code + ' · ' + D.items[l.item].name) + ' <span class="muted">(' + D.items[l.item].uom + ')</span></td><td class="acc">' + esc(l.lot) + '</td><td class="n" id="f_l' + i + '_book"></td><td>' + inp('f_l' + i + '_counted', 'lines.' + i + '.counted', l.counted, 'inputmode="decimal" placeholder="= sổ sách" aria-label="SL thực tế ' + esc(D.items[l.item].name + ' lô ' + l.lot) + '" style="width:100px"') + '</td><td class="n" id="f_l' + i + '_diff"></td><td class="n" id="f_l' + i + '_val"></td></tr>').join('') : '<tr><td colspan="6" class="muted">Kho này không có tồn tại ngày kiểm kê.</td></tr>') +
+        linesHead([['Mặt hàng'], ['Lô'], ['Mã hóa'], ['Vị trí'], ['SL sổ sách', 1], ['SL kiểm kê', 1], ['Chênh lệch', 1], ['% chênh lệch', 1], ['Giá trị', 1]]) +
+        (dr.lines.length ? dr.lines.map((l, i) => { const L = Rx.lots[l.lot]; return '<tr><td>' + esc(D.items[l.item].code + ' · ' + D.items[l.item].name) + ' <span class="muted">(' + D.items[l.item].uom + ')</span></td><td class="acc">' + esc(l.lot) + '</td><td class="acc">' + esc(L ? L.mh : '') + '</td><td class="acc">' + esc(l.loc || '—') + '</td><td class="n" id="f_l' + i + '_book"></td><td>' + inp('f_l' + i + '_counted', 'lines.' + i + '.counted', l.counted, 'inputmode="decimal" placeholder="= sổ sách" aria-label="SL kiểm kê ' + esc(D.items[l.item].name + ' lô ' + l.lot + ' vị trí ' + (l.loc || 'chưa xếp')) + '" style="width:100px"') + '</td><td class="n" id="f_l' + i + '_diff"></td><td class="n" id="f_l' + i + '_pct"></td><td class="n" id="f_l' + i + '_val"></td></tr>'; }).join('') : '<tr><td colspan="9" class="muted">Kho này không có tồn tại ngày kiểm kê.</td></tr>') +
         '</tbody></table></div>' +
         '<h3 style="margin:4px 0 0;font-size:13.5px">Hàng thừa chưa có lô trên sổ</h3>' +
-        linesHead([['Mặt hàng'], ['SL thừa', 1], ['Đơn giá', 1], ['Lô sẽ cấp'], ['']]) +
+        linesHead([['Mặt hàng'], ['Vị trí'], ['SL thừa', 1], ['Đơn giá', 1], ['Lô sẽ cấp'], ['']]) +
         (ne ? dr.extra.map((x, i) => { const g = latestLotUnit(Rx, x.item);
-          return '<tr><td>' + selx('f_x' + i + '_item', 'extra.' + i + '.item', itemOpts(['NVL', 'BTP', 'SP', 'HH'], x.item), 'aria-label="Hàng thừa dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_x' + i + '_qty', 'extra.' + i + '.qty', x.qty, 'inputmode="decimal" aria-label="SL thừa dòng ' + (i + 1) + '" style="width:90px"') + '</td><td>' + inp('f_x' + i + '_price', 'extra.' + i + '.price', x.price, 'inputmode="decimal" aria-label="Đơn giá hàng thừa dòng ' + (i + 1) + '" style="width:110px" placeholder="' + (g ? 'giá lô ' + esc(g.lot) + ': ' + fmt2(g.unit) : 'nhập đơn giá') + '"') + '</td><td class="acc small" id="f_x' + i + '_lot"></td><td><button class="icon-btn" type="button" data-act="delExtra" data-i="' + i + '" aria-label="Xóa dòng hàng thừa ' + (i + 1) + '">×</button></td></tr>'; }).join('') : '<tr><td colspan="5" class="muted">Không có.</td></tr>') +
+          return '<tr><td>' + selx('f_x' + i + '_item', 'extra.' + i + '.item', itemOpts(['NVL', 'BTP', 'SP', 'HH'], x.item), 'aria-label="Hàng thừa dòng ' + (i + 1) + '"') + '</td><td>' + locSel('f_x' + i + '_loc', 'extra.' + i + '.loc', dr.wh, x.loc, 'aria-label="Vị trí hàng thừa dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_x' + i + '_qty', 'extra.' + i + '.qty', x.qty, 'inputmode="decimal" aria-label="SL thừa dòng ' + (i + 1) + '" style="width:90px"') + '</td><td>' + inp('f_x' + i + '_price', 'extra.' + i + '.price', x.price, 'inputmode="decimal" aria-label="Đơn giá hàng thừa dòng ' + (i + 1) + '" style="width:110px" placeholder="' + (g ? 'giá lô ' + esc(g.lot) + ': ' + fmt2(g.unit) : 'nhập đơn giá') + '"') + '</td><td class="acc small" id="f_x' + i + '_lot"></td><td><button class="icon-btn" type="button" data-act="delExtra" data-i="' + i + '" aria-label="Xóa dòng hàng thừa ' + (i + 1) + '">×</button></td></tr>'; }).join('') : '<tr><td colspan="6" class="muted">Không có.</td></tr>') +
         '</tbody></table></div><div><button class="btn sm" type="button" data-act="addExtra">+ Hàng thừa ngoài sổ</button></div>'; },
     onField(k, dr){ if(k === 'wh' || k === 'date') FORMS.KK.withWh(dr); },
-    build(dr, Rb){ const E = [], D = S.data, spec = D.settings.method === 'specific'; chkDate(dr, E); const lines = [], taken = {};
+    build(dr, Rb){ const E = [], D = S.data, spec = D.settings.method === 'specific'; chkDate(dr, E); const lines = [], taken = {}, takenMh = {};
+      const date = dr.date || '2026-01-31', byLoc = {}, byLot = {};
+      Object.keys(D.items).forEach(k => { byLoc[k] = cellsAt(Rb, k, dr.wh, date, true); byLot[k] = cellsAt(Rb, k, dr.wh, date); });
       dr.lines.forEach((l, i) => { if(l.counted === '' || l.counted == null) return; const c = parseNum(l.counted), it = D.items[l.item];
         if(!chkQty(c, it, 'f_l' + i + '_counted', E, true)) return;
-        const cell = cellsAt(Rb, l.item, dr.wh, dr.date || '2026-01-31')[l.lot] || {q:0, v:0}, diff = rq(c - cell.q);
+        const cell = byLoc[l.item][llKey(l)] || {q:0}, lc = byLot[l.item][l.lot] || {q:0, v:0}, diff = rq(c - cell.q);
         if(Math.abs(diff) < EPS) return;
-        if(diff < 0){ lines.push({item:l.item, lot:l.lot, book:cell.q, counted:c, qty:diff, value:0}); return; }
-        let unit = spec ? (cell.q > EPS ? cell.v / cell.q : 0) : (() => { const s = stockAt(Rb, l.item, dr.date || '2026-01-31'); return s.q > EPS ? s.v / s.q : 0; })();
+        if(diff < 0){ lines.push({item:l.item, lot:l.lot, loc:l.loc || '', book:cell.q, counted:c, qty:diff, value:0}); return; }
+        let unit = spec ? (lc.q > EPS ? lc.v / lc.q : 0) : (() => { const s = stockAt(Rb, l.item, date); return s.q > EPS ? s.v / s.q : 0; })();
         if(!(unit > 0)){ const L = Rb.lots[l.lot]; unit = L && L.inQty > EPS && L.inValue > 0 ? L.inValue / L.inQty : 0; }
         if(!(unit > 0)){ const g = latestLotUnit(Rb, l.item); unit = g ? g.unit : 0; }
         if(!(unit > 0)){ E.push({id:'f_l' + i + '_counted', msg:'Không xác định được đơn giá hàng thừa ' + it.name + ': ghi ở mục "Hàng thừa ngoài sổ" kèm đơn giá.'}); return; }
-        lines.push({item:l.item, lot:l.lot, book:cell.q, counted:c, qty:diff, unit:r2(unit), value:Math.round(diff * unit)}); });
+        lines.push({item:l.item, lot:l.lot, loc:l.loc || '', book:cell.q, counted:c, qty:diff, unit:r2(unit), value:Math.round(diff * unit)}); });
+      const oldDoc = F && F.edit ? D.docs.find(x => x.no === F.edit) : null;
       dr.extra.forEach((x, i) => { const it = D.items[x.item], q = parseNum(x.qty);
         if(!chkQty(q, it, 'f_x' + i + '_qty', E)) return;
+        if(needLoc(D, x.item, dr.wh) && !x.loc){ E.push({id:'f_x' + i + '_loc', msg:'Hàng thừa dòng ' + (i + 1) + ': chọn vị trí chứa.'}); return; }
         let unit = x.price === '' || x.price == null ? NaN : parseNum(x.price);
         if(x.price !== '' && x.price != null && !(unit > 0)){ E.push({id:'f_x' + i + '_price', msg:'Đơn giá hàng thừa phải lớn hơn 0.'}); return; }
         if(!(unit > 0)){ const g = latestLotUnit(Rb, x.item); unit = g ? g.unit : NaN; }
         if(!(unit > 0)){ E.push({id:'f_x' + i + '_price', msg:'Nhập đơn giá cho hàng thừa ' + it.name + ': vật tư chưa có lô nào có giá.'}); return; }
-        const lot = nextLot(D, x.item, dr.date || '2026-01-31', taken); taken[lot] = 1;
-        lines.push({item:x.item, lot, book:0, counted:q, qty:q, unit:r2(unit), value:Math.round(q * unit), newLot:true}); });
+        const lot = x.lot || nextLot(D, x.item, date, taken); taken[lot] = 1;
+        const om = oldDoc && (oldDoc.lines.find(z => z.lot === lot) || {}).mh, mh = om || nextMh(D, x.item, date, takenMh); takenMh[mh] = 1;
+        lines.push({item:x.item, lot, mh, loc:x.loc || '', book:0, counted:q, qty:q, unit:r2(unit), value:Math.round(q * unit), newLot:true}); });
       if(!lines.length && !E.length) E.push({id: dr.lines.length ? 'f_l0_counted' : 'f_date', msg:'Không có chênh lệch kiểm kê, không phát sinh bút toán.'});
-      return {doc: lines.length ? {type:'KK', date:dr.date, wh:dr.wh, treat:dr.treat, desc:'Kiểm kê kho ' + dr.wh + ' ngày ' + ddmm(dr.date || '2026-01-31'), lines} : null, E, W:[], I:[]}; },
-    live(b, Rs, Rb, dr){ dr.lines.forEach((l, i) => { const cell = cellsAt(Rb, l.item, dr.wh, dr.date || '2026-01-31')[l.lot] || {q:0}, c = parseNum(l.counted);
-      const e1 = $('f_l' + i + '_book'), e2 = $('f_l' + i + '_diff'), e3 = $('f_l' + i + '_val');
+      return {doc: lines.length ? {type:'KK', date:dr.date, wh:dr.wh, treat:dr.treat, desc:'Kiểm kê kho ' + dr.wh + ' ngày ' + ddmm(date), lines} : null, E, W:[], I:[]}; },
+    live(b, Rs, Rb, dr){ const date = dr.date || '2026-01-31', cache = {};
+      dr.lines.forEach((l, i) => { const m = cache[l.item] || (cache[l.item] = cellsAt(Rb, l.item, dr.wh, date, true)), cell = m[llKey(l)] || {q:0}, c = parseNum(l.counted);
+      const e1 = $('f_l' + i + '_book'), e2 = $('f_l' + i + '_diff'), e4 = $('f_l' + i + '_pct'), e3 = $('f_l' + i + '_val');
       if(e1) e1.textContent = fmtQ(cell.q); const df = isFinite(c) ? rq(c - cell.q) : 0;
       if(e2) e2.textContent = isFinite(c) && df ? (df > 0 ? 'thừa ' : 'thiếu ') + fmtQ(Math.abs(df)) : '';
-      if(e3){ const j = b.doc ? b.doc.lines.findIndex(z => !z.newLot && z.item === l.item && z.lot === l.lot) : -1; e3.textContent = j >= 0 && Rs ? fmt(b.doc.lines[j].qty < 0 ? valOfSim(Rs, j) : b.doc.lines[j].value) : ''; } });
-      const nl = b.doc ? b.doc.lines.filter(z => z.newLot) : []; dr.extra.forEach((x, i) => { const e = $('f_x' + i + '_lot'); if(e) e.textContent = nl[i] ? nl[i].lot + ' · ' + fmt(nl[i].value) : ''; }); }
+      if(e4) e4.textContent = isFinite(c) && df && cell.q > EPS ? (df > 0 ? '+' : '−') + pct(Math.abs(df) / cell.q * 100) : '';
+      if(e3){ const j = b.doc ? b.doc.lines.findIndex(z => !z.newLot && z.item === l.item && z.lot === l.lot && z.loc === (l.loc || '')) : -1; e3.textContent = j >= 0 && Rs ? fmt(b.doc.lines[j].qty < 0 ? valOfSim(Rs, j) : b.doc.lines[j].value) : ''; } });
+      const nl = b.doc ? b.doc.lines.filter(z => z.newLot) : []; dr.extra.forEach((x, i) => { const e = $('f_x' + i + '_lot'); if(e) e.textContent = nl[i] ? nl[i].lot + ' · ' + nl[i].mh + ' · ' + fmt(nl[i].value) : ''; }); }
   },
   CT: {
     title:'Phiếu chi / ủy nhiệm chi trả nhà cung cấp',
@@ -2288,32 +2511,45 @@ const FORMS = {
   },
   NK: {
     title:'Nhập kho BTP / thành phẩm theo lệnh sản xuất',
-    blank(){ const k = firstLsx(), x = S.data.lsx[k] || {}; return {date:'2026-01-31', lsx:k, wh:x.wh || 'BBT', qty:'', rej:'0', qc:'pass', desc:''}; },
-    fromDoc: d => ({date:d.date, lsx:d.lsx, wh:d.wh, qty:fmtInput(d.lines[0].qty), rej:fmtInput(d.lines[0].rej || 0), qc:d.lines[0].qc || 'pass', desc:d.desc, lot:d.lines[0].lot}),
-    body(dr){ const D = S.data, x = D.lsx[dr.lsx], it = x ? D.items[x.item] : null, pr = it ? it.prod || {} : {};
-      return '<div class="frm">' + fDate(dr) + lab('Lệnh sản xuất', selx('f_lsx', 'lsx', lsxOpts(dr.lsx), 'data-rerender="1"')) + lab('Kho nhập', whSel('f_wh', 'wh', dr.wh)) +
-        lab('SL đạt nhập kho' + (it ? ' (' + esc(it.uom) + ')' : ''), inp('f_qty', 'qty', dr.qty, 'inputmode="decimal"')) + lab('SL không đạt (loại bỏ)', inp('f_rej', 'rej', dr.rej, 'inputmode="decimal"')) +
+    blank(){ const k = firstLsx(), x = S.data.lsx[k] || {}; return {date:'2026-01-31', lsx:k, wh:x.wh || 'BBT', lot:'', rej:'0', qc:'pass', desc:'', lines:[{loc:'', qty:''}]}; },
+    newLine: () => ({loc:'', qty:''}),
+    fromDoc: d => ({date:d.date, lsx:d.lsx, wh:d.wh, rej:fmtInput(sum(d.lines, l => l.rej || 0)), qc:d.lines[0].qc || 'pass', desc:d.desc, lot:d.lines[0].lot, lines:d.lines.map(l => ({loc:l.loc || '', qty:fmtInput(l.qty)}))}),
+    body(dr){ const D = S.data, x = D.lsx[dr.lsx], it = x ? D.items[x.item] : null, pr = it ? it.prod || {} : {}, n = dr.lines.length;
+      return '<div class="frm">' + fDate(dr) + lab('Lệnh sản xuất', selx('f_lsx', 'lsx', lsxOpts(dr.lsx), 'data-rerender="1"')) + lab('Kho nhập', whSel('f_wh', 'wh', dr.wh, 'data-rerender="1"')) +
+        lab('Mã lô', inp('f_lot', 'lot', dr.lot, 'autocomplete="off"')) +
+        lab('SL không đạt (loại bỏ)', inp('f_rej', 'rej', dr.rej, 'inputmode="decimal"')) +
         lab('QC lô', selx('f_qc', 'qc', QC_OPTS(dr.qc))) + lab('Diễn giải', inp('f_desc', 'desc', dr.desc, 'placeholder="Tự gợi ý nếu để trống"'), 'wide') + '</div>' +
-        (it ? '<dl class="kv"><dt>Sản phẩm</dt><dd>' + esc(it.code + ' · ' + it.name) + ' · ' + esc(pr.stage || '') + '</dd><dt>Định mức hao hụt</dt><dd>' + fmtD(pr.loss || 0, 2) + '% (đạt + không đạt)</dd><dt>Người QC</dt><dd>' + esc(it.qcRole || '') + '</dd><dt>Mã lô sẽ cấp</dt><dd class="acc" id="f_nkLot"></dd><dt>Giá thành đơn vị dự kiến</dt><dd id="f_nkZ"></dd><dt>Giá trị nhập kho lô</dt><dd id="f_nkV"></dd><dt>Hỏng ngoài định mức (cả kỳ)</dt><dd id="f_nkA"></dd></dl>' : '') +
-        ''; },
+        linesHead([['Vị trí chứa'], ['SL đạt' + (it ? ' (' + esc(it.uom) + ')' : ''), 1], ['']]) +
+        dr.lines.map((l, i) => '<tr><td>' + locSel('f_l' + i + '_loc', 'lines.' + i + '.loc', dr.wh, l.loc, 'aria-label="Vị trí chứa dòng ' + (i + 1) + '"') + '</td><td>' + inp('f_l' + i + '_qty', 'lines.' + i + '.qty', l.qty, 'inputmode="decimal" aria-label="SL đạt dòng ' + (i + 1) + '" style="width:110px"') + '</td><td>' + delBtn(i, n) + '</td></tr>').join('') +
+        '</tbody></table></div><div><button class="btn sm" type="button" data-act="addLine">+ Vị trí</button></div>' +
+        (it ? '<dl class="kv"><dt>Sản phẩm</dt><dd>' + esc(it.code + ' · ' + it.name) + ' · ' + esc(pr.stage || '') + '</dd><dt>Định mức hao hụt</dt><dd>' + fmtD(pr.loss || 0, 2) + '% (đạt + không đạt)</dd><dt>Người QC</dt><dd>' + esc(it.qcRole || '') + '</dd><dt>Mã hóa</dt><dd class="acc" id="f_nkMh"></dd><dt>SL đạt</dt><dd id="f_nkQ"></dd><dt>Giá thành đơn vị dự kiến</dt><dd id="f_nkZ"></dd><dt>Giá trị nhập kho lô</dt><dd id="f_nkV"></dd><dt>Hỏng ngoài định mức (cả kỳ)</dt><dd id="f_nkA"></dd></dl>' : ''); },
+    onField(k, dr){ if(k === 'wh') dr.lines.forEach(l => { if(l.loc && !locsOf(S.data, dr.wh).some(z => locCode(z) === l.loc)) l.loc = ''; }); },
     build(dr){ const E = [], W = [], D = S.data; chkDate(dr, E); const x = D.lsx[dr.lsx];
       if(!x || !D.items[x.item]){ E.push({id:'f_lsx', msg:'Chọn lệnh sản xuất.'}); return {doc:null, E, W, I:[]}; }
-      const it = D.items[x.item], q = parseNum(dr.qty), rj = dr.rej === '' ? 0 : parseNum(dr.rej);
-      const okQ = chkQty(q, it, 'f_qty', E), okR = chkQty(rj, it, 'f_rej', E, true);
-      if(!(okQ && okR)) return {doc:null, E, W, I:[]};
+      const it = D.items[x.item], rj = dr.rej === '' ? 0 : parseNum(dr.rej), okR = chkQty(rj, it, 'f_rej', E, true), parts = [], seen = {};
+      dr.lines.forEach((l, i) => { const q = parseNum(l.qty);
+        if(!chkQty(q, it, 'f_l' + i + '_qty', E)) return;
+        if(seen[l.loc || '']){ E.push({id:'f_l' + i + '_loc', msg:'Vị trí ' + (l.loc || 'chưa xếp') + ' bị lặp.'}); return; } seen[l.loc || ''] = 1;
+        if(needLoc(D, x.item, dr.wh) && !l.loc){ E.push({id:'f_l' + i + '_loc', msg:'Dòng ' + (i + 1) + ': chọn vị trí chứa (bồn, trái, phuy).'}); return; }
+        parts.push({q, loc:l.loc || ''}); });
+      if(!parts.length || !okR) return {doc:null, E, W, I:[]};
+      const q = rq(sum(parts, p => p.q));
       const done = sum(R.active.filter(d => d.type === 'NK' && d.lsx === dr.lsx && d.no !== (F && F.edit)), d => sum(d.lines, l => l.qty + (l.rej || 0)));
       if(done + q + rj > x.plan + EPS) W.push('Vượt kế hoạch của ' + x.no + ': đã hoàn thành ' + fmtQ(done) + ' / ' + fmtQ(x.plan) + ' ' + it.uom + '.');
-      const lot = dr.lot || nextLot(D, x.item, dr.date || '2026-01-31');
-      return {idx:[0], doc:{type:'NK', date:dr.date, lsx:dr.lsx, wh:dr.wh, desc:dr.desc.trim() || 'Nhập kho ' + it.name + ' theo ' + x.no, lines:[{item:x.item, qty:q, rej:rj, lot, qc:dr.qc}]}, E, W, I:[]}; },
+      const lot = (dr.lot || '').trim() || nextLot(D, x.item, dr.date || '2026-01-31'), oldDoc = F && F.edit ? D.docs.find(z => z.no === F.edit) : null;
+      const mh = checkLots([{lot, item:x.item, id:'f_lot'}], E, oldDoc, dr.date)[lot] || '';
+      if(E.length) return {doc:null, E, W, I:[]};
+      return {idx:parts.map((p, i) => i), doc:{type:'NK', date:dr.date, lsx:dr.lsx, wh:dr.wh, desc:dr.desc.trim() || 'Nhập kho ' + it.name + ' theo ' + x.no, lines:parts.map((p, i) => ({item:x.item, qty:p.q, rej: i ? 0 : rj, lot, mh, qc:dr.qc, loc:p.loc}))}, E, W, I:[], lot, mh}; },
     live(b, Rs, Rb, dr){ const set = (id, v) => { const e = $(id); if(e) e.textContent = v; };
-      if(!b.doc || !Rs){ ['f_nkLot', 'f_nkZ', 'f_nkV', 'f_nkA'].forEach(id => set(id, '')); return; }
-      const it = b.doc.lines[0].item, c = Rs.card[it], r = Rs.rowById[moveId(Rs.D.docs[Rs.D.docs.length - 1], 0)];
-      set('f_nkLot', b.doc.lines[0].lot); set('f_nkZ', fmt2(c.z) + ' đ/' + S.data.items[it].uom); set('f_nkV', fmt(r ? r.value : 0) + ' đ');
-      set('f_nkA', c.abn ? fmt(c.abn) + ' đ (vượt ' + fmtQ(c.excess) + ' ' + S.data.items[it].uom + '), phiếu này chịu ' + fmt(r && r.abn || 0) + ' đ' : 'không có (trong định mức)'); }
+      const lo = $('f_lot'); if(lo && !dr.lot){ const x = S.data.lsx[dr.lsx]; lo.placeholder = x ? nextLot(S.data, x.item, dr.date || '2026-01-31') : ''; }
+      if(!b.doc || !Rs){ ['f_nkMh', 'f_nkQ', 'f_nkZ', 'f_nkV', 'f_nkA'].forEach(id => set(id, '')); return; }
+      const it = b.doc.lines[0].item, c = Rs.card[it], d = Rs.D.docs[Rs.D.docs.length - 1], rows = d.lines.map((l, i) => Rs.rowById[moveId(d, i)]).filter(Boolean);
+      set('f_nkMh', b.mh); set('f_nkQ', fmtQ(sum(b.doc.lines, l => l.qty)) + ' ' + S.data.items[it].uom + ' · ' + b.doc.lines.length + ' vị trí');
+      set('f_nkZ', fmt2(c.z) + ' đ/' + S.data.items[it].uom); set('f_nkV', fmt(sum(rows, r => r.value)) + ' đ');
+      set('f_nkA', c.abn ? fmt(c.abn) + ' đ (vượt ' + fmtQ(c.excess) + ' ' + S.data.items[it].uom + '), phiếu này chịu ' + fmt(sum(rows, r => r.abn || 0)) + ' đ' : 'không có (trong định mức)'); }
   }
 };
 // Vật tư mới: không phải chứng từ nên dùng biểu mẫu riêng (custom)
-function foldVN(s){ return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D'); }
 function suggestCode(D, kind, grp, name){
   const pre = kind === 'NVL' ? (grp || 'NL') : kind === 'SP' ? 'TP' : kind;
   const ini = foldVN(name).toUpperCase().split(/[^A-Z0-9]+/).filter(w => /^[A-Z]/.test(w)).map(w => w[0]).join('').slice(0, 4) || 'X';
@@ -2323,11 +2559,11 @@ function suggestCode(D, kind, grp, name){
 FORMS.ITEM = {
   custom:true,
   title:'Vật tư, hàng hóa, thành phẩm',
-  blank: () => ({kind:'NVL', grp:'NL', code:'', codeTouched:false, name:'', uom:'kg', wh:'BBT', qcRole:'QC khu nông sản', shelf:'180', vat:'10', dec:'3', price:'', retail:'', loss:'0', oq:'', ov:'', bom:[]}),
+  blank: () => ({kind:'NVL', grp:'NL', code:'', codeTouched:false, name:'', uom:'kg', wh:'BBT', qcRole:'QC khu nông sản', shelf:'180', vat:'10', dec:'3', price:'', retail:'', loss:'0', oq:'', ov:'', bom:[], misa:'', min:''}),
   fromKey: k => { const it = S.data.items[k], o = openOf(S.data, k);
     return {kind:it.kind, grp:it.grp || 'NL', code:it.code, codeTouched:true, name:it.name, uom:it.uom, wh:it.wh, qcRole:it.qcRole || QC_ROLES[0], shelf:String(it.shelf || 0), vat:String(it.vat), dec:String(it.dec),
       price: it.price ? fmtInput(it.price) : '', retail: it.retail ? fmtInput(it.retail) : '', loss: fmtInput((it.prod || {}).loss || 0),
-      oq: o.qty ? fmtInput(o.qty) : '', ov: o.value ? fmtInput(o.value) : '', bom:(it.bom || []).map(b => ({item:b.item, qty:fmtInput(b.qty)}))}; },
+      oq: o.qty ? fmtInput(o.qty) : '', ov: o.value ? fmtInput(o.value) : '', bom:(it.bom || []).map(b => ({item:b.item, qty:fmtInput(b.qty)})), misa:it.misa || '', min: it.min ? fmtInput(it.min) : ''}; },
   body(dr){ const D = S.data, k = F.key, used = k ? itemUsage(D, k).docs.length > 0 : false, lk = locked(), multi = k && (D.open[k] || []).length > 1;
     const kinds = opt('NVL', 'NVL, bao bì, phụ gia · TK 152', dr.kind) + opt('HH', 'Hàng hóa mua bán · TK 156', dr.kind) + opt('SP', 'Thành phẩm tự sản xuất · TK 155', dr.kind) + (dr.kind === 'BTP' ? opt('BTP', 'Bán thành phẩm · TK 155', dr.kind) : '');
     let h = '<div class="frm">' +
@@ -2335,11 +2571,13 @@ FORMS.ITEM = {
       (dr.kind === 'NVL' ? lab('Nhóm', selx('f_grp', 'grp', Object.keys(GRP_NAME).map(g => opt(g, GRP_NAME[g], dr.grp)).join(''))) : '') +
       lab('Mã (tự gợi ý)', inp('f_code', 'code', dr.code, 'autocomplete="off"' + (k ? ' readonly title="Mã đã dùng trong chứng từ và mã lô, không đổi"' : ''))) +
       lab('Tên', inp('f_name', 'name', dr.name, 'autocomplete="off" placeholder="Ví dụ: Ớt hiểm khô"')) +
+      lab('Mã MISA', inp('f_misa', 'misa', dr.misa, 'autocomplete="off"')) +
       lab('Đơn vị tính', inp('f_uom', 'uom', dr.uom, 'list="uomList" autocomplete="off"' + (used ? ' readonly title="Đã có phát sinh, không đổi ĐVT"' : '')) + '<datalist id="uomList"><option value="kg"><option value="cái"><option value="hũ"><option value="chai"><option value="thùng"><option value="lít"></datalist>') +
       lab('Số lượng', selx('f_dec', 'dec', opt('3', 'Cho số lẻ (3 chữ số)', dr.dec) + opt('0', 'Chỉ số nguyên', dr.dec), used ? 'disabled' : '')) +
       lab('Kho mặc định', whSel('f_wh', 'wh', dr.wh)) +
       lab('QC phụ trách', selx('f_qcRole', 'qcRole', QC_ROLES.map(r => opt(r, r, dr.qcRole)).join(''))) +
       lab('Hạn sử dụng (ngày, 0 = không)', inp('f_shelf', 'shelf', dr.shelf, 'inputmode="numeric"')) +
+      lab('Tồn tối thiểu', inp('f_min', 'min', dr.min, 'inputmode="decimal"')) +
       lab('Thuế suất GTGT', vatSel('f_vat', 'vat', dr.vat)) +
       (dr.kind !== 'NVL' && dr.kind !== 'BTP' ? lab('Giá bán sỉ (đ)', inp('f_price', 'price', dr.price, 'inputmode="decimal"')) + lab('Giá bán lẻ tại NTH (đ)', inp('f_retail', 'retail', dr.retail, 'inputmode="decimal"')) : '') +
       (dr.kind === 'SP' || dr.kind === 'BTP' ? lab('Định mức hao hụt (%)', inp('f_loss', 'loss', dr.loss, 'inputmode="decimal"')) : '') +
@@ -2361,7 +2599,10 @@ FORMS.ITEM = {
     else if(Object.keys(D.items).some(x => x !== k && D.items[x].name.toLowerCase() === name.toLowerCase())) E.push({id:'f_name', msg:'Tên này đã có trong danh mục.'});
     if(!uom) E.push({id:'f_uom', msg:'Nhập đơn vị tính.'});
     const dec = +dr.dec, oq = dr.oq === '' ? 0 : parseNum(dr.oq), ov = dr.ov === '' ? 0 : parseNum(dr.ov), price = dr.price === '' ? 0 : parseNum(dr.price), retail = dr.retail === '' ? 0 : parseNum(dr.retail);
-    const shelf = dr.shelf === '' ? 0 : parseNum(dr.shelf), loss = dr.loss === '' ? 0 : parseNum(dr.loss);
+    const shelf = dr.shelf === '' ? 0 : parseNum(dr.shelf), loss = dr.loss === '' ? 0 : parseNum(dr.loss), min = dr.min === '' || dr.min == null ? 0 : parseNum(dr.min), misa = (dr.misa || '').trim().toUpperCase();
+    if(!(min >= 0) || rq(min) !== min) E.push({id:'f_min', msg:'Tồn tối thiểu là số không âm.'});
+    if(misa && !/^[A-Z0-9._-]{2,20}$/.test(misa)) E.push({id:'f_misa', msg:'Mã MISA gồm 2–20 ký tự chữ in, số, ".", "-", "_".'});
+    else if(misa && Object.keys(D.items).some(x => x !== k && (D.items[x].misa || '').toUpperCase() === misa)) E.push({id:'f_misa', msg:'Mã MISA ' + misa + ' đã gán cho vật tư khác.'});
     if(!(shelf >= 0) || Math.round(shelf) !== shelf || shelf > 3650) E.push({id:'f_shelf', msg:'Hạn sử dụng là số ngày nguyên từ 0 đến 3650.'});
     if((dr.kind === 'SP' || dr.kind === 'BTP') && !(loss >= 0 && loss < 50)) E.push({id:'f_loss', msg:'Định mức hao hụt từ 0 đến dưới 50%.'});
     if(!(oq >= 0) || (dec === 0 && Math.round(oq) !== oq) || rq(oq) !== oq) E.push({id:'f_oq', msg:'Số lượng tồn đầu không hợp lệ' + (dec === 0 ? ' (phải là số nguyên)' : '') + '.'});
@@ -2375,7 +2616,7 @@ FORMS.ITEM = {
     const openChanged = !multi && (oq !== old.qty || Math.round(ov || 0) !== old.value);
     if(locked() && openChanged) E.push({id:'f_oq', msg:LOCK_MSG + ' Không khai tồn đầu khi kỳ đã khóa.'});
     if(k && itemUsage(D, k).docs.length && openChanged) W.push('Vật tư đã có phát sinh: đổi tồn đầu sẽ tính lại giá xuất của các phiếu trong kỳ.');
-    const item = {code, name, uom, kind:dr.kind, wh:dr.wh, vat:+dr.vat, dec, qcRole:dr.qcRole, shelf: shelf || 0};
+    const item = {code, name, uom, kind:dr.kind, wh:dr.wh, vat:+dr.vat, dec, qcRole:dr.qcRole, shelf: shelf || 0, misa, min: min > 0 ? min : 0};
     if(dr.kind === 'NVL') item.grp = dr.grp;
     if(dr.kind !== 'NVL' && dr.kind !== 'BTP'){ if(price > 0) item.price = Math.round(price); if(retail > 0) item.retail = Math.round(retail); }
     if(dr.kind === 'SP' || dr.kind === 'BTP'){ item.bom = bom; item.prod = Object.assign({stage:'1 GĐ', steps:''}, k ? D.items[k].prod || {} : {}, {loss: loss || 0}); }
@@ -2389,9 +2630,9 @@ FORMS.ITEM = {
     closeDialog();
     commit(D => { D.items[key] = Object.assign({}, old || {}, b.item, {user: old ? !!old.user : true}); if(b.item.kind !== 'SP' && b.item.kind !== 'BTP'){ delete D.items[key].bom; delete D.items[key].prod; }
       if(!b.multi){ const prev = (D.open[key] || [])[0];
-        D.open[key] = b.open.qty ? [{lot: prev ? prev.lot : b.item.code + '-251231-01', wh: prev ? prev.wh : b.item.wh, date:'2025-12-31', qty:b.open.qty, value:b.open.value}] : []; }
+        if(b.open.qty){ const lot = prev ? prev.lot : nextLot(D, key, '2025-12-31'); D.open[key] = [{lot, wh: prev ? prev.wh : b.item.wh, loc: prev ? prev.loc || '' : '', date:'2025-12-31', qty:b.open.qty, value:b.open.value, mh: prev && prev.mh ? prev.mh : nextMh(D, key, '2025-12-31')}]; } else D.open[key] = []; }
       if(b.item.kind === 'SP' || b.item.kind === 'BTP'){ if(D.wipOpen[key] == null) D.wipOpen[key] = 0; if(D.settings.wipQty[key] == null) D.settings.wipQty[key] = 0; }
-      const det = old ? ['name', 'uom', 'vat', 'wh', 'shelf', 'qcRole'].filter(f => String(old[f]) !== String(b.item[f])).map(f => f + ': ' + old[f] + ' → ' + b.item[f]).concat(b.openChanged ? ['tồn đầu ' + fmtQ(oldOpen.qty) + ' / ' + fmt(oldOpen.value) + ' → ' + fmtQ(b.open.qty) + ' / ' + fmt(b.open.value)] : []).join('; ') || 'cập nhật định mức / giá bán'
+      const det = old ? ['name', 'uom', 'vat', 'wh', 'shelf', 'qcRole', 'misa', 'min'].filter(f => String(old[f] == null ? '' : old[f]) !== String(b.item[f] == null ? '' : b.item[f])).map(f => f + ': ' + (old[f] == null || old[f] === '' ? '—' : old[f]) + ' → ' + (b.item[f] === '' ? '—' : b.item[f])).concat(b.openChanged ? ['tồn đầu ' + fmtQ(oldOpen.qty) + ' / ' + fmt(oldOpen.value) + ' → ' + fmtQ(b.open.qty) + ' / ' + fmt(b.open.value)] : []).join('; ') || 'cập nhật định mức / giá bán'
         : 'Thêm ' + KIND_NAME[b.item.kind] + ' ' + b.item.code + ' · ' + b.item.name + (b.open.qty ? ' · tồn đầu ' + fmtQ(b.open.qty) + ' ' + b.item.uom + ' = ' + fmt(b.open.value) + ' đ' : '');
       return {action:'item', no:b.item.code, reason:'', detail:(old ? 'Sửa vật tư: ' : '') + det}; }, openChanged && (b.open.qty || (oldOpen && oldOpen.qty)) ? 3 : null, (old ? 'sửa ' : 'thêm ') + b.item.code);
     S.ui.item = key; renderAll();
@@ -2419,6 +2660,24 @@ FORMS.LSX = {
       const old = D.lsx[key]; D.lsx[key] = b.lsx;
       return {action:'lsx', no:b.lsx.no, reason:'', detail:(old ? 'Sửa lệnh: kế hoạch ' + fmtQ(old.plan) + ' → ' + fmtQ(b.lsx.plan) : 'Lập lệnh ' + itName(b.lsx.item) + ' kế hoạch ' + fmtQ(b.lsx.plan))}; }, null, (k0 ? 'sửa ' : 'lập ') + b.lsx.no);
     toast((k0 ? 'Đã cập nhật ' : 'Đã lập ') + b.lsx.no + '. Chọn được ngay trong phiếu xuất và phiếu nhập kho.'); }
+};
+// Vị trí chứa: nhận ký hiệu ghi tay (A.15, 5.trái, B.phuy…) và chuẩn hóa
+FORMS.LOC = {
+  custom:true,
+  title:'Vị trí chứa (bồn, trái, phuy)',
+  blank: () => ({wh:'BBT', raw:'', cap:''}),
+  body(dr){ return '<div class="frm">' + lab('Kho', whSel('f_wh', 'wh', dr.wh)) + lab('Ký hiệu', inp('f_raw', 'raw', dr.raw, 'autocomplete="off" placeholder="A.15 · 5.Trái · B.Phuy"')) +
+    lab('Sức chứa (kg, tùy chọn)', inp('f_cap', 'cap', dr.cap, 'inputmode="decimal"')) + '</div>'; },
+  build(dr){ const E = [], W = [], D = S.data, p = parseLoc(dr.raw || ''), cap = dr.cap === '' ? 0 : parseNum(dr.cap);
+    if(!(dr.raw || '').trim()) E.push({id:'f_raw', msg:'Nhập ký hiệu vị trí.'}); else if(p.err) E.push({id:'f_raw', msg:p.err});
+    if(!(cap >= 0)) E.push({id:'f_cap', msg:'Sức chứa là số không âm.'});
+    const z = p.err ? null : {wh:dr.wh, zone:p.zone, kind:p.kind, no:p.no}; if(cap > 0 && z) z.cap = cap;
+    if(z && locsOf(D, dr.wh).some(x => locCode(x) === locCode(z))) E.push({id:'f_raw', msg:'Vị trí ' + locCode(z) + ' đã có ở kho ' + dr.wh + '.'});
+    return {loc:z, E, W, I:[]}; },
+  preview(b){ return b.loc ? '<p style="margin:0">' + pill('info', LOC_KIND[b.loc.kind]) + ' <b class="acc">' + esc(locCode(b.loc)) + '</b> · ' + esc(whName(b.loc.wh)) + '</p>' : ''; },
+  save(b){ closeDialog(); const c = locCode(b.loc);
+    commit(D => { D.locs.push(b.loc); return {action:'loc', no:c, reason:'', detail:'Thêm vị trí ' + c + ' (' + LOC_KIND[b.loc.kind] + ') tại ' + b.loc.wh}; }, null, 'thêm vị trí ' + c);
+    toast('Đã thêm vị trí ' + c + '.'); }
 };
 function openItemDel(k){
   const D = S.data, it = D.items[k], u = itemUsage(D, k), o = openOf(D, k);
@@ -2465,9 +2724,10 @@ function openForm(type, opts){
     F = {type, key, itemKey: type === 'ITEM' ? key : null, Rb:R, dr:null};
     F.dr = key ? fm.fromKey(key) : fm.blank();
     const name = key ? (type === 'ITEM' ? S.data.items[key].code : S.data.lsx[key].no) : '';
+    if(type === 'LOC') F.key = null;
     openDialog('drawer', head((key ? 'Sửa ' + esc(name) + ' · ' : 'Thêm ') + fm.title) +
       '<div class="dlg-body"><div id="fBody"></div><div id="fMsgs" aria-live="polite"></div><div id="fPrev" class="prev"></div></div>' +
-      '<div class="dlg-foot"><span class="spacer"></span><button class="btn" type="button" data-act="close">Hủy bỏ</button><button class="btn primary" type="button" id="fSave" data-act="saveForm">' + (key ? 'Lưu thay đổi' : type === 'LSX' ? 'Lập lệnh' : 'Thêm vào danh mục') + '</button></div>');
+      '<div class="dlg-foot"><span class="spacer"></span><button class="btn" type="button" data-act="close">Hủy bỏ</button><button class="btn primary" type="button" id="fSave" data-act="saveForm">' + (key ? 'Lưu thay đổi' : type === 'LSX' ? 'Lập lệnh' : type === 'LOC' ? 'Thêm vị trí' : 'Thêm vào danh mục') + '</button></div>');
     renderFormBody(); updatePreview(); const f = dlg.querySelector('#fBody input:not([readonly]), #fBody select'); if(f && !opts.noFocus) f.focus(); return;
   }
   let Rb = R;
@@ -2489,7 +2749,7 @@ function renderFormBody(){
   let h = '';
   if(F.edit) h += '<div class="frm"><label class="wide">Lý do sửa (≥ 10 ký tự)' + inp('f_reason', 'reason', F.dr.reason, 'placeholder="Ví dụ: nhập sai số lượng theo hóa đơn"') + '</label></div>';
   $('fBody').innerHTML = h + FORMS[F.type].body(F.dr);
-  F._lots = (F.dr.lines || []).map(l => l.lot).join('|');
+  F._lots = (F.dr.lines || []).map(llKey).join('/');
   if(aid && $(aid)) $(aid).focus();
 }
 function simulate(doc){
@@ -2523,8 +2783,8 @@ function updatePreview(){
     return b; }
   const b = buildForm(); let sim = null, extra = {W:[], I:[]};
   if(b.doc){ sim = simulate(b.doc);
-    const had = {}; F.Rb.negatives.forEach(n => had[n.id + '|' + n.wh + '|' + n.lot] = 1);
-    const nn = sim.Rs.negatives.filter(n => !had[n.id + '|' + n.wh + '|' + n.lot]);
+    const had = {}; F.Rb.negatives.forEach(n => had[n.id + '|' + n.wh + '|' + n.lot + '|' + n.loc] = 1);
+    const nn = sim.Rs.negatives.filter(n => !had[n.id + '|' + n.wh + '|' + n.lot + '|' + n.loc]);
     if(nn.length){ const msg = nn.map(n => negText(S.data, n).replace(n.doc + ' ', n.doc === sim.d.no ? 'phiếu này ' : n.doc + ' ')).join('; ');
       F.negMsg = 'Xuất quá tồn: ' + msg + '. Tồn âm sẽ chặn bước 4 khi khóa sổ.';
       if(!F.allowNeg) b.E.push({id:'f_allowNeg', msg:F.negMsg}); } else F.negMsg = null;
@@ -2544,7 +2804,7 @@ function updatePreview(){
       '<div class="panel-head"><h3>Bút toán sẽ sinh</h3><div class="spacer"></div><div class="seg" role="group" aria-label="Xem theo chế độ">' +
       ['TT99', 'TT133'].map(r => '<button type="button" data-pv="' + r + '" aria-pressed="' + (F.pv === r) + '">' + (r === 'TT99' ? 'TT 99/2025' : 'TT 133/2016') + '</button>').join('') + '</div></div>' +
       postTable(L, t) + '<h3>Ảnh hưởng dự kiến</h3>' + impactTable(impactRows(snapshot(R), snapshot(sim.Rs)), true) + '</div></details>';
-    $('fNo').textContent = 'Số chứng từ sẽ cấp: ' + sim.d.no;
+    const kn = nextKno(S.data, sim.d); $('fNo').textContent = 'Số chứng từ sẽ cấp: ' + sim.d.no + (kn ? ' · ' + kn : '');
   } else { $('fNo').textContent = ''; }
   $('fPrev').innerHTML = p;
   const sv = $('fSave'); if(sv){ sv.setAttribute('aria-disabled', b.E.length ? 'true' : 'false'); }
@@ -2566,6 +2826,7 @@ function saveForm(){
     if(dr.partyId === '__new'){ const kind = type === 'HD' ? 'CUS' : 'SUP'; let n = 1; while(D.parties[(kind === 'CUS' ? 'C' : 'S') + String(n).padStart(2, '0')]) n++;
       const id = (kind === 'CUS' ? 'C' : 'S') + String(n).padStart(2, '0'); D.parties[id] = {type:kind, name:dr.np.name.trim(), tax:(dr.np.tax || '').trim(), user:true}; doc.partyId = id; }
     doc.no = nextNo(D, type); doc.origin = 'user'; doc.status = 'posted'; doc.createdAt = nowISO(); newNo = doc.no;
+    const kn = nextKno(D, doc); if(kn) doc.kno = kn;
     if(type === 'HD') doc.inv = Math.max.apply(null, D.docs.filter(d => d.type === 'HD').map(d => d.inv || 0).concat([0])) + 1;
     if(editNo){ const old = D.docs.find(d => d.no === editNo); old.lastAmt = R.postByNo[old.no] ? R.postByNo[old.no].dr : 0; old.status = 'void'; old.voidedBy = doc.no; old.voidReason = reason; old.voidAt = nowISO(); doc.replaces = old.no;
       D.docs.push(doc); return {action:'edit', no:editNo, newNo:doc.no, reason, detail:describe(old, D) + ' → ' + describe(doc, D)}; }
@@ -2588,7 +2849,7 @@ function openVoid(no){
   const d = S.data.docs.find(x => x.no === no); if(!d || d.status === 'void') return;
   const tl = R.active.filter(x => x.type === 'TL' && x.ref === no), ct = R.active.filter(x => x.type === 'CT' && x.lines.some(l => l.ref === no));
   const Ds = clone(S.data); Ds.docs.find(x => x.no === no).status = 'void'; const Rs = compute(Ds);
-  const had = {}; R.negatives.forEach(n => had[n.id + '|' + n.wh + '|' + n.lot] = 1); const nn = Rs.negatives.filter(n => !had[n.id + '|' + n.wh + '|' + n.lot]);
+  const had = {}; R.negatives.forEach(n => had[n.id + '|' + n.wh + '|' + n.lot + '|' + n.loc] = 1); const nn = Rs.negatives.filter(n => !had[n.id + '|' + n.wh + '|' + n.lot + '|' + n.loc]);
   F = {type:null, voidNo:no, block: tl.length ? 'Không hủy được: hóa đơn đã có hàng bán bị trả lại tham chiếu (' + tl.map(x => x.no).join(', ') + '). Hủy phiếu trả lại trước.'
       : ct.length ? 'Không hủy được: hóa đơn USD đã có phiếu chi tham chiếu (' + ct.map(x => x.no).join(', ') + '). Hủy phiếu chi trước.' : null,
     neg: nn.length ? 'Hủy phiếu này làm tồn âm: ' + nn.map(n => negText(S.data, n)).join('; ') : null};
@@ -2646,6 +2907,25 @@ function copyText(txt){
   try{ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(() => toast('Đã sao chép ' + txt.split('\n').length + ' dòng. Dán vào Excel là ra đúng cột.'), fallback); return; } }catch(_){}
   fallback();
 }
+// In phiếu nhập / xuất kho theo bố cục sổ kho: bản in nằm ở #printArea, chỉ hiện khi in (@media print)
+function printDoc(no){
+  const D = S.data, d = D.docs.find(x => x.no === no); if(!d || !d.kno) return;
+  const isIn = SLIP[d.type] === 'PNK', hd = d.type === 'TL' ? D.docs.find(x => x.no === d.ref) : null;
+  const rows = d.lines.map((l, i) => { const src = hd ? hd.lines[l.refLine] || {} : l, L = R.lots[src.lot], it = D.items[l.item] || {name:l.item, uom:''};
+    const loc = (src.loc || '') + (d.type === 'CK' ? ' → ' + (l.locTo || '—') : '');
+    const note = [l.rej ? 'loại ' + fmtQ(l.rej) : '', L && L.qc !== 'pass' ? 'QC ' + QC_NAME[L.qc] : ''].filter(Boolean).join('; ');
+    return '<tr><td class="c">' + (i + 1) + '</td><td>' + esc(it.name) + '</td><td>' + esc(src.lot || '') + '</td><td>' + esc(L ? L.mh : '') + '</td><td>' + esc(loc || '—') + '</td><td class="c">' + esc(it.uom) + '</td><td class="r">' + fmtQ(l.qty) + '</td><td>' + esc(note) + '</td></tr>'; }).join('');
+  const who = d.partyId ? (D.parties[d.partyId] && D.parties[d.partyId].type === 'SUP' ? 'Nhà cung cấp: ' : 'Khách hàng: ') + partyName(D, d.partyId) : '';
+  const m1 = ['Ngày: ' + dmy(d.date), 'Số phiếu: ' + d.kno, 'Chứng từ: ' + d.no];
+  const m2 = [(d.type === 'CK' ? 'Từ kho: ' + whName(d.wh) + ' → ' + whName(d.whTo) : 'Kho: ' + whName(hd ? hd.wh : d.wh)), outReason(d) ? 'Lý do xuất: ' + outReason(d) : '', d.lsx && D.lsx[d.lsx] ? 'Lệnh sản xuất: ' + D.lsx[d.lsx].no : '', who].filter(Boolean);
+  const sign = ['Người lập phiếu', isIn ? 'Người giao hàng' : 'Người nhận hàng', 'Thủ kho'];
+  $('printArea').innerHTML = '<div class="ps"><div class="ps-co">Nhà máy chế biến mắm</div><h1>' + (isIn ? 'PHIẾU NHẬP KHO' : 'PHIẾU XUẤT KHO') + '</h1>' +
+    '<div class="ps-meta">' + m1.map(x => '<span>' + esc(x) + '</span>').join('') + '</div><div class="ps-meta">' + m2.map(x => '<span>' + esc(x) + '</span>').join('') + '</div>' +
+    '<p class="ps-desc">' + esc(d.desc) + '</p>' +
+    '<table><thead><tr><th>STT</th><th>Tên hàng</th><th>Lot</th><th>Mã hóa</th><th>Vị trí</th><th>ĐVT</th><th>Số lượng</th><th>Ghi chú</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+    '<div class="ps-sign">' + sign.map(x => '<div><b>' + x + '</b><span>(Ký, ghi rõ họ tên)</span></div>').join('') + '</div></div>';
+  try{ window.print(); }catch(_){}
+}
 function toggleTheme(){
   const root = document.documentElement, cur = root.getAttribute('data-theme');
   let dark; try{ dark = cur ? cur === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; }catch(_){ dark = false; }
@@ -2668,12 +2948,12 @@ const TOUR = [
     b:'Doanh thu, giá vốn, lãi gộp, tồn kho của nhà máy mắm được tính lại từ chứng từ mỗi khi có thay đổi. Không có ô nào gõ tay.'},
   {view:'dash', sel:'#reconPanel', t:'Kho luôn khớp sổ cái',
     b:'Bút toán kho sinh từ chính sổ kho theo lô; chi phí sản xuất luôn được kết chuyển (tạm tính) vào 154. Vì vậy 152, 154, 155, 156 khớp sổ chi tiết ở mọi thời điểm.'},
-  {view:'stock', sel:'#lotPanel', t:'Tồn theo kho và lô, có QC',
-    b:'3 kho: nhà máy Bà Ba Thạo, kho Bình Tây, cửa hàng 97 Nguyễn Thái Học. Mỗi lô (mã lót hàng) có HSD, trạng thái QC và người QC theo khu. Lô "Chờ" như TP-ML5-260129-01 không chọn được khi bán.'},
+  {view:'stock', sel:'#lotPanel', t:'Tồn kho chi tiết: lô, mã hóa, bồn / trái / phuy',
+    b:'Tồn theo tên hàng, mã lô, mã hóa và vị trí chứa ở 3 kho. Một lô nằm được ở nhiều bồn; chuyển bồn bằng phiếu chuyển kho. Lô "Chờ" như 290126-01 không chọn được khi bán.'},
   {view:'cogs', sel:'#method', settings:true, t:'Giá xuất: thực tế đích danh theo lô',
     b:'Mặc định giá xuất lấy đúng giá của lô được chọn. Đổi sang bình quân cuối kỳ, bình quân tức thời hoặc FIFO để so sánh; khi đó lô chỉ dùng để đếm số lượng và truy xuất.'},
-  {view:'cogs', prep(){ S.ui.item = 'BTP'; S.ui.sel = 'PX0005#2'; }, sel:'#explain', t:'Nguồn gốc đơn giá',
-    b:'Phiếu xuất BTP cho GĐ2 lấy giá của lô BTP-CL-260118-01, và giá lô này đến từ thẻ giá thành GĐ1. Kế toán trưởng kiểm tra được từng đồng.'},
+  {view:'cogs', prep(){ S.ui.item = 'BTP'; S.ui.sel = 'PX0005#3'; }, sel:'#explain', t:'Nguồn gốc đơn giá',
+    b:'Phiếu xuất BTP cho GĐ2 lấy giá của lô 180126-01, và giá lô này đến từ thẻ giá thành GĐ1. Kế toán trưởng kiểm tra được từng đồng.'},
   {view:'cogs', sel:'#btnBack', t:'Lập phiếu nhập lùi ngày',
     b:'Bấm nút này để mở phiếu nhập thính gạo ngày 06/01 đã điền sẵn, rồi "Lưu & ghi sổ". Với đích danh, phiếu đã chọn lô không đổi giá; đổi sang bình quân để thấy các phiếu sau ngày đó được tính lại. Ô "Ảnh hưởng" hiện trước → sau.'},
   {view:'cost', sel:'#cards', t:'Thẻ giá thành theo giai đoạn',
@@ -2778,8 +3058,10 @@ $('ledger').addEventListener('keydown', e => rowKeys(e, 'data-sel', 'sel', 'expl
 $('docList').addEventListener('click', e => pickRow(e, 'data-doc', 'doc', 'docDetail'));
 $('docList').addEventListener('keydown', e => rowKeys(e, 'data-doc', 'doc', 'docDetail'));
 $('docSearch').addEventListener('input', e => { S.ui.q = e.target.value; RENDER.docs(); });
+$('lotSearch').addEventListener('input', e => { S.ui.sq = e.target.value; RENDER.stock(); });
 $('itemSel').addEventListener('change', e => { S.ui.item = e.target.value; S.ui.sel = null; renderAll(); });
-$('repCtl').addEventListener('change', e => { const id = e.target.id, map = {repSel:'rep', repAcc:'repAcc', repDebt:'repDebt', repCash:'repCash'};
+$('repCtl').addEventListener('change', e => { const id = e.target.id, map = {repSel:'rep', repAcc:'repAcc', repDebt:'repDebt', repCash:'repCash', repItem:'repItem', repWh:'repWh', repFrom:'repFrom', repTo:'repTo'};
+  if((id === 'repFrom' || id === 'repTo') && !/^2026-01-\d\d$/.test(e.target.value)){ e.target.value = S.ui[map[id]]; return; }
   if(map[id]){ S.ui[map[id]] = e.target.value; RENDER.reports(); } });
 $('regime').addEventListener('change', e => {
   if(locked()){ e.target.value = S.data.settings.regime; return lockedNotice(); }
@@ -2831,16 +3113,18 @@ $('btnSide').addEventListener('click', () => setSide(!$('app').classList.contain
 dlg.addEventListener('toggle', e => { if(F && e.target && e.target.id === 'fFold') F.prevOpen = e.target.open; }, true);
 // Uỷ quyền click toàn trang
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-act],[data-item-edit],[data-item-del],[data-lsx-edit],[data-open-doc],[data-goto],[data-goto-view],[data-edit],[data-void],[data-copy],[data-lot],[data-pv],[data-hint],[data-new],[data-filter],[data-wh],[data-qc]');
+  const t = e.target.closest('[data-act],[data-item-edit],[data-item-del],[data-lsx-edit],[data-open-doc],[data-goto],[data-goto-view],[data-edit],[data-void],[data-copy],[data-lot],[data-pv],[data-hint],[data-new],[data-filter],[data-wh],[data-qc],[data-lk],[data-print]');
   if(!t) return;
   const ds = t.dataset;
-  if(ds.new){ setMenu(false); if(locked() && ds.new !== 'ITEM' && ds.new !== 'LSX') return lockedNotice(); return openForm(ds.new); }
+  if(ds.new){ setMenu(false); if(locked() && ds.new !== 'ITEM' && ds.new !== 'LSX' && ds.new !== 'LOC') return lockedNotice(); return openForm(ds.new); }
   if(ds.itemEdit) return openForm('ITEM', {key:ds.itemEdit});
   if(ds.itemDel) return openItemDel(ds.itemDel);
   if(ds.lsxEdit) return openForm('LSX', {key:ds.lsxEdit});
   if(ds.filter){ S.ui.filter = ds.filter; return RENDER.docs(); }
   if(ds.wh){ S.ui.wh = ds.wh; return RENDER.stock(); }
   if(ds.qc) return openQC(ds.qc);
+  if(ds.lk){ S.ui.lk = ds.lk; return RENDER.stock(); }
+  if(ds.print) return printDoc(ds.print);
   if(ds.openDoc){ if(dlg.open) closeDialog(); return openDoc(ds.openDoc); }
   if(ds.goto){ const p = ds.goto.split('|'); go('cogs', {item:p[0], sel:p[1]}); if(narrow()) try{ $('explain').scrollIntoView({block:'start'}); }catch(_){} return; }
   if(ds.gotoView) return go(ds.gotoView);
@@ -2856,8 +3140,12 @@ document.addEventListener('click', e => {
     case 'dismissImpact': S.ui.impact = null; return renderAll();
     case 'saveForm': return saveForm();
     case 'addLine': if(F && FORMS[F.type].newLine){ F.dr.lines.push(FORMS[F.type].newLine()); if(PURPOSE[F.type]) fixLots(F.dr, PURPOSE[F.type]); renderFormBody(); updatePreview(); const n = F.dr.lines.length - 1, f = $('f_l' + n + '_item'); if(f) f.focus(); } return;
+    case 'splitLine': if(F && F.type === 'PN'){ const i = +ds.i, l = F.dr.lines[i]; if(!l) return;
+      if(!(l.lot || '').trim()) l.lot = autoLots(F.dr)[i];
+      F.dr.lines.splice(i + 1, 0, {item:l.item, qty:'', price:l.price, vat:l.vat, qc:l.qc, lot:l.lot, loc:''});
+      renderFormBody(); updatePreview(); const f = $('f_l' + (i + 1) + '_loc'); if(f) f.focus(); } return;
     case 'delLine': if(F){ F.dr.lines.splice(+ds.i, 1); renderFormBody(); updatePreview(); const f = $('f_l0_item'); if(f) f.focus(); } return;
-    case 'addExtra': if(F && F.type === 'KK'){ F.dr.extra.push({item:'MUOI', qty:'', price:''}); renderFormBody(); updatePreview(); const f = $('f_x' + (F.dr.extra.length - 1) + '_item'); if(f) f.focus(); } return;
+    case 'addExtra': if(F && F.type === 'KK'){ F.dr.extra.push({item:'MUOI', loc:'', qty:'', price:''}); renderFormBody(); updatePreview(); const f = $('f_x' + (F.dr.extra.length - 1) + '_item'); if(f) f.focus(); } return;
     case 'delExtra': if(F && F.type === 'KK'){ F.dr.extra.splice(+ds.i, 1); renderFormBody(); updatePreview(); } return;
     case 'doVoid': return doVoid();
     case 'doItemDel': return doItemDel();
@@ -2869,8 +3157,8 @@ document.addEventListener('click', e => {
       const lines = [];
       (it.bom || []).filter(b => S.data.items[b.item]).forEach(b => { const di = S.data.items[b.item]; let need = di.dec === 0 ? Math.ceil(b.qty * n) : rq(b.qty * n);
         const ch = lotChoices(F.Rb, b.item, F.dr.wh, F.dr.date, 'use').filter(c => c.allowed);
-        ch.forEach(c => { if(need <= EPS) return; const take = Math.min(need, c.q); lines.push({item:b.item, lot:c.lot, qty:fmtInput(rq(take))}); need = rq(need - take); });
-        if(need > EPS) lines.push({item:b.item, lot: ch.length ? ch[ch.length - 1].lot : '', qty:fmtInput(need)}); });
+        ch.forEach(c => { if(need <= EPS) return; const take = Math.min(need, c.q); lines.push({item:b.item, lot:c.lot, loc:c.loc, qty:fmtInput(rq(take))}); need = rq(need - take); });
+        if(need > EPS) lines.push({item:b.item, lot: ch.length ? ch[ch.length - 1].lot : '', loc: ch.length ? ch[ch.length - 1].loc : '', qty:fmtInput(need)}); });
       F.dr.lines = lines.length ? lines : F.dr.lines;
       if(!F.dr.desc) F.dr.desc = 'Xuất NVL theo định mức cho ' + fmt(n) + ' ' + it.uom + ' ' + it.name + ' (' + x.no + ')';
       renderFormBody(); updatePreview(); const f = $('f_l0_qty'); if(f) f.focus(); } return;
@@ -2884,9 +3172,10 @@ function onFormInput(e){
   if(k === '__allowNeg'){ F.allowNeg = el.checked; return updatePreview(); }
   const v = el.type === 'checkbox' ? el.checked : el.value;
   setPath(F.dr, k, v);
+  const ll = /^lines\.(\d+)\.ll$/.exec(k); if(ll){ const l = F.dr.lines[+ll[1]], p = String(v).split('|'); l.lot = p[0] || ''; l.loc = p[1] || ''; delete l.ll; }
   if(FORMS[F.type].onField) FORMS[F.type].onField(k, F.dr);
   if(el.dataset.rerender || /\.item$/.test(k) || k === 'svc') renderFormBody();
-  else if(PURPOSE[F.type]) { const lotsNow = F.dr.lines.map(l => l.lot).join('|'); if(lotsNow !== (F._lots || '')){ F._lots = lotsNow; renderFormBody(); } }
+  else if(PURPOSE[F.type]) { const lotsNow = F.dr.lines.map(llKey).join('/'); if(lotsNow !== (F._lots || '')){ F._lots = lotsNow; renderFormBody(); } }
   updatePreview();
 }
 dlg.addEventListener('input', onFormInput);
@@ -2897,22 +3186,23 @@ dlg.addEventListener('keydown', e => { if(e.key === 'Enter' && F && F.type && e.
 function addNewItems(D){
   const u = d => Object.assign(d, {origin:'user', status:'posted'});
   D.items.OT = {code:'PG-OT', name:'Ớt hiểm khô', uom:'kg', kind:'NVL', grp:'PG', wh:'BBT', vat:5, dec:3, shelf:180, qcRole:'QC khu nông sản', user:true};
-  D.open.OT = [{lot:'PG-OT-251231-01', wh:'BBT', date:'2025-12-31', qty:20, value:1600000}];
+  D.open.OT = [{lot:'311225-01', wh:'BBT', date:'2025-12-31', qty:20, value:1600000}];
   D.items.BTR = {code:'HH-BTR', name:'Bánh tráng (hàng mua)', uom:'xấp', kind:'HH', wh:'NTH', vat:8, dec:0, shelf:180, qcRole:'QC khu đóng gói', price:25000, retail:25000, user:true}; D.open.BTR = [];
   D.items.MR = {code:'TP-MR', name:'Mắm ruốc xả ớt hũ 200g', uom:'hũ', kind:'SP', wh:'BBT', vat:10, dec:0, shelf:180, qcRole:'QC khu đóng gói', price:45000, retail:52000,
     prod:{stage:'1 GĐ', steps:'Phối trộn – đóng gói', loss:2}, bom:[{item:'TOM', qty:0.1}, {item:'OT', qty:0.01}, {item:'HU2', qty:1}], user:true};
   D.open.MR = []; D.wipOpen.MR = 0; D.settings.wipQty.MR = 20;
   D.lsx.LSX04 = {no:'LSX-2601-04', item:'MR', plan:300, wh:'BBT', date:'2026-01-16', note:'Mắm ruốc xả ớt'};
   D.docs.push(
-    u({no:'PN0010', type:'PN', date:'2026-01-15', partyId:'S06', pay:'331', wh:'BBT', desc:'Mua ớt hiểm khô', lines:[{item:'OT', qty:10, value:850000, vat:5, lot:'PG-OT-260115-01', qc:'pass'}]}),
-    u({no:'PN0011', type:'PN', date:'2026-01-15', partyId:'S07', pay:'331', wh:'NTH', desc:'Mua bánh tráng', lines:[{item:'BTR', qty:100, value:1800000, vat:8, lot:'HH-BTR-260115-01', qc:'pass'}]}),
-    u({no:'PX0009', type:'PX', date:'2026-01-16', lsx:'LSX04', to:'MR', wh:'BBT', desc:'Xuất làm mắm ruốc', lines:[{item:'TOM', qty:30, lot:'NL-TOM-260114-01'}, {item:'OT', qty:3, lot:'PG-OT-251231-01'}, {item:'HU2', qty:300, lot:'BB-HU2-260107-01'}]}),
-    u({no:'NK0006', type:'NK', date:'2026-01-26', lsx:'LSX04', wh:'BBT', desc:'Nhập kho mắm ruốc', lines:[{item:'MR', qty:270, rej:10, lot:'TP-MR-260126-01', qc:'pass'}]}),
+    u({no:'PN0010', type:'PN', date:'2026-01-15', partyId:'S06', pay:'331', wh:'BBT', desc:'Mua ớt hiểm khô', lines:[{item:'OT', qty:10, value:850000, vat:5, lot:'150126-03', qc:'pass'}]}),
+    u({no:'PN0011', type:'PN', date:'2026-01-15', partyId:'S07', pay:'331', wh:'NTH', desc:'Mua bánh tráng', lines:[{item:'BTR', qty:100, value:1800000, vat:8, lot:'150126-04', qc:'pass'}]}),
+    u({no:'PX0009', type:'PX', date:'2026-01-16', lsx:'LSX04', to:'MR', wh:'BBT', desc:'Xuất làm mắm ruốc', lines:[{item:'TOM', qty:30, lot:'140126-01', loc:'5.Trái'}, {item:'OT', qty:3, lot:'311225-01'}, {item:'HU2', qty:300, lot:'070126-02'}]}),
+    u({no:'NK0006', type:'NK', date:'2026-01-26', lsx:'LSX04', wh:'BBT', desc:'Nhập kho mắm ruốc', lines:[{item:'MR', qty:270, rej:10, lot:'260126-01', qc:'pass'}]}),
     u({no:'BL0002', type:'BL', date:'2026-01-31', contrib:0.235, desc:'Lương mắm ruốc', lines:[{role:'NC', obj:'MR', amt:1500000}]}),
-    u({no:'HD0006', type:'HD', date:'2026-01-29', partyId:'C01', pay:'131', wh:'BBT', inv:6, desc:'Bán mắm ruốc', lines:[{item:'MR', lot:'TP-MR-260126-01', qty:200, price:45000, vat:10}]}),
-    u({no:'HD0007', type:'HD', date:'2026-01-29', partyId:'C03', pay:'1111', wh:'NTH', inv:7, desc:'Bán bánh tráng', lines:[{item:'BTR', lot:'HH-BTR-260115-01', qty:60, price:25000, vat:8}]}),
-    u({no:'TL0001', type:'TL', date:'2026-01-30', ref:'HD0007', partyId:'C03', desc:'Trả bánh tráng', lines:[{refLine:0, item:'BTR', lot:'HH-BTR-260115-01', qty:5, price:25000, vat:8}]}),
-    u({no:'KK0001', type:'KK', date:'2026-01-31', wh:'NTH', treat:'632', desc:'Kiểm kê NTH', lines:[{item:'BTR', lot:'HH-BTR-260115-01', book:45, counted:43, qty:-2, value:0}]}));
+    u({no:'HD0006', type:'HD', date:'2026-01-29', partyId:'C01', pay:'131', wh:'BBT', inv:6, desc:'Bán mắm ruốc', lines:[{item:'MR', lot:'260126-01', qty:200, price:45000, vat:10}]}),
+    u({no:'HD0007', type:'HD', date:'2026-01-29', partyId:'C03', pay:'1111', wh:'NTH', inv:7, desc:'Bán bánh tráng', lines:[{item:'BTR', lot:'150126-04', qty:60, price:25000, vat:8}]}),
+    u({no:'TL0001', type:'TL', date:'2026-01-30', ref:'HD0007', partyId:'C03', desc:'Trả bánh tráng', lines:[{refLine:0, item:'BTR', lot:'150126-04', qty:5, price:25000, vat:8}]}),
+    u({no:'KK0001', type:'KK', date:'2026-01-31', wh:'NTH', treat:'632', desc:'Kiểm kê NTH', lines:[{item:'BTR', lot:'150126-04', book:45, counted:43, qty:-2, value:0}]}));
+  assignMh(D);
 }
 
 // ================= Kiểm tra tự động (gọi từ console: __giagoc.selfTest()) =================
@@ -2925,26 +3215,38 @@ function selfTest(){
   const find = (D, no) => D.docs.find(d => d.no === no);
   const V = {
     base: {from:null, f: D => {}},
-    back: {from:3, f: D => D.docs.push(U({no:'PN0009', type:'PN', date:'2026-01-06', partyId:'S02', pay:'331', wh:'BBT', desc:'lùi ngày', lines:[{item:'THINH', qty:80, value:2520000, vat:5, lot:'PG-THINH-260106-02', qc:'pass'}]}))},
-    sale: {from:7, f: D => D.docs.push(U({no:'HD0006', type:'HD', date:'2026-01-31', partyId:'C02', pay:'131', wh:'BBT', desc:'bán thêm', lines:[{item:'ML5', lot:'TP-ML5-260127-01', qty:100, price:68000, vat:10}, {item:'MT2', lot:'TP-MT2-260127-01', qty:40, price:56000, vat:8}]}))},
-    ret: {from:7, f: D => D.docs.push(U({no:'TL0001', type:'TL', date:'2026-01-30', ref:'HD0003', partyId:'C02', desc:'trả', lines:[{refLine:0, item:'ML5', lot:'TP-ML5-260127-01', qty:20, price:68000, vat:10}, {refLine:1, item:'MT2', lot:'TP-MT2-251220-01', qty:5, price:56000, vat:10}]}))},
-    kk: {from:1, f: D => D.docs.push(U({no:'KK0001', type:'KK', date:'2026-01-31', wh:'BBT', treat:'1381', desc:'kk BBT', lines:[{item:'MUOI', lot:'PG-MUOI-251215-01', book:80, counted:78, qty:-2, value:0}, {item:'HU5', lot:'BB-HU5-260107-01', book:500, counted:503, qty:3, unit:6400, value:19200}, {item:'GV', lot:'PG-GV-260131-01', book:0, counted:0.5, qty:0.5, unit:118000, value:59000, newLot:true}]}),
-      U({no:'KK0002', type:'KK', date:'2026-01-31', wh:'NTH', treat:'632', desc:'kk NTH', lines:[{item:'NM', lot:'HH-NM-260120-01', book:130, counted:128, qty:-2, value:0}]}))},
-    ck: {from:3, f: D => D.docs.push(U({no:'CK0003', type:'CK', date:'2026-01-30', wh:'BBT', whTo:'NTH', desc:'ck', lines:[{item:'MT2', lot:'TP-MT2-260127-01', qty:100}, {item:'BTP', lot:'BTP-CL-260124-01', qty:50}]}),
-      U({no:'HD0006', type:'HD', date:'2026-01-31', partyId:'C03', pay:'1111', wh:'NTH', desc:'bán sau chuyển', lines:[{item:'MT2', lot:'TP-MT2-260127-01', qty:150, price:65000, vat:10}]}))},
-    usd: {from:3, f: D => D.docs.push(U({no:'PN0009', type:'PN', date:'2026-01-20', partyId:'S04', pay:'331', wh:'BBT', cur:'USD', rate:25500, desc:'usd', lines:[{item:'HU2', qty:1000, fc:180, value:4590000, vat:0, lot:'BB-HU2-260120-01', qc:'pass'}]}),
+    back: {from:3, f: D => D.docs.push(U({no:'PN0009', type:'PN', date:'2026-01-06', partyId:'S02', pay:'331', wh:'BBT', desc:'lùi ngày', lines:[{item:'THINH', qty:80, value:2520000, vat:5, lot:'060126-03', qc:'pass'}]}))},
+    sale: {from:7, f: D => D.docs.push(U({no:'HD0006', type:'HD', date:'2026-01-31', partyId:'C02', pay:'131', wh:'BBT', desc:'bán thêm', lines:[{item:'ML5', lot:'270126-01', qty:100, price:68000, vat:10}, {item:'MT2', lot:'270126-02', qty:40, price:56000, vat:8}]}))},
+    ret: {from:7, f: D => D.docs.push(U({no:'TL0001', type:'TL', date:'2026-01-30', ref:'HD0003', partyId:'C02', desc:'trả', lines:[{refLine:0, item:'ML5', lot:'270126-01', qty:20, price:68000, vat:10}, {refLine:1, item:'MT2', lot:'201225-02', qty:5, price:56000, vat:10}]}))},
+    kk: {from:1, f: D => D.docs.push(U({no:'KK0001', type:'KK', date:'2026-01-31', wh:'BBT', treat:'1381', desc:'kk BBT', lines:[{item:'MUOI', lot:'151225-01', loc:'5.Phuy', book:80, counted:78, qty:-2, value:0}, {item:'HU5', lot:'070126-01', book:500, counted:503, qty:3, unit:6400, value:19200}, {item:'GV', lot:'310126-01', book:0, counted:0.5, qty:0.5, unit:118000, value:59000, newLot:true}]}),
+      U({no:'KK0002', type:'KK', date:'2026-01-31', wh:'NTH', treat:'632', desc:'kk NTH', lines:[{item:'NM', lot:'200126-01', book:130, counted:128, qty:-2, value:0}]}))},
+    ck: {from:3, f: D => D.docs.push(U({no:'CK0004', type:'CK', date:'2026-01-30', wh:'BBT', whTo:'NTH', desc:'ck', lines:[{item:'MT2', lot:'270126-02', qty:100}, {item:'BTP', lot:'240126-01', loc:'A.29', qty:50}]}),
+      U({no:'HD0006', type:'HD', date:'2026-01-31', partyId:'C03', pay:'1111', wh:'NTH', desc:'bán sau chuyển', lines:[{item:'MT2', lot:'270126-02', qty:150, price:65000, vat:10}]}))},
+    usd: {from:3, f: D => D.docs.push(U({no:'PN0009', type:'PN', date:'2026-01-20', partyId:'S04', pay:'331', wh:'BBT', cur:'USD', rate:25500, desc:'usd', lines:[{item:'HU2', qty:1000, fc:180, value:4590000, vat:0, lot:'200126-02', qc:'pass'}]}),
       U({no:'CT0003', type:'CT', date:'2026-01-30', partyId:'S04', acc:'1122', desc:'trả 1 phần', lines:[{fc:100, ref:'PN0009'}]}), U({no:'CT0004', type:'CT', date:'2026-01-31', partyId:'S03', acc:'1111', desc:'trả bao bì', lines:[{amt:20000000}]}))},
     voids: {from:2, f: D => ['CP0002', 'CT0001', 'TN0001', 'HD0005'].forEach(no => find(D, no).status = 'void')},
     costs: {from:2, f: D => D.docs.push(U({no:'KH0002', type:'KH', date:'2026-01-31', desc:'kh', lines:[{name:'Máy đóng hũ', amt:3000000, fixed:true}]}),
       U({no:'BL0002', type:'BL', date:'2026-01-31', contrib:0.235, desc:'bl', lines:[{role:'NC', obj:'MT2', amt:1234567}, {role:'SXC', name:'Tổ trưởng', amt:777777, fixed:true}]}),
       U({no:'CP0003', type:'CP', date:'2026-01-20', partyId:'S08', pay:'331', desc:'thuê', lines:[{name:'Thuê bể ủ', amt:3333333, fixed:true, vat:10}]}))},
     abn: {from:6, f: D => { find(D, 'NK0003').lines[0].rej = 100; }},
-    qcFail: {from:null, f: D => { D.qc['TP-ML5-260127-01'] = {status:'fail', role:'QC khu đóng gói'}; }},
+    qcFail: {from:null, f: D => { D.qc['270126-01'] = {status:'fail', role:'QC khu đóng gói'}; }},
     newItems: {from:0, f: D => addNewItems(D)},
-    negPX: {from:3, neg:true, f: D => D.docs.push(U({no:'PX0009', type:'PX', date:'2026-01-20', lsx:'LSX03', to:'MT2', wh:'BBT', desc:'vượt', lines:[{item:'MUOI', qty:200, lot:'PG-MUOI-251215-01'}]}))},
-    negHD: {from:7, neg:true, f: D => D.docs.push(U({no:'HD0006', type:'HD', date:'2026-01-31', partyId:'C01', pay:'131', wh:'BT', desc:'bán vượt', lines:[{item:'ML5', lot:'TP-ML5-260127-01', qty:5000, price:68000, vat:10}]}))},
-    negVoidNK: {from:6, neg:true, f: D => { find(D, 'NK0001').status = 'void'; }}
+    negPX: {from:3, neg:true, f: D => D.docs.push(U({no:'PX0009', type:'PX', date:'2026-01-20', lsx:'LSX03', to:'MT2', wh:'BBT', desc:'vượt', lines:[{item:'MUOI', qty:200, lot:'151225-01', loc:'5.Phuy'}]}))},
+    negHD: {from:7, neg:true, f: D => D.docs.push(U({no:'HD0006', type:'HD', date:'2026-01-31', partyId:'C01', pay:'131', wh:'BT', desc:'bán vượt', lines:[{item:'ML5', lot:'270126-01', qty:5000, price:68000, vat:10}]}))},
+    negVoidNK: {from:6, neg:true, f: D => { find(D, 'NK0001').status = 'void'; }},
+    // vị trí chứa: một lô ở 2 bồn, chuyển bồn, xuất vượt tồn của bồn (lô vẫn còn), kiểm kê theo bồn
+    lot2loc: {from:3, f: D => D.docs.push(U({no:'NK0006', type:'NK', date:'2026-01-30', lsx:'LSX01', wh:'BBT', desc:'nk 2 bồn', lines:[{item:'BTP', qty:500, rej:0, lot:'300126-01', mh:'BTP-2601-0099', qc:'pass', loc:'A.16'}, {item:'BTP', qty:300, lot:'300126-01', mh:'BTP-2601-0099', qc:'pass', loc:'A.17'}]}),
+      U({no:'PX0009', type:'PX', date:'2026-01-31', lsx:'LSX02', to:'ML5', wh:'BBT', desc:'xuất 1 bồn', lines:[{item:'BTP', qty:200, lot:'300126-01', loc:'A.16'}]})),
+      chk: Rx => lq(Rx, 'BTP', 'BBT', '300126-01', 'A.16') === 300 && lq(Rx, 'BTP', 'BBT', '300126-01', 'A.17') === 300 && Rx.lots['300126-01'].inQty === 800 && Rx.lots['300126-01'].locs.length === 2 && Rx.lots['300126-01'].mh === 'BTP-2601-0099'},
+    move: {from:3, f: D => D.docs.push(U({no:'CK0004', type:'CK', date:'2026-01-30', wh:'BBT', whTo:'BBT', desc:'chuyển bồn', lines:[{item:'BTP', lot:'240126-01', loc:'A.30', locTo:'A.16', qty:150}]}),
+      U({no:'PX0009', type:'PX', date:'2026-01-31', lsx:'LSX02', to:'ML5', wh:'BBT', desc:'xuất bồn mới', lines:[{item:'BTP', qty:100, lot:'240126-01', loc:'A.16'}]})),
+      chk: Rx => lq(Rx, 'BTP', 'BBT', '240126-01', 'A.30') === 250 && lq(Rx, 'BTP', 'BBT', '240126-01', 'A.16') === 50 && lq(Rx, 'BTP', 'BBT', '240126-01', 'A.29') === 800 && Rx.rowById['CK0004'].value > 0},
+    negLoc: {from:3, neg:true, f: D => D.docs.push(U({no:'PX0009', type:'PX', date:'2026-01-31', lsx:'LSX02', to:'ML5', wh:'BBT', desc:'vượt tồn bồn', lines:[{item:'BTP', qty:500, lot:'240126-01', loc:'A.30'}]})),
+      chk: Rx => Rx.negatives.some(n => n.lot === '240126-01' && n.loc === 'A.30' && Math.abs(n.short - 100) < EPS) && Rx.items.BTP.cells['BBT|240126-01'].q > 0},
+    kkLoc: {from:1, f: D => D.docs.push(U({no:'KK0001', type:'KK', date:'2026-01-31', wh:'BBT', treat:'1381', desc:'kk theo bồn', lines:[{item:'BTP', lot:'240126-01', loc:'A.29', book:800, counted:790, qty:-10, value:0}, {item:'BTP', lot:'240126-01', loc:'A.30', book:400, counted:405, qty:5, unit:70000, value:350000}]})),
+      chk: Rx => lq(Rx, 'BTP', 'BBT', '240126-01', 'A.29') === 790 && lq(Rx, 'BTP', 'BBT', '240126-01', 'A.30') === 405}
   };
+  const lq = (Rx, k, wh, lot, loc) => { const c = Rx.items[k].lcells[wh + '|' + lot + '|' + loc]; return c ? c.q : 0; };
   const hoursL = [800, 1200], wipL = ['def', 0];
   const prep = (rg, m, h, w) => { const D = freshData(); Object.assign(D.settings, {regime:rg, method:m, hours:h}); if(w === 0) Object.keys(D.settings.wipQty).forEach(k => D.settings.wipQty[k] = 0);
     invalidate(D, 0); for(let i = 0; i < 4; i++) runStepOn(D); return D; };
@@ -2969,19 +3271,32 @@ function selfTest(){
       if(!isFinite(c.z)) f('z NaN ' + o); if(c.excess > EPS && v === 'abn' && o === 'ML5' && !(c.abn > 0)) f('không ghi hỏng ngoài định mức ML5'); });
     Object.keys(Rx.items).forEach(k => { if(!isFinite(Rx.items[k].closeV)) f('NaN tồn ' + k); Rx.items[k].rows.forEach(r => { if(!isFinite(r.value)) f('NaN dòng ' + r.id); }); });
     if((Rx.gl['154'] || 0) < 0) f('154 âm ' + Rx.gl['154']);
+    if(spec.chk && !spec.chk(Rx)) f('kiểm tra riêng của biến thể không đạt');
+    Object.keys(Rx.items).forEach(k => { const it = Rx.items[k], sl = {}; Object.values(it.lcells).forEach(c => { const key = c.wh + '|' + c.lot; sl[key] = rq((sl[key] || 0) + c.q); });
+      Object.values(it.cells).forEach(c => { if(Math.abs((sl[c.wh + '|' + c.lot] || 0) - c.q) > EPS) f('Σ vị trí ≠ tồn lô ' + k + ' ' + c.wh + ' ' + c.lot); }); });
     if(spec.neg){ if(!Rx.negatives.length) f('biến thể tồn âm nhưng không phát hiện tồn âm'); }
     else { if(Rx.negatives.length) f('tồn âm ' + negText(D, Rx.negatives[0]));
       Object.keys(Rx.items).forEach(k => Object.values(Rx.items[k].cells).forEach(c => { if(c.q < -EPS) f('ô âm ' + k + ' ' + c.wh + ' ' + c.lot + ' ' + c.q); }));
+      Object.keys(Rx.items).forEach(k => Object.values(Rx.items[k].lcells).forEach(c => { if(c.q < -EPS) f('vị trí âm ' + k + ' ' + c.wh + ' ' + c.lot + ' ' + c.loc + ' ' + c.q); }));
       CASH_ACC.forEach(a => { if((Rx.gl[a] || 0) < 0) f('TK ' + a + ' âm ' + Rx.gl[a]); }); if(Rx.fx.bal1122.fc < -0.001) f('USD 1122 âm'); }
     if(v === 'newItems'){ const hd = Rx.postByNo.HD0007, tl = Rx.postByNo.TL0001;
       if(!hd || !hd.lines.some(l => l.acc === '5111' && l.cr > 0) || hd.lines.some(l => l.acc === '5112')) f('B2: bán hàng hóa không ghi Có 5111');
       if(!tl || !tl.lines.some(l => l.acc === '5111' && l.dr > 0)) f('B2: trả lại hàng hóa không ghi Nợ 5111');
       if(!Rx.postByNo.HD0006.lines.some(l => l.acc === '5112' && l.cr > 0)) f('B2: bán thành phẩm không ghi 5112'); }
     if(v === 'usd'){ const x = Rx.fx.byDoc.CT0003; if(!x || x.dr !== Math.round(100 * 25500)) f('Nợ 331 USD không theo tỷ giá hóa đơn'); if(Math.abs(Rx.fx.pnLeft.PN0009.fc - 80) > 0.001) f('còn nợ USD sai'); }
-    if(v === 'qcFail'){ const L = Rx.lots['TP-ML5-260127-01']; if(lotAllowed(L, 'sale').ok || lotAllowed(L, 'use').ok) f('lô không đạt vẫn được dùng');
-      const b = FORMS.HD.build({date:'2026-01-31', partyId:'C01', pay:'131', wh:'BBT', lines:[{item:'ML5', lot:'TP-ML5-260127-01', qty:'10', price:'68000', vat:'10'}]}, Rx);
+    if(v === 'base' && stage === 'open' && rg === 'TT99' && h === 800 && w === 'def'){
+      const ck = FORMS.CK.build({date:'2026-01-31', wh:'BBT', whTo:'BBT', desc:'', lines:[{item:'BTP', lot:'240126-01', loc:'A.29', locTo:'A.29', qty:'10'}]}, Rx);
+      if(!ck.E.length) f('form chuyển vị trí cho vị trí đến trùng vị trí đi');
+      const pn = FORMS.PN.build({date:'2026-01-31', partyId:'S02', pay:'331', wh:'BBT', cur:'VND', rate:'25400', desc:'', lines:[{item:'MUOI', qty:'10', price:'4000', vat:'5', qc:'pass', lot:'050126-01', loc:'5.Phuy'}]}, Rx);
+      if(!pn.E.length) f('form phiếu nhập nhận mã lô trùng');
+      const pn2 = FORMS.PN.build({date:'2026-01-31', partyId:'S02', pay:'331', wh:'BBT', cur:'VND', rate:'25400', desc:'', lines:[{item:'MUOI', qty:'10', price:'4000', vat:'5', qc:'pass', lot:'310126-05', loc:'5.Phuy'}, {item:'MUOI', qty:'5', price:'4000', vat:'5', qc:'pass', lot:'310126-05', loc:'A.Phuy'}, {item:'THINH', qty:'5', price:'30000', vat:'5', qc:'pass', lot:'', loc:''}]}, Rx);
+      if(pn2.E.length || !pn2.doc || pn2.doc.lines[0].mh !== pn2.doc.lines[1].mh || pn2.doc.lines[0].mh === pn2.doc.lines[2].mh || !/^PG-2601-\d{4}$/.test(pn2.doc.lines[0].mh)) f('mã hóa tự sinh không đúng: ' + JSON.stringify(pn2.E) + (pn2.doc ? pn2.doc.lines.map(l => l.mh).join(',') : ''));
+      const mhs = {}; Object.values(Rx.lots).forEach(L => { if(!L.mh) f('lô ' + L.code + ' thiếu mã hóa'); else if(mhs[L.mh]) f('trùng mã hóa ' + L.mh); mhs[L.mh] = 1; });
+    }
+    if(v === 'qcFail'){ const L = Rx.lots['270126-01']; if(lotAllowed(L, 'sale').ok || lotAllowed(L, 'use').ok) f('lô không đạt vẫn được dùng');
+      const b = FORMS.HD.build({date:'2026-01-31', partyId:'C01', pay:'131', wh:'BBT', lines:[{item:'ML5', lot:'270126-01', qty:'10', price:'68000', vat:'10'}]}, Rx);
       if(!b.E.length || b.doc) f('form hóa đơn vẫn cho bán lô không đạt');
-      const h2 = FORMS.HD.build({date:'2026-01-31', partyId:'C01', pay:'131', wh:'BBT', lines:[{item:'ML5', lot:'TP-ML5-260129-01', qty:'10', price:'68000', vat:'10'}]}, Rx);
+      const h2 = FORMS.HD.build({date:'2026-01-31', partyId:'C01', pay:'131', wh:'BBT', lines:[{item:'ML5', lot:'290126-01', qty:'10', price:'68000', vat:'10'}]}, Rx);
       if(!h2.E.length) f('form hóa đơn vẫn cho bán lô đang Chờ QC'); }
     if(stage === 'closed'){
       if(spec.neg){ if(D.closing.done[11] && !D.closing.dirty[11]) f('B1: khóa sổ được dù tồn âm'); if(!last || (last.i !== 3 && last.i !== 10)) f('không dừng ở bước 4/11 (dừng ' + (last && last.i) + ')'); }

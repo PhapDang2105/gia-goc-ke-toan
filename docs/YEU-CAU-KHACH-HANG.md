@@ -1,6 +1,6 @@
 # Yêu cầu khách hàng — chuẩn hoá từ `HỆ THỐNG.docx`
 
-> Phiên bản: **v1.0** · Ngày: 2026-10-06 · Trạng thái: bản chuẩn hoá lần đầu, **chưa được khách xác nhận**
+> Phiên bản: **v1.1** · Ngày: 2026-10-07 · Trạng thái: **chưa được khách xác nhận** · v1.1 thêm §9 (kế thừa file Excel kho BTP)
 > Nguồn: `HỆ THỐNG.docx` (gốc repo). Metadata của file: tạo và sửa lần cuối ngày 2026-10-06; đưa vào repo cùng ngày. Tài liệu khách không ghi ngày gửi, nên lấy **2026-10-06** làm ngày nhận.
 > Liên quan: `KE-HOACH-DU-AN.md` v0.3 (phạm vi, đợt phát hành, tiến độ), `research/07-dieu-chinh-kien-truc-theo-khach-hang.md` (thay đổi dữ liệu và kiến trúc), `research/01` (định khoản gốc), `research/05` (kiến trúc gốc).
 
@@ -183,6 +183,8 @@ Kho vật lý: **Nhà máy Bà Ba Thạo** (NVL, bao bì, phụ gia, thành ph�
 | KHO-R4 | Tổng hợp xuất kho theo lệnh SX | Theo lệnh: định mức vs thực xuất theo NVL và lô; chênh lệch | — | BOM theo công đoạn | 1A (SL) / 1B (GT) | Thiếu | |
 | KHO-R5 | Báo cáo tiến độ sản xuất | Theo lệnh/công đoạn: SL kế hoạch, đã nhận NVL, đang ủ (ngày bắt đầu, ngày dự kiến xong), hoàn thành, Đạt/Không đạt QC | — | Trạng thái lệnh, phiếu QC | 1B (bản SL đơn giản ở 1A) | Thiếu | Dữ liệu từ QC khu và kế hoạch |
 | KHO-R6 | Đối chiếu nhập kho – xuất kho giữa kế toán và thủ kho | Theo kho × kỳ: chứng từ thủ kho đã xác nhận nhưng kế toán chưa ghi sổ và ngược lại; lệch SL theo mặt hàng × lô; kết quả kiểm kê | — | Mỗi chứng từ kho có 2 dấu: thủ kho xác nhận (SL thực) và kế toán ghi sổ | 1A | Thiếu | Thủ kho chỉ thấy SL |
+
+Vị trí chứa (bồn / trái / phuy), mã hóa lô, tồn tối thiểu, mã MISA, số phiếu kho, in phiếu và báo cáo tồn theo lô + vị trí (KHO-06..11, KHO-R7..R9): §9.
 
 ### 3.8 Phân hệ 8 — Giá thành
 
@@ -409,6 +411,7 @@ Quy tắc kèm theo:
 | A6 | Luồng duyệt: đề nghị thanh toán, đơn mua, đơn bán vượt hạn mức — mấy cấp, ai duyệt, hạn mức tiền bao nhiêu | NEN-04, TIEN-01 |
 | A7 | Hai "Ms Trâm" là một hay hai người? | Tài khoản, phân quyền |
 | A8 | Ai đặt hàng mua (lập đơn mua) và ai nhận hóa đơn mua? | Phân quyền MUA |
+| A9 | Câu hỏi về file Excel kho BTP: mã hóa, danh mục bồn / trái / phuy, số phiếu kho, mã lô (D1–D8, §9.7) | KHO-06..10 |
 
 **Mức B — chặn đợt 1B (giá thành, QC):**
 
@@ -450,3 +453,87 @@ Quy tắc kèm theo:
 4. GĐ1 không có phân hệ lương, không tích hợp HĐĐT, không kết nối ngân hàng, không ứng dụng di động; thủ kho và QC dùng web trên máy tính/máy tính bảng.
 5. Một công ty, một sổ tài chính, một chế độ kế toán; khoá sổ theo tháng.
 6. Ngoại tệ: giả định chủ yếu USD, số nghiệp vụ ít; tỷ giá nhập tay.
+
+---
+
+## 9. Kế thừa file Excel kho BTP (Bà Ba Thạo)
+
+> Nguồn: file Excel sổ kho bán thành phẩm của nhà máy Bà Ba Thạo, khách gửi ngày 2026-10-07 (xuất từ Google Sheets; không đưa vào repo). Yêu cầu người dùng kèm theo: **"Hàng tồn kho sẽ theo dõi: Tên hàng + mã lot + mã hóa + bồn/trái/phuy"** và kế thừa các tính năng của file. Tên công ty, mã số thuế, địa chỉ trong file **không** chép vào repo; demo và mẫu in dùng "Nhà máy chế biến mắm".
+
+### 9.1 File có gì
+
+13 sheet: tồn đầu, cú pháp tên hàng, vùng chọn (danh sách thả xuống), tồn kho, gợi ý xuất, **sổ nhập xuất** (sheet chính, 420 dòng, 88 tên hàng, 206 mã lô), gợi ý điều chỉnh (kiểm kê), tồn theo lô, mẫu in phiếu xuất kho, mẫu in phiếu nhập kho, báo cáo N-X-T, báo cáo N-X chi tiết, N-X-T thực tế. Nhiều công thức đã hỏng khi xuất file (`#REF!`, `#NAME?`) và tham chiếu tới 3 sheet không có trong file (đơn hàng, nhập kiểm kê, tồn lô phụ).
+
+Mỗi dòng sổ nhập xuất: ngày, người thực hiện, mã đơn hàng, lý do xuất, nhóm hàng, **tên sản phẩm, mã hóa, lot, bồn**, cảnh báo, SL nhập, SL xuất, ghi chú, mã phiếu, tồn tổng, ĐVT, SL thực xuất, tồn theo lot, tồn theo lot + bồn.
+
+### 9.2 Tính năng của file → yêu cầu → trạng thái
+
+| Tính năng trong file | Mã | Yêu cầu chuẩn hoá | Demo v3.2 | Kế hoạch |
+|---|---|---|---|---|
+| Cột BỒN; tồn theo lot + bồn | KHO-06 | **Vị trí chứa** (khu + loại bồn / trái / phuy + số) theo kho; khoá tồn = (vật tư, kho, lô, vị trí); một lô ở nhiều vị trí; kiểm âm theo vị trí; giá trị vẫn theo lô | Có: danh mục 31 vị trí ở nhà máy (26 bồn, 2 trái, 3 phuy), chọn vị trí trên mọi phiếu nhập / xuất / chuyển / kiểm kê | 1A (`research/07` §2.8) |
+| Chuyển bồn (ghi bằng 1 dòng xuất + 1 dòng nhập) | KHO-04 (mở rộng) | Chuyển vị trí trong cùng kho bằng phiếu chuyển kho; không bút toán | Có | 1A |
+| Cột MÃ HÓA | KHO-07 | **Mã hóa lô do hệ thống tự sinh** (đề xuất), xem §9.4 | Có | 1A, chờ khách duyệt định dạng |
+| Mã LOT | KHO-03 (mở rộng) | Mã lô dạng DDMMYY-nn, tự gợi ý, sửa được, kiểm trùng | Có | 1A |
+| Tồn tối thiểu, cảnh báo "CẦN ĐẶT THÊM" | KHO-08 | Tồn tối thiểu trên danh mục; cảnh báo khi tồn ≤ tối thiểu | Có: cột trong danh mục, mục "Cần đặt thêm" ở Việc cần làm | 1A |
+| Cảnh báo "TRÙNG" tên hàng | NEN-01 | Chặn trùng tên / mã khi khai danh mục | Có sẵn từ v3 | 1A |
+| Cú pháp tên → tên chốt + MÃ MISA tương ứng | KHO-09 | Cột **Mã MISA** trên danh mục (duy nhất, để đối chiếu khi chạy song song MISA); chuẩn hoá tên theo cú pháp: chưa làm | Có cột Mã MISA (mã giả định) | Mã MISA 1A; cú pháp tên: chờ khách gửi quy tắc |
+| Mã phiếu PNK / PXK đánh số theo tháng | KHO-10 | Số phiếu kho `PNK-YYMMnnn` / `PXK-YYMMnnn` bên cạnh số chứng từ kế toán | Có (phiếu nhập mua, nhập kho SX, trả lại → PNK; xuất SX, bán, chuyển kho → PXK) | 1A |
+| Lý do xuất (Xuất sản xuất / bán hàng / kho Bình Tây / kho 97) | KHO-02 (mở rộng) | Lý do xuất suy ra từ loại chứng từ: Sản xuất, Bán hàng, Chuyển kho Bình Tây, Chuyển kho 97, Chuyển vị trí, Khác | Có (hiển thị trên chi tiết và bản in) | 1A |
+| ĐVT Kg / Cái / Hũ / Chai / Can | NEN-01 | Danh mục ĐVT | Có sẵn | 1A |
+| Gợi ý điều chỉnh (kiểm kê theo tên + lot + bồn, % chênh lệch) | KHO-05 (mở rộng) | Phiếu kiểm kê theo lô **và vị trí**: SL sổ, SL đếm, chênh lệch, % chênh lệch → nhập / xuất điều chỉnh | Có | 1A |
+| Gợi ý xuất | KHO-02 | Gợi ý (lô, vị trí) theo HSD gần nhất rồi lô cũ nhất; danh sách chọn hiện "Lô · Vị trí · tồn" | Có | 1A |
+| SL thực xuất khác SL yêu cầu | KHO-04 / BAN-02 | Hai số: SL yêu cầu (đơn hàng) và SL thực xuất (phiếu kho) | Chưa | 1A, gắn đơn bán / kế hoạch SX |
+| Tồn theo lô (tồn cuối theo SP tách theo lot) | KHO-R7 | Bảng **Tồn kho chi tiết**: tên hàng · mã lô · mã hóa · vị trí · kho · HSD · QC · SL · số ngày lưu kho · giá trị; lọc theo kho, loại vị trí; tìm theo tên / lô / mã hóa / vị trí; cộng theo tên hàng | Có | 1A |
+| Báo cáo N-X-T theo SP + lot theo khoảng ngày | KHO-R8 | N-X-T theo lô và vị trí, khoảng ngày trong kỳ, lọc kho | Có (báo cáo mới) | 1A |
+| Báo cáo N-X chi tiết 1 SP | KHO-R9 | Sổ chi tiết một mặt hàng theo lô + vị trí, khoảng ngày, có tồn theo ô và tồn tổng | Có (báo cáo mới) | 1A |
+| Mẫu in phiếu nhập / xuất kho | KHO-11 | In phiếu: STT, tên hàng, lot, mã hóa, vị trí, ĐVT, SL, ghi chú; chữ ký người lập / người giao (nhận) / thủ kho | Có (nút "In phiếu", in bằng trình duyệt) | 1A |
+| Người thực hiện, mã đơn hàng trên từng dòng | NEN-05 / BAN-01 | Người lập ghi tự động; mã đơn hàng khi có phân hệ đơn hàng | Người lập: có (nhật ký); đơn hàng: chưa | 1A |
+
+### 9.3 Quy ước mã lô
+
+- Định dạng trong file: `DDMMYY-n` hoặc `DDMMYY-nn` (ngày nhập / sản xuất + số mẻ; 116 mã), `DDMMYY` không có số mẻ (53 mã), và 37 mã dạng khác (`6232-4`, `6248-03`, `10724`, `40624`…). `10724`, `40624` nhiều khả năng là `010724`, `040624` bị Excel bỏ số 0 đầu.
+- Demo: mã lô tự gợi ý `DDMMYY-nn` (số mẻ 2 chữ số, đếm trong ngày), **sửa được**, chỉ nhận chữ, số, `-`, `.` (3–20 ký tự), lưu dạng chuỗi (không mất số 0 đầu), **kiểm trùng toàn công ty**; mã đã cấp không cấp lại kể cả khi huỷ phiếu. Nhiều dòng cùng mã lô trong một phiếu = một lô ở nhiều vị trí (nút "+ Vị trí").
+- Chưa rõ: mã lô duy nhất toàn công ty hay chỉ trong một mặt hàng; dạng `6232-4` có nghĩa gì (câu hỏi §9.6).
+
+### 9.4 Mã hóa
+
+- **Bối cảnh từ file**: mã hóa là một cột riêng; công thức cảnh báo so `RIGHT(LOT, 2)` với mã hóa ("KIỂM TRA MÃ LOT") và cột "mã SP = tên hàng + 2 số cuối lot". Trong file cột mã hóa **trống toàn bộ** 420 dòng. Ý nghĩa nghiệp vụ của mã hóa **chưa xác minh**.
+- **Đề xuất (theo ý người dùng: "mã hóa có thể là 1 mã tự sinh ra trong hệ thống")**: hệ thống tự sinh mã hóa khi tạo lô (phiếu nhập mua, nhập kho sản xuất, kiểm kê thừa ngoài sổ), định dạng **nhóm hàng + YYMM + số thứ tự 4 chữ số** (`NL`, `PG`, `BB`, `BTP`, `TP`, `HH`; ví dụ `BTP-2601-0003`): ngắn, ghi tay và in lên phiếu được; duy nhất toàn công ty; không sửa tay; không đổi khi chuyển kho / chuyển bồn; không cấp lại khi huỷ phiếu. Hiển thị ở danh sách chọn lô, Tồn kho chi tiết, sổ chi tiết, báo cáo, phiếu in, truy xuất; tìm được chứng từ và tồn theo mã hóa. **Còn chờ khách xác nhận định dạng**; khi khách xác nhận khác (vd mã do QC ghi tay), mã hóa đổi thành trường nhập có kiểm tra như file.
+
+### 9.5 Ký hiệu vị trí chứa
+
+| Trong file | Số dòng | Hiểu là | Hệ thống |
+|---|---|---|---|
+| `A.15`, `A.109`, `C.34`, `2.205`, `A. 98` | 279 | Bồn: khu + số | Bồn `A.15` (bỏ khoảng trắng) |
+| `5.trái`, `2. trái`, `2.trái` | 21 | Trái ở khu 5 / khu 2 | `5.Trái` |
+| `5.Phuy`, `A.Phuy`, `B.phuy` | 8 | Phuy ở khu | `5.Phuy`, `B.Phuy` |
+| `A.`, `4.`, `C.`, `1.` (thiếu số) | 73 | Chưa rõ bồn nào | **Bị chặn**: bồn phải có số |
+| `H1`, `A1`, `MA1`, `TB2`, `TE3`… (không có dấu chấm) | 37 | Chưa rõ (kệ? pallet? khu khác?) | Chưa nhận; hỏi khách |
+
+Khi nhập ký hiệu vị trí mới, hệ thống nhận các biến thể có dấu chấm ở trên (không phân biệt hoa thường, có / không dấu, có khoảng trắng) và chuẩn hoá. Phiếu kho chọn vị trí từ danh sách, không gõ tay.
+
+### 9.6 Lỗi dữ liệu trong file và cách hệ thống chặn
+
+| Lỗi thấy trong file | Hệ thống |
+|---|---|
+| Tồn theo lot âm (−884, −40) | Kiểm âm theo (vật tư, kho, lô, vị trí) khi lưu phiếu; muốn lưu phải tích "Vẫn lưu (chấp nhận tồn âm)" và bước 4 khoá sổ dừng ở đúng phiếu, lô, vị trí |
+| Số lẻ dấu phẩy động (`1,42e-14` còn lại sau khi trừ) | Số lượng làm tròn 3 chữ số thập phân ở mọi phép cộng trừ; ĐVT "chỉ số nguyên" không nhận số lẻ |
+| ĐVT `#REF!` (3.717 dòng), `#N/A` (302 dòng) | ĐVT lấy từ danh mục vật tư, không tính bằng công thức trên dòng |
+| Ký hiệu bồn không thống nhất (`2. trái` / `2.trái`, `B.phuy` / `5.Phuy`, `A.` thiếu số) | Danh mục vị trí chuẩn hoá; phiếu chọn từ danh sách |
+| Mã hóa bỏ trống | Mã hóa tự sinh khi tạo lô, bắt buộc |
+| Mã lô mất số 0 đầu (`10724`) | Mã lô lưu dạng chuỗi |
+| Mã phiếu hai kiểu (`PXK-0126-001` và `PNK-2609001`), công thức gợi ý mã phiếu `#NAME?` | Số phiếu kho cấp tự động một kiểu `PNK-YYMMnnn` / `PXK-YYMMnnn` |
+| Tên hàng trùng / nhiều cách viết | Danh mục chặn trùng tên và mã; mỗi tên hàng có Mã MISA để đối chiếu |
+
+### 9.7 Câu hỏi mở cho khách
+
+| # | Câu hỏi | Ảnh hưởng |
+|---|---|---|
+| D1 | **Mã hóa** dùng để làm gì (in lên bao bì? QC ghi? đối chiếu với lot)? Đồng ý mã tự sinh `nhóm-YYMM-nnnn` không, hay muốn mã do người ghi? | KHO-07 |
+| D2 | Gửi **danh mục bồn / trái / phuy đầy đủ** theo khu, **sức chứa** từng bồn (kg hay lít); ký hiệu không có dấu chấm (`H1`, `MA1`, `TB2`…) là gì | KHO-06, cảnh báo vượt sức chứa |
+| D3 | **"Trái"** là gì (chum / lu?), thể tích bao nhiêu; một trái chứa một lô hay nhiều lô | KHO-06 |
+| D4 | Kho **Bình Tây** và **97 Nguyễn Thái Học** có theo dõi theo bồn / kệ không, hay chỉ nhà máy | Danh mục vị trí, phạm vi bắt buộc |
+| D5 | **Quy tắc số phiếu**: `PNK-YYMMnnn` hay `PXK-MMYY-nnn` (file có cả hai); đánh số chung các kho hay riêng từng kho; phiếu chuyển kho dùng PXK hay mẫu riêng | KHO-10 |
+| D6 | Mã lô duy nhất toàn nhà máy hay trong từng mặt hàng; mã dạng `6232-4` / `6248-03` nghĩa là gì; lô `DDMMYY` không số mẻ có được không | KHO-03, A4 |
+| D7 | "SL thực xuất" khác "SL yêu cầu" xảy ra khi nào (cân lại? hao hụt khi bơm?), chênh lệch xử lý thế nào | KHO-02, KHO-04 |
+| D8 | Cú pháp tên hàng (tên SP + nguyên liệu + thông tin + khối lượng + ĐV + quy cách) có bắt buộc khi khai danh mục không; danh sách Mã MISA hiện có | KHO-09 |
