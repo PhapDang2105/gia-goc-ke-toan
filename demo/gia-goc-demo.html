@@ -44,6 +44,7 @@ abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:he
 /* Trạng thái: chữ thường, không nền, không viền */
 .s-warn{color:var(--warn)}
 .s-bad{color:var(--neg)}
+.pos{color:var(--pos)}
 .s-mute{color:var(--muted)}
 .s-acc{color:var(--accent)}
 .sx{font-size:12px;font-weight:400;white-space:nowrap}
@@ -383,6 +384,50 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
   .tbl-wrap tbody tr.click td{padding-block:12px}
   .field select,.field input,.inp{min-height:44px}
 }
+/* Truy xuất lô */
+.tr-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:start}
+.tr-qr{background:#fff;border:1px solid var(--line);padding:4px;line-height:0}
+.tr-kv{grid-template-columns:auto 1fr;font-size:13px}
+.tr-kpis{grid-column:1 / -1}
+#traceMore{display:flex;flex-direction:column;gap:12px}
+.tr-scroll{overflow-x:auto;padding-bottom:4px}
+.tr-graph{position:relative;display:flex;gap:44px;align-items:flex-start;min-width:max-content;padding:4px 2px}
+.tr-svg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+.tr-svg path{stroke:var(--axis);stroke-width:1.5}
+.tr-svg path.up{stroke:var(--k2)}.tr-svg path.dn{stroke:var(--k3)}
+.tr-svg path.hot{stroke-width:2.5}
+.tr-col{display:flex;flex-direction:column;gap:10px;width:200px;position:relative;z-index:1}
+.tr-ch{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;min-height:18px}
+.tn{display:flex;flex-direction:column;gap:1px;text-align:left;font:inherit;font-size:12.5px;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--line);border-radius:var(--r);padding:7px 9px;width:100%}
+button.tn{cursor:pointer}button.tn:hover{background:var(--hover)}
+.tn b{font-size:13px;font-weight:600}
+.tn .tn-k{font-size:11px;color:var(--muted)}
+.tn-sup,.tn-origin{border-left-color:var(--k2)}
+.tn-lsx{border-left-color:var(--k4);background:var(--surface-2)}
+.tn-cus{border-left-color:var(--k3)}
+.tn-lot{border-left-color:var(--k1)}
+.tn.on{border-color:var(--accent);border-left-width:3px;background:var(--kpi-bg);box-shadow:0 0 0 1px var(--accent)}
+.tr-leg{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.tr-leg i{display:inline-block;width:16px;height:3px;background:var(--k2)}.tr-leg i.dn{background:var(--k3);margin-left:8px}
+@media (max-width:640px){ .tr-head{grid-template-columns:1fr} .tr-col{width:172px} .tr-graph{gap:28px} }
+/* Giả lập giá */
+.sim-ctl{display:grid;gap:6px 18px;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.sim-r{display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,1.2fr) 52px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line-2)}
+.sim-r label{display:flex;flex-direction:column;min-width:0}
+.sim-r input[type=range]{width:100%;accent-color:var(--accent)}
+.sim-r output{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+/* Tem lô: 2 tem mỗi hàng trên A4 */
+.tems{display:grid;grid-template-columns:repeat(2,1fr);gap:6mm}
+.tem{display:flex;gap:8px;border:1px dashed #000;padding:3mm;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;break-inside:avoid;page-break-inside:avoid;min-height:58mm}
+.tem-l{flex:1;min-width:0}
+.tem-co{font-size:9pt;text-transform:uppercase;font-weight:700}
+.tem-n{font-size:12pt;font-weight:700;margin:1mm 0}
+.tem-lot{font-family:Consolas,monospace;font-size:20pt;font-weight:700;letter-spacing:.02em;line-height:1.1}
+.tem-mh{font-family:Consolas,monospace;font-size:11pt;margin-bottom:1mm}
+.tem table{border-collapse:collapse;font-size:9pt;width:100%}
+.tem td{padding:.4mm 1mm .4mm 0;vertical-align:top}.tem td:first-child{color:#333;width:20mm}
+.tem-r{display:flex;flex-direction:column;align-items:center;gap:1mm;font-size:8pt}
+.tem-r .qr{width:34mm;height:34mm}
 /* Bản in phiếu: A4 dọc, chữ đen nền trắng, viền mảnh */
 #printArea{display:none}
 .ps{font-family:"Times New Roman",Times,serif;color:#000;background:#fff;font-size:12.5px;line-height:1.4;padding:4px 2px}
@@ -436,6 +481,8 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
       <div class="nav-label">Sản xuất</div>
       <button data-view="cost" title="Giá thành theo lệnh sản xuất"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 17V9l4 3V9l4 3V5l6 4v8z"/></svg><span class="nl">Giá thành theo lệnh sản xuất</span></button>
       <button data-view="lots" title="Giá vốn theo lô"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="15" cy="10" r="2.2"/><circle cx="5" cy="4.5" r="2"/><circle cx="5" cy="10" r="2"/><circle cx="5" cy="15.5" r="2"/><path d="M7 4.5c3 0 3 5.5 5.8 5.5M7 10h5.8M7 15.5c3 0 3-5.5 5.8-5.5"/></svg><span class="nl">Giá vốn theo lô</span></button>
+      <button data-view="trace" title="Truy xuất lô"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="4" cy="10" r="2"/><circle cx="16" cy="4.5" r="2"/><circle cx="16" cy="15.5" r="2"/><circle cx="10" cy="10" r="2"/><path d="M6 10h2M12 9l2.3-3.2M12 11l2.3 3.2"/></svg><span class="nl">Truy xuất lô</span></button>
+      <button data-view="sim" title="Giả lập giá nguyên liệu"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 5h14M3 10h14M3 15h14"/><circle cx="7" cy="5" r="1.8" fill="currentColor"/><circle cx="13" cy="10" r="1.8" fill="currentColor"/><circle cx="9" cy="15" r="1.8" fill="currentColor"/></svg><span class="nl">Giả lập giá nguyên liệu</span></button>
       <div class="nav-label">Kiểm soát</div>
       <button data-view="audit" title="Nhật ký sửa đổi"><svg class="ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2"/></svg><span class="nl">Nhật ký sửa đổi</span></button>
     </nav>
@@ -561,6 +608,7 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
       </div>
       <div class="panel" id="lotPanel">
         <div class="panel-head"><h2>Tồn kho chi tiết</h2><span class="note" id="lotWh"></span><div class="seg" id="locFilter" role="group" aria-label="Lọc theo loại vị trí"></div><div class="spacer"></div>
+          <button class="btn sm" type="button" data-act="printTems"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 6V2.5h7V6M4.5 11.5h-2v-5h11v5h-2"/><path d="M4.5 9.5h7v4h-7z"/></svg>In tem các lô</button>
           <button class="btn sm xl" type="button" data-csv="lotTbl" data-name="ton-kho-chi-tiet" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button></div>
         <label class="vh" for="lotSearch">Tìm tồn kho</label>
         <input type="search" id="lotSearch" class="inp" placeholder="Tìm tên hàng, mã lô, mã hóa, vị trí…">
@@ -647,6 +695,30 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
       <div class="panel" id="lotTree" tabindex="-1"></div>
     </section>
 
+    <!-- TRUY XUẤT LÔ -->
+    <section class="view" id="v-trace" hidden>
+      <div class="panel">
+        <div class="panel-head"><label class="field" for="traceSel">Lô <select id="traceSel"></select></label><div class="spacer"></div>
+          <button class="btn sm" type="button" data-act="printTem"><svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4.5 6V2.5h7V6M4.5 11.5h-2v-5h11v5h-2"/><path d="M4.5 9.5h7v4h-7z"/></svg>In tem lô</button>
+          <button class="btn sm danger" type="button" id="btnLock" data-act="openLock">Khóa các lô còn tồn</button></div>
+        <div id="traceBody"></div>
+      </div>
+      <div id="traceMore"></div>
+    </section>
+
+    <!-- GIẢ LẬP GIÁ -->
+    <section class="view" id="v-sim" hidden>
+      <div class="panel">
+        <div class="panel-head"><h2>Giá nguyên liệu thay đổi</h2><div class="spacer"></div><button class="btn sm" type="button" id="simReset" data-act="simReset">Đặt lại 0%</button></div>
+        <div class="sim-ctl" id="simCtl"></div>
+      </div>
+      <div class="kpis" id="simKpis"></div>
+      <div class="panel">
+        <div class="panel-head"><h2>Giá thành và biên lãi theo sản phẩm</h2><div class="spacer"></div><button class="btn sm xl" type="button" data-csv="simTbl" data-name="gia-lap-gia-thanh" aria-label="Tải bảng (tệp mở bằng Excel)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/></svg>Tải bảng</button></div>
+        <div class="tbl-wrap"><table id="simTbl"></table></div>
+      </div>
+    </section>
+
     <!-- NHẬT KÝ -->
     <section class="view" id="v-audit" hidden>
       <div class="panel">
@@ -661,6 +733,10 @@ textarea.inp{width:100%;min-height:180px;font-family:var(--font-mono);font-size:
 <dialog id="dlg" aria-labelledby="dlgTitle"></dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div id="printArea" aria-hidden="true"></div>
+<script>
+/* QR Code Generator for JavaScript 1.4.4 · Copyright (c) 2009 Kazuhiko Arase · MIT License · https://github.com/kazuhikoarase/qrcode-generator */
+var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],f={},c=function(t,r){o=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(i=4*e+17),l(0,0),l(i-7,0),l(0,i-7),s(),h(),d(t,r),e>=7&&v(t),null==a&&(a=p(e,n,u)),w(a,r)},l=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||i<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||i<=r+n||(o[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},h=function(){for(var t=8;t<i-8;t+=1)null==o[t][6]&&(o[t][6]=t%2==0);for(var r=8;r<i-8;r+=1)null==o[6][r]&&(o[6][r]=r%2==0)},s=function(){for(var t=B.getPatternPosition(e),r=0;r<t.length;r+=1)for(var n=0;n<t.length;n+=1){var i=t[r],a=t[n];if(null==o[i][a])for(var u=-2;u<=2;u+=1)for(var f=-2;f<=2;f+=1)o[i+u][a+f]=-2==u||2==u||-2==f||2==f||0==u&&0==f}},v=function(t){for(var r=B.getBCHTypeNumber(e),n=0;n<18;n+=1){var a=!t&&1==(r>>n&1);o[Math.floor(n/3)][n%3+i-8-3]=a}for(n=0;n<18;n+=1){a=!t&&1==(r>>n&1);o[n%3+i-8-3][Math.floor(n/3)]=a}},d=function(t,r){for(var e=n<<3|r,a=B.getBCHTypeInfo(e),u=0;u<15;u+=1){var f=!t&&1==(a>>u&1);u<6?o[u][8]=f:u<8?o[u+1][8]=f:o[i-15+u][8]=f}for(u=0;u<15;u+=1){f=!t&&1==(a>>u&1);u<8?o[8][i-u-1]=f:u<9?o[8][15-u-1+1]=f:o[8][15-u-1]=f}o[i-8][8]=!t},w=function(t,r){for(var e=-1,n=i-1,a=7,u=0,f=B.getMaskFunction(r),c=i-1;c>0;c-=2)for(6==c&&(c-=1);;){for(var g=0;g<2;g+=1)if(null==o[n][c-g]){var l=!1;u<t.length&&(l=1==(t[u]>>>a&1)),f(n,c-g)&&(l=!l),o[n][c-g]=l,-1==(a-=1)&&(u+=1,a=7)}if((n+=e)<0||i<=n){n-=e,e=-e;break}}},p=function(t,r,e){for(var n=A.getRSBlocks(t,r),o=b(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=B.getErrorCorrectPolynomial(c),h=k(i[u],l.getLength()-1).mod(l);for(a[u]=new Array(l.getLength()-1),g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=s>=0?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};f.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=M(t);break;case"Alphanumeric":e=x(t);break;case"Byte":e=m(t);break;case"Kanji":e=L(t);break;default:throw"mode:"+r}u.push(e),a=null},f.isDark=function(t,r){if(t<0||i<=t||r<0||i<=r)throw t+","+r;return o[t][r]},f.getModuleCount=function(){return i},f.make=function(){if(e<1){for(var t=1;t<40;t++){for(var r=A.getRSBlocks(t,n),o=b(),i=0;i<u.length;i++){var a=u[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var g=0;for(i=0;i<r.length;i++)g+=r[i].dataCount;if(o.getLengthInBits()<=8*g)break}e=t}c(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){c(!0,e);var n=B.getLostPoint(f);(0==e||t>n)&&(t=n,r=e)}return r}())},f.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<f.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<f.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=f.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},f.createSvgTag=function(t,r,e,n){var o={};"object"==typeof arguments[0]&&(t=(o=arguments[0]).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,c,g=f.getModuleCount()*t+2*r,l="";for(c="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",l+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',l+=o.scalable?"":' width="'+g+'px" height="'+g+'px"',l+=' viewBox="0 0 '+g+" "+g+'" ',l+=' preserveAspectRatio="xMinYMin meet"',l+=n.text||e.text?' role="img" aria-labelledby="'+y([n.id,e.id].join(" ").trim())+'"':"",l+=">",l+=n.text?'<title id="'+y(n.id)+'">'+y(n.text)+"</title>":"",l+=e.text?'<description id="'+y(e.id)+'">'+y(e.text)+"</description>":"",l+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',l+='<path d="',a=0;a<f.getModuleCount();a+=1)for(u=a*t+r,i=0;i<f.getModuleCount();i+=1)f.isDark(a,i)&&(l+="M"+(i*t+r)+","+u+c);return l+='" stroke="transparent" fill="black"/>',l+="</svg>"},f.createDataURL=function(t,r){t=t||2,r=void 0===r?4*t:r;var e=f.getModuleCount()*t+2*r,n=r,o=e-r;return I(e,e,(function(r,e){if(n<=r&&r<o&&n<=e&&e<o){var i=Math.floor((r-n)/t),a=Math.floor((e-n)/t);return f.isDark(a,i)?0:1}return 1}))},f.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=f.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=f.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=y(e),o+='"'),o+="/>"};var y=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return f.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*f.getModuleCount()+2*t,u=t,c=a-t,g={"██":"█","█ ":"▀"," █":"▄","  ":" "},l={"██":"▀","█ ":"▀"," █":" ","  ":" "},h="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<c&&u<=r&&r<c&&f.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<c&&u<=r+1&&r+1<c&&f.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",h+=t<1&&r+1>=c?l[i]:g[i];h+="\n"}return a%2&&t>0?h.substring(0,h.length-a-1)+Array(a+1).join("▀"):h.substring(0,h.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=f.getModuleCount()*t+2*r,u=r,c=a-r,g=Array(t+1).join("██"),l=Array(t+1).join("  "),h="",s="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),s="",n=0;n<a;n+=1)i=1,u<=n&&n<c&&u<=e&&e<c&&f.isDark(o,Math.floor((n-u)/t))&&(i=0),s+=i?g:l;for(o=0;o<t;o+=1)h+=s+"\n"}return h.substring(0,h.length-1)},f.renderTo2dContext=function(t,r){r=r||2;for(var e=f.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=f.isDark(n,o)?"black":"white",t.fillRect(n*r,o*r,r,r)},f};t.stringToBytes=(t.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,t.createStringToBytes=function(t,r){var e=function(){for(var e=S(t),n=function(){var t=e.read();if(-1==t)throw"eof";return t},o=0,i={};;){var a=e.read();if(-1==a)break;var u=n(),f=n()<<8|n();i[String.fromCharCode(a<<8|u)]=f,o+=1}if(o!=r)throw o+" != "+r;return i}(),n="?".charCodeAt(0);return function(t){for(var r=[],o=0;o<t.length;o+=1){var i=t.charCodeAt(o);if(i<128)r.push(i);else{var a=e[t.charAt(o)];"number"==typeof a?(255&a)==a?r.push(a):(r.push(a>>>8),r.push(255&a)):r.push(n)}}return r}};var r,e,n,o,i,a=1,u=2,f=4,c=8,g={L:1,M:0,Q:3,H:2},l=0,h=1,s=2,v=3,d=4,w=5,p=6,y=7,B=(r=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],e=1335,n=7973,i=function(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r},(o={}).getBCHTypeInfo=function(t){for(var r=t<<10;i(r)-i(e)>=0;)r^=e<<i(r)-i(e);return 21522^(t<<10|r)},o.getBCHTypeNumber=function(t){for(var r=t<<12;i(r)-i(n)>=0;)r^=n<<i(r)-i(n);return t<<12|r},o.getPatternPosition=function(t){return r[t-1]},o.getMaskFunction=function(t){switch(t){case l:return function(t,r){return(t+r)%2==0};case h:return function(t,r){return t%2==0};case s:return function(t,r){return r%3==0};case v:return function(t,r){return(t+r)%3==0};case d:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case w:return function(t,r){return t*r%2+t*r%3==0};case p:return function(t,r){return(t*r%2+t*r%3)%2==0};case y:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},o.getErrorCorrectPolynomial=function(t){for(var r=k([1],0),e=0;e<t;e+=1)r=r.multiply(k([1,C.gexp(e)],0));return r},o.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case a:return 10;case u:return 9;case f:case c:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case a:return 12;case u:return 11;case f:return 16;case c:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case a:return 14;case u:return 13;case f:return 16;case c:return 12;default:throw"mode:"+t}}},o.getLostPoint=function(t){for(var r=t.getModuleCount(),e=0,n=0;n<r;n+=1)for(var o=0;o<r;o+=1){for(var i=0,a=t.isDark(n,o),u=-1;u<=1;u+=1)if(!(n+u<0||r<=n+u))for(var f=-1;f<=1;f+=1)o+f<0||r<=o+f||0==u&&0==f||a==t.isDark(n+u,o+f)&&(i+=1);i>5&&(e+=3+i-5)}for(n=0;n<r-1;n+=1)for(o=0;o<r-1;o+=1){var c=0;t.isDark(n,o)&&(c+=1),t.isDark(n+1,o)&&(c+=1),t.isDark(n,o+1)&&(c+=1),t.isDark(n+1,o+1)&&(c+=1),0!=c&&4!=c||(e+=3)}for(n=0;n<r;n+=1)for(o=0;o<r-6;o+=1)t.isDark(n,o)&&!t.isDark(n,o+1)&&t.isDark(n,o+2)&&t.isDark(n,o+3)&&t.isDark(n,o+4)&&!t.isDark(n,o+5)&&t.isDark(n,o+6)&&(e+=40);for(o=0;o<r;o+=1)for(n=0;n<r-6;n+=1)t.isDark(n,o)&&!t.isDark(n+1,o)&&t.isDark(n+2,o)&&t.isDark(n+3,o)&&t.isDark(n+4,o)&&!t.isDark(n+5,o)&&t.isDark(n+6,o)&&(e+=40);var g=0;for(o=0;o<r;o+=1)for(n=0;n<r;n+=1)t.isDark(n,o)&&(g+=1);return e+=Math.abs(100*g/r/r-50)/5*10},o),C=function(){for(var t=new Array(256),r=new Array(256),e=0;e<8;e+=1)t[e]=1<<e;for(e=8;e<256;e+=1)t[e]=t[e-4]^t[e-5]^t[e-6]^t[e-8];for(e=0;e<255;e+=1)r[t[e]]=e;var n={glog:function(t){if(t<1)throw"glog("+t+")";return r[t]},gexp:function(r){for(;r<0;)r+=255;for(;r>=256;)r-=255;return t[r]}};return n}();function k(t,r){if(void 0===t.length)throw t.length+"/"+r;var e=function(){for(var e=0;e<t.length&&0==t[e];)e+=1;for(var n=new Array(t.length-e+r),o=0;o<t.length-e;o+=1)n[o]=t[o+e];return n}(),n={getAt:function(t){return e[t]},getLength:function(){return e.length},multiply:function(t){for(var r=new Array(n.getLength()+t.getLength()-1),e=0;e<n.getLength();e+=1)for(var o=0;o<t.getLength();o+=1)r[e+o]^=C.gexp(C.glog(n.getAt(e))+C.glog(t.getAt(o)));return k(r,0)},mod:function(t){if(n.getLength()-t.getLength()<0)return n;for(var r=C.glog(n.getAt(0))-C.glog(t.getAt(0)),e=new Array(n.getLength()),o=0;o<n.getLength();o+=1)e[o]=n.getAt(o);for(o=0;o<t.getLength();o+=1)e[o]^=C.gexp(C.glog(t.getAt(o))+r);return k(e,0).mod(t)}};return n}var A=function(){var t=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],r=function(t,r){var e={};return e.totalCount=t,e.dataCount=r,e},e={};return e.getRSBlocks=function(e,n){var o=function(r,e){switch(e){case g.L:return t[4*(r-1)+0];case g.M:return t[4*(r-1)+1];case g.Q:return t[4*(r-1)+2];case g.H:return t[4*(r-1)+3];default:return}}(e,n);if(void 0===o)throw"bad rs block @ typeNumber:"+e+"/errorCorrectionLevel:"+n;for(var i=o.length/3,a=[],u=0;u<i;u+=1)for(var f=o[3*u+0],c=o[3*u+1],l=o[3*u+2],h=0;h<f;h+=1)a.push(r(c,l));return a},e}(),b=function(){var t=[],r=0,e={getBuffer:function(){return t},getAt:function(r){var e=Math.floor(r/8);return 1==(t[e]>>>7-r%8&1)},put:function(t,r){for(var n=0;n<r;n+=1)e.putBit(1==(t>>>r-n-1&1))},getLengthInBits:function(){return r},putBit:function(e){var n=Math.floor(r/8);t.length<=n&&t.push(0),e&&(t[n]|=128>>>r%8),r+=1}};return e},M=function(t){var r=a,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+2<r.length;)t.put(o(r.substring(n,n+3)),10),n+=3;n<r.length&&(r.length-n==1?t.put(o(r.substring(n,n+1)),4):r.length-n==2&&t.put(o(r.substring(n,n+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+i(t.charAt(e));return r},i=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return n},x=function(t){var r=u,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+1<r.length;)t.put(45*o(r.charAt(n))+o(r.charAt(n+1)),11),n+=2;n<r.length&&t.put(o(r.charAt(n)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return n},m=function(r){var e=f,n=t.stringToBytes(r),o={getMode:function(){return e},getLength:function(t){return n.length},write:function(t){for(var r=0;r<n.length;r+=1)t.put(n[r],8)}};return o},L=function(r){var e=c,n=t.stringToBytesFuncs.SJIS;if(!n)throw"sjis not supported.";!function(t,r){var e=n("友");if(2!=e.length||38726!=(e[0]<<8|e[1]))throw"sjis not supported."}();var o=n(r),i={getMode:function(){return e},getLength:function(t){return~~(o.length/2)},write:function(t){for(var r=o,e=0;e+1<r.length;){var n=(255&r[e])<<8|255&r[e+1];if(33088<=n&&n<=40956)n-=33088;else{if(!(57408<=n&&n<=60351))throw"illegal char at "+(e+1)+"/"+n;n-=49472}n=192*(n>>>8&255)+(255&n),t.put(n,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return i},D=function(){var t=[],r={writeByte:function(r){t.push(255&r)},writeShort:function(t){r.writeByte(t),r.writeByte(t>>>8)},writeBytes:function(t,e,n){e=e||0,n=n||t.length;for(var o=0;o<n;o+=1)r.writeByte(t[o+e])},writeString:function(t){for(var e=0;e<t.length;e+=1)r.writeByte(t.charCodeAt(e))},toByteArray:function(){return t},toString:function(){var r="";r+="[";for(var e=0;e<t.length;e+=1)e>0&&(r+=","),r+=t[e];return r+="]"}};return r},S=function(t){var r=t,e=0,n=0,o=0,i={read:function(){for(;o<8;){if(e>=r.length){if(0==o)return-1;throw"unexpected end of file./"+o}var t=r.charAt(e);if(e+=1,"="==t)return o=0,-1;t.match(/^\s$/)||(n=n<<6|a(t.charCodeAt(0)),o+=6)}var i=n>>>o-8&255;return o-=8,i}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return i},I=function(t,r,e){for(var n=function(t,r){var e=t,n=r,o=new Array(t*r),i={setPixel:function(t,r,n){o[r*e+t]=n},write:function(t){t.writeString("GIF87a"),t.writeShort(e),t.writeShort(n),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(e),t.writeShort(n),t.writeByte(0);var r=a(2);t.writeByte(2);for(var o=0;r.length-o>255;)t.writeByte(255),t.writeBytes(r,o,255),o+=255;t.writeByte(r.length-o),t.writeBytes(r,o,r.length-o),t.writeByte(0),t.writeString(";")}},a=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,i=u(),a=0;a<r;a+=1)i.add(String.fromCharCode(a));i.add(String.fromCharCode(r)),i.add(String.fromCharCode(e));var f,c,g,l=D(),h=(f=l,c=0,g=0,{write:function(t,r){if(t>>>r!=0)throw"length over";for(;c+r>=8;)f.writeByte(255&(t<<c|g)),r-=8-c,t>>>=8-c,g=0,c=0;g|=t<<c,c+=r},flush:function(){c>0&&f.writeByte(g)}});h.write(r,n);var s=0,v=String.fromCharCode(o[s]);for(s+=1;s<o.length;){var d=String.fromCharCode(o[s]);s+=1,i.contains(v+d)?v+=d:(h.write(i.indexOf(v),n),i.size()<4095&&(i.size()==1<<n&&(n+=1),i.add(v+d)),v=d)}return h.write(i.indexOf(v),n),h.write(e,n),h.flush(),l.toByteArray()},u=function(){var t={},r=0,e={add:function(n){if(e.contains(n))throw"dup key:"+n;t[n]=r,r+=1},size:function(){return r},indexOf:function(r){return t[r]},contains:function(r){return void 0!==t[r]}};return e};return i}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=D();n.write(a);for(var u=function(){var t=0,r=0,e=0,n="",o={},i=function(t){n+=String.fromCharCode(a(63&t))},a=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return o.writeByte=function(n){for(t=t<<8|255&n,r+=8,e+=1;r>=6;)i(t>>>r-6),r-=6},o.flush=function(){if(r>0&&(i(t<<6-r),t=0,r=0),e%3!=0)for(var o=3-e%3,a=0;a<o;a+=1)n+="="},o.toString=function(){return n},o}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return t}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||n>=57344?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)},function(t){"function"==typeof define&&define.amd?define([],t):"object"==typeof exports&&(module.exports=t())}((function(){return qrcode}));
+</script>
 <script>
 (function(){
 "use strict";
@@ -1490,7 +1566,7 @@ function impactTable(imp, short){
 }
 
 // ================= Render chung =================
-const TITLES = {dash:'Tổng quan', docs:'Chứng từ & bút toán', reports:'Báo cáo', stock:'Kho & lô', mat:'Giá nguyên liệu', cogs:'Giá xuất kho', cost:'Giá thành theo lệnh sản xuất', lots:'Giá vốn theo lô', audit:'Nhật ký sửa đổi', items:'Danh mục & lệnh sản xuất'};
+const TITLES = {dash:'Tổng quan', docs:'Chứng từ & bút toán', reports:'Báo cáo', stock:'Kho & lô', mat:'Giá nguyên liệu', cogs:'Giá xuất kho', cost:'Giá thành theo lệnh sản xuất', lots:'Giá vốn theo lô', trace:'Truy xuất lô', sim:'Giả lập giá nguyên liệu', audit:'Nhật ký sửa đổi', items:'Danh mục & lệnh sản xuất'};
 const RENDER = {};
 function renderAll(){
   R = compute(S.data);
@@ -1974,7 +2050,7 @@ RENDER.stock = function(){
   $('locFilter').innerHTML = [['all', 'Tất cả'], ['TANK', 'Bồn'], ['JAR', 'Trái'], ['DRUM', 'Phuy'], ['none', 'Chưa xếp']].map(([k, l]) => '<button type="button" data-lk="' + k + '" aria-pressed="' + (lk === k) + '">' + l + '</button>').join('');
   if(document.activeElement !== $('lotSearch')) $('lotSearch').value = S.ui.sq || '';
   const end = D.period.to, days = d => Math.round((Date.parse(end + 'T00:00:00Z') - Date.parse(d + 'T00:00:00Z')) / 864e5);
-  let lbody = '', gv = 0, nRows = 0;
+  let lbody = '', gv = 0, nRows = 0; const tems = S.ui._tems = [];
   Object.keys(D.items).forEach(k => { const r = R.items[k], it = D.items[k]; if(!r) return;
     const rows = [];
     Object.values(r.cells).forEach(c => { if(w !== 'all' && c.wh !== w) return;
@@ -1985,8 +2061,8 @@ RENDER.stock = function(){
       if(q){ const L = R.lots[x.lot]; if(!match(it.name + ' ' + it.code + ' ' + (it.misa || '') + ' ' + x.lot + ' ' + (L ? L.mh : '') + ' ' + x.loc + ' ' + x.wh, q)) return false; }
       return true; }).sort((a, b) => a.lot < b.lot ? -1 : a.lot > b.lot ? 1 : (a.wh + '|' + a.loc < b.wh + '|' + b.loc ? -1 : 1));
     if(!shown.length) return; let sq = 0, sv = 0;
-    shown.forEach(x => { const L = R.lots[x.lot]; sq = rq(sq + x.q); sv += x.v; nRows++;
-      lbody += '<tr><td>' + esc(it.name) + '</td><td class="acc">' + esc(x.lot) + '</td><td class="acc">' + esc(L ? L.mh : '') + '</td><td class="acc">' + esc(x.loc || '—') + (x.loc ? ' <span class="muted small">' + esc(LOC_KIND[locKind(D, x.wh, x.loc)] || '') + '</span>' : '') + '</td><td>' + x.wh + '</td><td>' + (L && L.hsd ? hsdText(L) : '<span class="muted">—</span>') + '</td><td>' + (L ? qcText(L.qc) : '') + '</td><td class="n">' + (x.q < -EPS ? sx('s-bad', fmtQ(x.q) + ' ' + esc(it.uom) + ' tồn âm') : fmtQ(x.q) + ' ' + esc(it.uom)) + '</td><td class="n">' + (L ? days(L.date) : '') + '</td><td class="n">' + (spec ? fmt(x.v) : '<span class="muted">—</span>') + '</td><td><div class="btn-row" style="flex-wrap:nowrap"><button class="btn sm" type="button" data-qc="' + esc(x.lot) + '">QC lô</button>' + (L && L.qc === 'fail' && x.q > EPS ? '<button class="btn sm danger" type="button" data-scrap="' + esc(k + '|' + x.wh + '|' + x.lot + '|' + x.loc) + '">Xuất hủy</button>' : '') + '</div></td></tr>'; });
+    shown.forEach(x => { const L = R.lots[x.lot]; if(x.q > EPS) tems.push({item:k, lot:x.lot, wh:x.wh, loc:x.loc || '', q:x.q}); sq = rq(sq + x.q); sv += x.v; nRows++;
+      lbody += '<tr><td>' + esc(it.name) + '</td><td class="acc">' + esc(x.lot) + '</td><td class="acc">' + esc(L ? L.mh : '') + '</td><td class="acc">' + esc(x.loc || '—') + (x.loc ? ' <span class="muted small">' + esc(LOC_KIND[locKind(D, x.wh, x.loc)] || '') + '</span>' : '') + '</td><td>' + x.wh + '</td><td>' + (L && L.hsd ? hsdText(L) : '<span class="muted">—</span>') + '</td><td>' + (L ? qcText(L.qc) : '') + '</td><td class="n">' + (x.q < -EPS ? sx('s-bad', fmtQ(x.q) + ' ' + esc(it.uom) + ' tồn âm') : fmtQ(x.q) + ' ' + esc(it.uom)) + '</td><td class="n">' + (L ? days(L.date) : '') + '</td><td class="n">' + (spec ? fmt(x.v) : '<span class="muted">—</span>') + '</td><td><div class="btn-row" style="flex-wrap:nowrap"><button class="btn sm" type="button" data-qc="' + esc(x.lot) + '">QC lô</button><button class="btn sm" type="button" data-tem="' + esc(k + '|' + x.lot + '|' + x.wh + '|' + (x.loc || '')) + '">Tem</button>' + (L && L.qc === 'fail' && x.q > EPS ? '<button class="btn sm danger" type="button" data-scrap="' + esc(k + '|' + x.wh + '|' + x.lot + '|' + x.loc) + '">Xuất hủy</button>' : '') + '</div></td></tr>'; });
     gv += sv;
     lbody += '<tr class="sub"><td colspan="7">Cộng ' + esc(it.name) + ' · ' + new Set(shown.map(x => x.lot)).size + ' lô · ' + shown.length + ' dòng</td><td class="n">' + fmtQ(sq) + ' ' + esc(it.uom) + '</td><td></td><td class="n">' + (spec ? fmt(sv) : '') + '</td><td></td></tr>'; });
   $('lotTbl').innerHTML = '<thead><tr><th>Tên hàng</th><th>Mã lô</th><th>Mã hóa</th><th>Vị trí</th><th>Kho</th><th>Hạn sử dụng</th><th>QC</th><th class="n">Số lượng tồn</th><th class="n">Số ngày lưu kho</th><th class="n">Giá trị</th><th>Thao tác</th></tr></thead><tbody>' +
@@ -2202,7 +2278,7 @@ function renderLotTree(){
   const D = S.data, code = S.ui.lot, box = $('lotTree');
   if(!code || !R.lots[code]){ box.innerHTML = '<h2>Cấu thành giá vốn</h2><p class="muted" style="margin:0">Chọn một lô.</p>'; return; }
   const T = lotComps(R, code), L = T.L, it = D.items[L.item], u = it.uom, q = L.inQty, z = q > EPS ? T.value / q : 0;
-  let h = '<div class="panel-head"><h2>Cấu thành giá vốn · lô <span class="acc">' + esc(code) + '</span></h2><div class="spacer"></div>' + csvBtn('treeTbl', 'cau-thanh-lo-' + code) + '</div>';
+  let h = '<div class="panel-head"><h2>Cấu thành giá vốn · lô <span class="acc">' + esc(code) + '</span></h2><div class="spacer"></div><button class="btn sm" type="button" data-goto-trace="' + esc(code) + '">Truy xuất lô</button>' + csvBtn('treeTbl', 'cau-thanh-lo-' + code) + '</div>';
   h += '<div class="meta"><span>' + esc(it.name) + '</span>' + (L.mh ? '<span>Mã hóa <span class="acc">' + esc(L.mh) + '</span></span>' : '') + '<span>' + (T.c ? 'Lệnh <b class="acc">' + esc(T.c.no) + '</b> · nhập kho ' + esc(L.doc) + ' ngày ' + dmy(L.date) : esc(lotSource(R, code)) + ' · ' + dmy(L.date)) + '</span><span>QC ' + qcText(L.qc) + '</span></div>';
   h += '<div class="kpis"><div class="panel kpi"><span class="label">Số lượng lô</span><span class="val" id="treeQ">' + fmtQ(q) + '<small>' + esc(u) + '</small></span></div><div class="panel kpi"><span class="label">Giá trị lô (tổng giá thành)</span><span class="val" id="treeV">' + fmt(T.value) + '<small>đ</small></span></div><div class="panel kpi"><span class="label">Giá thành đơn vị</span><span class="val" id="treeZ">' + fmt4(z) + '<small>đ/' + esc(u) + '</small></span></div>' +
     (T.c ? '<div class="panel kpi"><span class="label">Tổng chi phí lệnh</span><span class="val">' + fmt(T.c.total) + '<small>đ</small></span><span class="sub">' + (T.c.abn ? 'Hỏng ngoài định mức → 632: ' + fmt(T.c.abn) + ' đ' : T.c.lots.length > 1 ? T.c.lots.length + ' lô cùng lệnh' : 'Toàn bộ vào lô này') + '</span></div>' : '') + '</div>';
@@ -2240,6 +2316,169 @@ function renderLotTree(){
       '<tfoot><tr><td colspan="3">Cộng</td><td class="n">' + fmtQ(s.q) + '</td><td class="n">' + fmt(s.cost) + '</td><td class="n">' + fmt(s.rev) + '</td><td class="n">' + fmt(s.rev - s.cost) + '</td></tr></tfoot></table></div>' : '<p class="muted" style="margin:0">Chưa bán.</p>');
   }
   box.innerHTML = h;
+}
+
+
+// ================= Truy xuất lô: nguồn gốc và nơi đi =================
+const TR_TYPE = {sup:'Nhà cung cấp', origin:'Nguồn', lot:'Lô', lsx:'Lệnh sản xuất', cus:'Khách hàng'};
+function salesOfLot(Rx, code){ const out = [];
+  Rx.active.forEach(d => { if(d.type !== 'HD') return; d.lines.forEach(l => { if(l.lot === code) out.push({doc:d.no, date:d.date, partyId:d.partyId, wh:d.wh, item:l.item, lot:code, qty:l.qty, price:l.price}); }); });
+  return out; }
+function lotCellsLeft(Rx, code){ const L = Rx.lots[code]; if(!L || !Rx.items[L.item]) return [];
+  return Object.values(Rx.items[L.item].lcells).filter(c => c.lot === code && c.q > EPS).map(c => ({item:L.item, lot:code, wh:c.wh, loc:c.loc, q:c.q})); }
+function traceGraph(Rx, code){
+  const D = Rx.D, nodes = {}, edges = [], seen = {};
+  const node = (id, col, o) => nodes[id] || (nodes[id] = Object.assign({id, col}, o));
+  const edge = (a, b) => { const k = a + '>' + b; if(!seen[k]){ seen[k] = 1; edges.push({a, b}); } };
+  const lotNode = (c, col) => { const L = Rx.lots[c]; return node('lot:' + c, col, {type:'lot', lot:c, L}); };
+  const up = (c, col, depth) => { const L = Rx.lots[c]; if(!L || depth > 6) return; lotNode(c, col);
+    if(L.src === 'NK' && Rx.card[L.lsx]){ const cd = Rx.card[L.lsx], id = 'lsx:' + L.lsx; node(id, col - 1, {type:'lsx', k:L.lsx, c:cd}); edge(id, 'lot:' + c);
+      const ins = {}; cd.rows.forEach(r => { if(r.lot) ins[r.lot] = rq((ins[r.lot] || 0) + r.qty); });
+      Object.keys(ins).forEach(x => { if(!nodes['lot:' + x]){ up(x, col - 2, depth + 1); } if(nodes['lot:' + x]){ nodes['lot:' + x].used = ins[x]; edge('lot:' + x, id); } }); }
+    else if(L.src === 'PN'){ const id = 'sup:' + L.partyId; node(id, col - 1, {type:'sup', name:partyName(D, L.partyId)}); edge(id, 'lot:' + c); }
+    else { const id = 'org:' + c; node(id, col - 1, {type:'origin', name:lotSource(Rx, c)}); edge(id, 'lot:' + c); } };
+  const affected = [code];
+  const down = (c, col, depth) => { if(depth > 6) return;
+    usesOf(Rx, c, 9).forEach(u => { const id = 'lsx:' + u.row.lsx; node(id, col + 1, {type:'lsx', k:u.row.lsx, c:u.c}); edge('lot:' + c, id);
+      u.lots.forEach(l => { const fresh = !nodes['lot:' + l.lot]; lotNode(l.lot, col + 2); edge(id, 'lot:' + l.lot); if(fresh){ affected.push(l.lot); down(l.lot, col + 2, depth + 1); } }); });
+    const by = {}; salesOfLot(Rx, c).forEach(s => { (by[s.partyId] = by[s.partyId] || []).push(s); });
+    Object.keys(by).forEach(p => { const id = 'cus:' + p, n = node(id, col + 1, {type:'cus', name:partyName(D, p), qty:0, docs:[]}); by[p].forEach(s => { n.qty = rq(n.qty + s.qty); if(n.docs.indexOf(s.doc) < 0) n.docs.push(s.doc); n.uom = unitOf(D, s.item); }); edge('lot:' + c, id); }); };
+  up(code, 0, 0); down(code, 0, 0);
+  const sales = [], stock = []; affected.forEach(c => { salesOfLot(Rx, c).forEach(s => sales.push(s)); lotCellsLeft(Rx, c).forEach(x => stock.push(x)); });
+  sales.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.doc < b.doc ? -1 : 1);
+  return {nodes, edges, affected, sales, stock};
+}
+function trNodeHTML(n, sel){
+  const D = S.data, cls = 'tn tn-' + n.type + (sel ? ' on' : '');
+  if(n.type === 'lot'){ const L = n.L, it = L ? D.items[L.item] : null, u = L && L.inQty > EPS ? L.inValue / L.inQty : 0, left = lotLeft(R, n.lot);
+    return '<button type="button" class="' + cls + '" data-node="' + esc(n.id) + '" data-tlot="' + esc(n.lot) + '"><span class="tn-k">' + esc(it ? GROUP_NAME(it) : 'Lô') + '</span><b>' + esc(it ? it.name : n.lot) + '</b>' +
+      '<span class="mono">' + esc(n.lot) + (L && L.mh ? ' · ' + esc(L.mh) : '') + '</span>' +
+      '<span>' + (u ? fmt(u) + ' đ/' + esc(it.uom) : '') + (L && L.qc !== 'pass' ? ' · ' + qcText(L.qc) : '') + '</span>' +
+      (n.used != null ? '<span class="muted">dùng ' + fmtQ(n.used) + ' ' + esc(it ? it.uom : '') + '</span>' : left > EPS ? '<span class="muted">còn ' + fmtQ(left) + ' ' + esc(it ? it.uom : '') + '</span>' : '') + '</button>'; }
+  if(n.type === 'lsx'){ const c = n.c, it = D.items[c.o];
+    return '<div class="' + cls + '" data-node="' + esc(n.id) + '"><span class="tn-k">Lệnh sản xuất</span><b class="mono">' + esc(c.no) + '</b><span>' + esc(it ? it.name : '') + '</span><span>' + (c.status === 'done' && c.z ? fmt(c.z) + ' đ/' + esc(it.uom) : LSX_STATUS[c.status] || '') + '</span></div>'; }
+  if(n.type === 'cus') return '<div class="' + cls + '" data-node="' + esc(n.id) + '"><span class="tn-k">Khách hàng</span><b>' + esc(n.name) + '</b><span>' + fmtQ(n.qty) + ' ' + esc(n.uom || '') + '</span><span class="mono muted">' + esc(n.docs.join(', ')) + '</span></div>';
+  return '<div class="' + cls + '" data-node="' + esc(n.id) + '"><span class="tn-k">' + (n.type === 'sup' ? 'Nhà cung cấp' : 'Nguồn') + '</span><b>' + esc(n.name) + '</b></div>';
+}
+function traceDefault(){ if(R.lots['050126-01']) return '050126-01'; const L = Object.values(R.lots).find(x => S.data.items[x.item] && S.data.items[x.item].kind === 'NVL'); return L ? L.code : null; }
+function lotOptions(cur){
+  const D = S.data, g = [['NVL', 'Nguyên vật liệu, bao bì, phụ gia'], ['BTP', 'Bán thành phẩm'], ['SP', 'Thành phẩm'], ['HH', 'Hàng hóa']];
+  return g.map(([k, l]) => { const xs = Object.values(R.lots).filter(L => D.items[L.item] && D.items[L.item].kind === k).sort((a, b) => a.item < b.item ? -1 : a.item > b.item ? 1 : a.date < b.date ? -1 : 1);
+    return xs.length ? '<optgroup label="' + l + '">' + xs.map(L => opt(L.code, L.code + ' · ' + D.items[L.item].name + (L.mh ? ' · ' + L.mh : ''), cur)).join('') + '</optgroup>' : ''; }).join(''); }
+const lotUrl = code => location.href.split('#')[0] + '#lo=' + encodeURIComponent(code);
+function qrSVG(text, px){
+  const q = qrcode(0, 'M'); q.addData(text); q.make(); const n = q.getModuleCount(); let d = '';
+  for(let r = 0; r < n; r++) for(let c = 0; c < n; c++) if(q.isDark(r, c)) d += 'M' + c + ' ' + r + 'h1v1h-1z';
+  return '<svg class="qr" viewBox="-2 -2 ' + (n + 4) + ' ' + (n + 4) + '" width="' + px + '" height="' + px + '" role="img" aria-label="Mã QR lô" shape-rendering="crispEdges"><rect x="-2" y="-2" width="' + (n + 4) + '" height="' + (n + 4) + '" fill="#fff"/><path d="' + d + '" fill="#000"/></svg>'; }
+RENDER.trace = function(){
+  const D = S.data;
+  if(!S.ui.tlot || !R.lots[S.ui.tlot]) S.ui.tlot = traceDefault();
+  const code = S.ui.tlot; $('traceSel').innerHTML = lotOptions(code);
+  const box = $('traceBody'); if(!code){ box.innerHTML = '<p class="muted">Chưa có lô.</p>'; $('traceMore').innerHTML = ''; return; }
+  const L = R.lots[code], it = D.items[L.item], G = traceGraph(R, code), u = L.inQty > EPS ? L.inValue / L.inQty : 0, left = lotLeft(R, code);
+  const cus = new Set(G.sales.map(s => s.partyId)), soldQ = {}, leftQ = {};
+  G.sales.forEach(s => { const k = unitOf(D, s.item); soldQ[k] = rq((soldQ[k] || 0) + s.qty); });
+  G.stock.forEach(x => { const k = unitOf(D, x.item); leftQ[k] = rq((leftQ[k] || 0) + x.q); });
+  const qtyTxt = o => Object.keys(o).length ? Object.keys(o).map(k => fmtQ(o[k]) + '<small>' + esc(k) + '</small>').join(' ') : '0';
+  const qcP = (D.qc[code] && D.qc[code].role) || L.qcRole;
+  let h = '<div class="tr-head"><div class="tr-qr">' + qrSVG(lotUrl(code), 112) + '</div><dl class="kv tr-kv">' +
+    '<dt>Tên hàng</dt><dd><b>' + esc(it.name) + '</b></dd><dt>Mã lô · mã hóa</dt><dd class="mono">' + esc(code) + (L.mh ? ' · ' + esc(L.mh) : '') + '</dd>' +
+    '<dt>Nguồn</dt><dd>' + esc(lotSource(R, code)) + ' · ' + dmy(L.date) + '</dd><dt>Đơn giá lô</dt><dd>' + fmt2(u) + ' đ/' + esc(it.uom) + '</dd>' +
+    '<dt>Hạn sử dụng</dt><dd>' + (L.hsd ? dmy(L.hsd) : '—') + '</dd><dt>QC</dt><dd>' + qcText(L.qc) + ' · ' + esc(qcLabel(qcP)) + '</dd>' +
+    '<dt>Còn tồn</dt><dd>' + fmtQ(left) + ' ' + esc(it.uom) + (L.locs.length ? ' · ' + esc(lotCellsLeft(R, code).map(x => x.wh + (x.loc ? ' ' + x.loc : '')).join(', ')) : '') + '</dd></dl>' +
+    '<div class="kpis tr-kpis"><div class="panel kpi"><span class="label">Lô liên quan phía sau</span><span class="val">' + (G.affected.length - 1) + '</span></div>' +
+    '<div class="panel kpi"><span class="label">Khách hàng đã nhận</span><span class="val">' + cus.size + '</span></div>' +
+    '<div class="panel kpi"><span class="label">Đã bán</span><span class="val">' + qtyTxt(soldQ) + '</span></div>' +
+    '<div class="panel kpi"><span class="label">Còn trong kho</span><span class="val">' + qtyTxt(leftQ) + '</span></div></div></div>';
+  // sơ đồ: cột theo khoảng cách tới lô đang xem (âm: nguồn gốc, dương: nơi đi)
+  const cols = {}; Object.values(G.nodes).forEach(n => (cols[n.col] = cols[n.col] || []).push(n));
+  const ks = Object.keys(cols).map(Number).sort((a, b) => a - b);
+  const colHead = xs => { const t = [...new Set(xs.map(n => n.type === 'origin' ? 'sup' : n.type))]; return t.map(x => x === 'sup' ? 'Nguồn' : TR_TYPE[x]).join(' · '); };
+  box.innerHTML = h; h = '';
+  h += '<div class="panel"><div class="panel-head"><h2>Sơ đồ truy xuất</h2><div class="spacer"></div><span class="tr-leg"><i class="up"></i>Nguồn gốc <i class="dn"></i>Nơi đi</span></div>' +
+    '<div class="tr-scroll"><div class="tr-graph" id="trGraph"><svg class="tr-svg" id="trSvg" aria-hidden="true"></svg>' +
+    ks.map(k => '<div class="tr-col"><div class="tr-ch">' + esc(k === 0 ? 'Lô đang xem' : colHead(cols[k])) + '</div>' + cols[k].map(n => trNodeHTML(n, n.id === 'lot:' + code)).join('') + '</div>').join('') + '</div></div></div>';
+  // khách đã nhận và tồn cần giữ
+  h += '<div class="duo"><div class="panel"><div class="panel-head"><h2>Khách hàng đã nhận</h2><div class="spacer"></div>' + csvBtn('trSales', 'khach-da-nhan-' + code) + '</div><div class="tbl-wrap"><table id="trSales"><thead><tr><th>Ngày</th><th>Hóa đơn</th><th>Khách hàng</th><th>Hàng · lô</th><th class="n">Số lượng</th></tr></thead><tbody>' +
+    (G.sales.length ? G.sales.map(s => '<tr><td>' + ddmm(s.date) + '</td><td class="acc"><button class="linkbtn mono" type="button" data-open-doc="' + esc(s.doc) + '">' + esc(s.doc) + '</button></td><td>' + esc(partyName(D, s.partyId)) + '</td><td>' + esc(itName(s.item)) + ' <span class="mono muted small">' + esc(s.lot) + '</span></td><td class="n">' + fmtQ(s.qty) + ' ' + esc(unitOf(D, s.item)) + '</td></tr>').join('') : '<tr><td colspan="5" class="muted">Chưa bán.</td></tr>') + '</tbody></table></div></div>' +
+    '<div class="panel"><div class="panel-head"><h2>Tồn trong kho</h2><div class="spacer"></div>' + (G.stock.length ? '<button class="btn sm" type="button" data-act="printTraceTems">' + PRINT_ICO + 'In tem</button>' : '') + '</div><div class="tbl-wrap"><table id="trStock"><thead><tr><th>Hàng · lô</th><th>Kho · vị trí</th><th>Thủ kho</th><th>QC</th><th class="n">Số lượng</th></tr></thead><tbody>' +
+    (G.stock.length ? G.stock.map(x => { const Lx = R.lots[x.lot]; return '<tr><td>' + esc(itName(x.item)) + ' <span class="mono muted small">' + esc(x.lot) + '</span></td><td>' + esc(x.wh + (x.loc ? ' · ' + x.loc : '')) + '</td><td>' + esc(keeperOf(x.wh)) + '</td><td>' + (Lx ? qcText(Lx.qc) : '') + '</td><td class="n">' + fmtQ(x.q) + ' ' + esc(unitOf(D, x.item)) + '</td></tr>'; }).join('') : '<tr><td colspan="5" class="muted">Không còn tồn.</td></tr>') + '</tbody></table></div></div></div>';
+  $('traceMore').innerHTML = h;
+  const canLock = G.stock.some(x => R.lots[x.lot] && R.lots[x.lot].qc === 'pass');
+  $('btnLock').setAttribute('aria-disabled', String(!canLock)); $('btnLock').title = canLock ? '' : 'Không còn lô đạt QC đang tồn';
+  S.ui._trace = G; requestAnimationFrame(() => { drawTrace(); const sc = document.querySelector('#traceMore .tr-scroll'), on = sc && sc.querySelector('.tn.on'); if(on){ const r = on.getBoundingClientRect(), q = sc.getBoundingClientRect(); sc.scrollLeft = Math.max(0, sc.scrollLeft + (r.left - q.left) - (sc.clientWidth - r.width) / 2); } });
+};
+function drawTrace(){
+  const g = $('trGraph'), svg = $('trSvg'), G = S.ui._trace; if(!g || !svg || !G || g.offsetParent === null) return;
+  const W = g.scrollWidth, H = g.scrollHeight, o = g.getBoundingClientRect(); svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  const box = id => { const el = g.querySelector('[data-node="' + CSS.escape(id) + '"]'); if(!el) return null; const r = el.getBoundingClientRect(); return {l:r.left - o.left, r:r.right - o.left, y:r.top - o.top + r.height / 2}; };
+  const sel = 'lot:' + S.ui.tlot, col = id => G.nodes[id] ? G.nodes[id].col : 0;
+  svg.innerHTML = G.edges.map(e => { const a = box(e.a), b = box(e.b); if(!a || !b) return ''; const x1 = a.r, x2 = b.l, m = (x1 + x2) / 2, dn = col(e.b) > 0;
+    return '<path class="' + (dn ? 'dn' : 'up') + (e.a === sel || e.b === sel ? ' hot' : '') + '" d="M' + x1 + ' ' + a.y + 'C' + m + ' ' + a.y + ' ' + m + ' ' + b.y + ' ' + x2 + ' ' + b.y + '" fill="none"/>'; }).join('');
+}
+window.addEventListener('resize', () => { if(S.ui.view === 'trace') drawTrace(); });
+function openLock(){
+  const G = S.ui._trace; if(!G) return; const xs = [...new Set(G.stock.map(x => x.lot))].filter(c => R.lots[c] && R.lots[c].qc === 'pass'); if(!xs.length) return;
+  F = {type:null, lockLots:xs};
+  openDialog('modal', head('Khóa lô liên quan') + '<div class="dlg-body"><p style="margin:0">Chuyển QC sang <b>Chờ</b> cho ' + xs.length + ' lô còn tồn: <span class="mono">' + esc(xs.join(', ')) + '</span>. Lô đang Chờ không xuất bán được.</p>' +
+    '<label class="fl" for="k_reason">Lý do (≥ 5 ký tự)<input class="inp" id="k_reason" autocomplete="off" placeholder="Ví dụ: nghi nhiễm từ lô nguyên liệu ' + esc(S.ui.tlot) + '"></label></div>' +
+    '<div class="dlg-foot"><span class="spacer"></span><button class="btn" type="button" data-act="close">Đóng</button><button class="btn danger" type="button" data-act="doLock">Khóa ' + xs.length + ' lô</button></div>', '#k_reason');
+}
+function doLock(){
+  const xs = F.lockLots, reason = $('k_reason').value.trim(), src = S.ui.tlot;
+  if(reason.length < 5){ $('k_reason').setAttribute('aria-invalid', 'true'); $('k_reason').focus(); toast('Ghi lý do, ít nhất 5 ký tự.'); return; }
+  closeDialog();
+  commit(D => { xs.forEach(c => { D.qc[c] = {status:'hold', role:'Trưởng QC', at:nowISO(), note:reason}; }); return {action:'qc', no:src, reason, detail:'Khóa ' + xs.length + ' lô theo truy xuất từ lô ' + src + ': ' + xs.join(', ')}; }, null, 'khóa lô theo ' + src);
+  toast('Đã khóa ' + xs.length + ' lô (QC Chờ).');
+}
+// Tem lô: dán lên bồn / trái / phuy; mã QR mở thẳng trang truy xuất lô
+function temHTML(t){
+  const D = S.data, L = R.lots[t.lot], it = D.items[t.item] || {name:t.item, uom:''}, qcP = (D.qc[t.lot] && D.qc[t.lot].role) || (L && L.qcRole) || '';
+  return '<div class="tem"><div class="tem-l"><div class="tem-co">Nhà máy chế biến mắm</div><div class="tem-n">' + esc(it.name) + '</div>' +
+    '<div class="tem-lot">' + esc(t.lot) + '</div><div class="tem-mh">' + esc(L && L.mh ? L.mh : '') + '</div>' +
+    '<table><tr><td>Kho</td><td>' + esc(whName(t.wh)) + '</td></tr><tr><td>Vị trí</td><td>' + esc(t.loc || '—') + '</td></tr>' +
+    '<tr><td>Ngày</td><td>' + (L ? dmy(L.date) : '') + '</td></tr><tr><td>Hạn dùng</td><td>' + (L && L.hsd ? dmy(L.hsd) : '—') + '</td></tr>' +
+    '<tr><td>Số lượng</td><td>' + fmtQ(t.q) + ' ' + esc(it.uom) + '</td></tr><tr><td>QC</td><td>' + esc(L ? QC_NAME[L.qc] : '') + ' · ' + esc(QC_PERSON[qcP] || qcP) + '</td></tr></table></div>' +
+    '<div class="tem-r">' + qrSVG(lotUrl(t.lot), 132) + '<span>Quét để xem lô</span></div></div>'; }
+function printTems(list){
+  if(!list.length){ toast('Không có lô để in tem.'); return; }
+  $('printArea').innerHTML = '<div class="tems">' + list.map(temHTML).join('') + '</div>';
+  try{ window.print(); }catch(_){}
+}
+
+// ================= Giả lập giá nguyên liệu =================
+function simData(pcts){
+  const D = clone(S.data), f = k => 1 + (pcts[k] || 0) / 100;
+  Object.keys(D.open).forEach(k => { if(!pcts[k]) return; (D.open[k] || []).forEach(o => { o.value = Math.round(o.value * f(k)); }); });
+  D.docs.forEach(d => { if(d.type !== 'PN') return; d.lines.forEach(l => { if(!pcts[l.item]) return; l.value = Math.round(l.value * f(l.item)); if(l.fc != null) l.fc = Math.round(l.fc * f(l.item) * 100) / 100; }); });
+  return D; }
+function prodCost(Rx){ const o = {};
+  Rx.order.forEach(k => { const c = Rx.card[k]; if(c.status !== 'done' || !(c.good > EPS)) return; const x = o[c.o] || (o[c.o] = {q:0, v:0}); x.q = rq(x.q + c.good); x.v += c.z * c.good; });
+  Object.keys(o).forEach(k => o[k].z = o[k].v / o[k].q); return o; }
+function simAvgPrice(Rx, k){ const ls = Object.values(Rx.lots).filter(L => L.item === k && L.inQty > EPS && (L.src === 'PN' || L.src === 'open')); const q = sum(ls, L => L.inQty); return q > EPS ? sum(ls, L => L.inValue) / q : 0; }
+RENDER.sim = function(){
+  const D = S.data, P = S.ui.sim || (S.ui.sim = {}), ks = itemsOf(D, 'NVL').filter(k => simAvgPrice(R, k) > 0);
+  if(!$('simCtl').dataset.built || $('simCtl').dataset.built !== ks.join(',')){
+    $('simCtl').dataset.built = ks.join(',');
+    $('simCtl').innerHTML = ks.map(k => { const it = D.items[k], v = P[k] || 0;
+      return '<div class="sim-r"><label for="sim_' + k + '"><b>' + esc(it.name) + '</b><span class="muted small">' + fmt(simAvgPrice(R, k)) + ' đ/' + esc(it.uom) + '</span></label>' +
+        '<input type="range" id="sim_' + k + '" data-sim="' + k + '" min="-30" max="50" step="1" value="' + v + '">' +
+        '<output id="simv_' + k + '" for="sim_' + k + '">' + (v > 0 ? '+' : '') + v + '%</output></div>'; }).join(''); }
+  ks.forEach(k => { const el = $('sim_' + k); if(el && document.activeElement !== el) el.value = P[k] || 0; $('simv_' + k).textContent = ((P[k] || 0) > 0 ? '+' : '') + (P[k] || 0) + '%'; });
+  simRun();
+};
+function simRun(){
+  const D = S.data, P = S.ui.sim || {}, any = Object.keys(P).some(k => P[k]);
+  const Rs = any ? compute(simData(P)) : R, a = prodCost(R), b = prodCost(Rs);
+  const dl = (x, y, inv) => { const d = y - x; if(Math.abs(d) < 0.5) return '<span class="muted">—</span>'; const bad = inv ? d < 0 : d > 0; return '<span class="' + (bad ? 's-bad' : 'pos') + '">' + (d > 0 ? '+' : '−') + fmt(Math.abs(d)) + '</span>'; };
+  const k4 = (l, x, y, inv, unit) => '<div class="panel kpi"><span class="label">' + l + '</span><span class="val">' + (unit === '%' ? fmtD(y, 1) + '<small>%</small>' : fmt(y) + '<small>đ</small>') + '</span><span class="sub">Hiện tại ' + (unit === '%' ? fmtD(x, 1) + '%' : fmt(x)) + ' · ' + (unit === '%' ? (Math.abs(y - x) < 0.05 ? 'không đổi' : '<span class="' + ((y - x) < 0 ? 's-bad' : 'pos') + '">' + (y > x ? '+' : '−') + fmtD(Math.abs(y - x), 1) + ' điểm</span>') : dl(x, y, inv)) + '</span></div>';
+  $('simKpis').innerHTML = k4('Giá vốn hàng bán', R.cogs, Rs.cogs) + k4('Lãi gộp', R.gross, Rs.gross, true) + k4('Biên lãi gộp', R.margin, Rs.margin, true, '%') + k4('Hàng tồn kho cuối kỳ', R.stock, Rs.stock);
+  const ks = Object.keys(a).sort((x, y) => (D.items[x].kind === 'BTP' ? 0 : 1) - (D.items[y].kind === 'BTP' ? 0 : 1) || (x < y ? -1 : 1));
+  $('simTbl').innerHTML = '<thead><tr><th>Sản phẩm</th><th class="n">Giá thành hiện tại</th><th class="n">Giá thành giả lập</th><th class="n">Chênh lệch</th><th class="n">Giá bán</th><th class="n">Biên hiện tại</th><th class="n">Biên giả lập</th><th class="n">Giá bán để giữ biên</th></tr></thead><tbody>' +
+    ks.map(k => { const it = D.items[k], z0 = a[k].z, z1 = b[k] ? b[k].z : z0, pr = it.price || 0, m0 = pr ? (pr - z0) / pr * 100 : null, m1 = pr ? (pr - z1) / pr * 100 : null, need = pr && z0 > 0 ? Math.ceil(pr * z1 / z0 / 100) * 100 : null, chg = z0 > 0 ? (z1 / z0 - 1) * 100 : 0;
+      return '<tr><td><b>' + esc(it.name) + '</b> <span class="muted small">' + esc(it.uom) + '</span></td><td class="n">' + fmt(z0) + '</td><td class="n"><b>' + fmt(z1) + '</b></td><td class="n">' + (Math.abs(chg) < 0.05 ? '<span class="muted">—</span>' : '<span class="' + (chg > 0 ? 's-bad' : 'pos') + '">' + (chg > 0 ? '+' : '−') + fmtD(Math.abs(chg), 1) + '%</span>') + '</td>' +
+        '<td class="n">' + (pr ? fmt(pr) : '<span class="muted">—</span>') + '</td><td class="n">' + (m0 != null ? fmtD(m0, 1) + '%' : '—') + '</td><td class="n">' + (m1 != null ? '<span class="' + (m1 < m0 - 0.05 ? 's-bad' : '') + '">' + fmtD(m1, 1) + '%</span>' : '—') + '</td><td class="n">' + (need != null ? (need !== pr ? '<b>' + fmt(need) + '</b>' : fmt(need)) : '—') + '</td></tr>'; }).join('') + '</tbody>';
+  $('simReset').setAttribute('aria-disabled', String(!any));
 }
 
 // ================= Giá nguyên liệu theo lô =================
@@ -3402,6 +3641,9 @@ $('docList').addEventListener('click', e => pickRow(e, 'data-doc', 'doc', 'docDe
 $('docList').addEventListener('keydown', e => rowKeys(e, 'data-doc', 'doc', 'docDetail'));
 $('docList').addEventListener('change', e => { const no = e.target.dataset && e.target.dataset.pick; if(!no) return; S.ui.picked = S.ui.picked || {}; S.ui.picked[no] = e.target.checked; S.ui.refocus = '[data-pick="' + no + '"]'; RENDER.docs(); const f = document.querySelector(S.ui.refocus); S.ui.refocus = null; if(f) f.focus(); });
 $('docSearch').addEventListener('input', e => { S.ui.q = e.target.value; RENDER.docs(); });
+let simRaf = 0;
+document.addEventListener('input', e => { const k = e.target && e.target.dataset ? e.target.dataset.sim : null; if(!k) return; (S.ui.sim || (S.ui.sim = {}))[k] = +e.target.value; $('simv_' + k).textContent = (+e.target.value > 0 ? '+' : '') + e.target.value + '%'; cancelAnimationFrame(simRaf); simRaf = requestAnimationFrame(simRun); });
+$('traceSel').addEventListener('change', e => { S.ui.tlot = e.target.value; RENDER.trace(); });
 $('lotSearch').addEventListener('input', e => { S.ui.sq = e.target.value; RENDER.stock(); });
 $('itemSel').addEventListener('change', e => { S.ui.item = e.target.value; S.ui.sel = null; renderAll(); });
 $('repCtl').addEventListener('change', e => { const id = e.target.id, map = {repSel:'rep', repAcc:'repAcc', repDebt:'repDebt', repCash:'repCash', repItem:'repItem', repWh:'repWh', repFrom:'repFrom', repTo:'repTo'};
@@ -3451,7 +3693,7 @@ $('btnSide').addEventListener('click', () => setSide(!$('app').classList.contain
 dlg.addEventListener('toggle', e => { if(F && e.target && e.target.id === 'fFold') F.prevOpen = e.target.open; }, true);
 // Uỷ quyền click toàn trang
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-act],[data-item-edit],[data-item-del],[data-lsx-edit],[data-open-doc],[data-goto],[data-goto-view],[data-goto-lot],[data-goto-lots],[data-edit],[data-void],[data-csv],[data-pv],[data-hint],[data-new],[data-filter],[data-wh],[data-qc],[data-lk],[data-itab],[data-print],[data-lot-kind],[data-tree],[data-scrap]');
+  const t = e.target.closest('[data-act],[data-item-edit],[data-item-del],[data-lsx-edit],[data-open-doc],[data-goto],[data-goto-view],[data-goto-lot],[data-goto-lots],[data-edit],[data-void],[data-csv],[data-pv],[data-hint],[data-new],[data-filter],[data-wh],[data-qc],[data-lk],[data-goto-trace],[data-itab],[data-tlot],[data-tem],[data-print],[data-lot-kind],[data-tree],[data-scrap]');
   if(!t) return;
   const ds = t.dataset;
   if(ds.new){ setMenu(false); return openForm(ds.new); }
@@ -3461,6 +3703,9 @@ document.addEventListener('click', e => {
   if(ds.filter){ S.ui.filter = ds.filter; return RENDER.docs(); }
   if(ds.wh){ S.ui.wh = ds.wh; return RENDER.stock(); }
   if(ds.qc) return openQC(ds.qc);
+  if(ds.gotoTrace) return go('trace', {tlot:ds.gotoTrace});
+  if(ds.tlot){ S.ui.tlot = ds.tlot; RENDER.trace(); const f = document.querySelector('#trGraph [data-tlot="' + CSS.escape(ds.tlot) + '"]'); if(f) f.focus({preventScroll:true}); return; }
+  if(ds.tem){ const [k, lot, wh, loc] = ds.tem.split('|'), c = Object.values(R.items[k].lcells).find(x => x.lot === lot && x.wh === wh && (x.loc || '') === loc); return printTems(c ? [{item:k, lot, wh, loc, q:c.q}] : []); }
   if(ds.itab){ S.ui.itab = ds.itab; return RENDER.items(); }
   if(ds.lk){ S.ui.lk = ds.lk; return RENDER.stock(); }
   if(ds.print) return printDoc(ds.print);
@@ -3487,6 +3732,12 @@ document.addEventListener('click', e => {
     case 'dismissImpact': S.ui.impact = null; return renderAll();
     case 'saveForm': return saveForm();
     case 'saveFormPrint': return saveForm(true);
+    case 'openLock': if(t.getAttribute('aria-disabled') === 'true') return; return openLock();
+    case 'doLock': return doLock();
+    case 'printTem': { const c = S.ui.tlot, L = R.lots[c]; if(!L) return; const cs = lotCellsLeft(R, c); return printTems(cs.length ? cs : [{item:L.item, lot:c, wh:L.wh, loc:L.locs[0] || '', q:0}]); }
+    case 'printTraceTems': return printTems((S.ui._trace || {stock:[]}).stock);
+    case 'printTems': return printTems(S.ui._tems || []);
+    case 'simReset': S.ui.sim = {}; return RENDER.sim();
     case 'toggleAlloc': { const w = $('allocWrap'), on = w.hidden; w.hidden = !on; t.setAttribute('aria-expanded', String(on)); t.textContent = on ? 'Ẩn bảng phân bổ' : 'Xem bảng phân bổ'; return; }
     case 'printPicked': { const nos = Object.keys(S.ui.picked || {}).filter(no => S.ui.picked[no]).sort((a, b) => { const x = S.data.docs.find(d => d.no === a), y = S.data.docs.find(d => d.no === b); return x.date < y.date ? -1 : x.date > y.date ? 1 : a < b ? -1 : 1; });
       if(!nos.length) return toast('Chọn phiếu cần in bằng ô tích ở đầu dòng.'); printDocs(nos); return toast('Đang in ' + nos.length + ' phiếu, mỗi phiếu một trang.'); }
@@ -3814,7 +4065,9 @@ window.__giagoc = {get tour(){ return T; }, tourStart, tourGo, tourEnd, addNewIt
   openForm, saveForm, openVoid, doVoid, tableCSV, get F(){ return F; }, moneyWords, updatePreview, onFormInput, openQC, doQC, go, FORMS, lotComps, matLots, salesByLot, mulRound};
 
 // ================= Khởi động =================
-const h0 = (location.hash || '').slice(1); if(TITLES[h0]) S.ui.view = h0; else if(h0 === 'trace') S.ui.view = 'lots';
+const h0 = (location.hash || '').slice(1); if(TITLES[h0]) S.ui.view = h0;
+const lotHash = () => { const m = /^#lo=(.+)$/.exec(location.hash || ''); if(!m) return false; S.ui.view = 'trace'; S.ui.tlot = decodeURIComponent(m[1]); return true; };
+lotHash(); window.addEventListener('hashchange', () => { if(lotHash()) renderAll(); });
 renderAll();
 })();
 </script>

@@ -36,6 +36,15 @@ Nếu người làm demo đổi dữ liệu mẫu, cập nhật bảng này và 
 | 7 | Quy trình chỉ có cá linh (2 giai đoạn) và mắm tôm (1 giai đoạn) | 4 quy trình theo [YEU-CAU-KHACH-HANG](../docs/01-yeu-cau/YEU-CAU-KHACH-HANG.md) §4 | GT-01 |
 | 8 | Tiêu thức phân bổ nhân công / sản xuất chung = chi phí nguyên vật liệu trực tiếp của lệnh; lệnh hoàn thành khi có phiếu nhập kho đầu tiên | Tiêu thức cấu hình theo giai đoạn (đề xuất khối lượng × số ngày cho công đoạn ủ); trạng thái lệnh có Hoàn thành → Đóng | [QD-29](../docs/02-ke-hoach/QUYET-DINH.md#qd-29) — cố ý giản lược, chỉ cần nói rõ khi trình diễn |
 
+## v4.4 — truy xuất lô, giả lập giá nguyên liệu, tem lô có mã QR (2026-10-07)
+
+- **Truy xuất lô** (menu Sản xuất): chọn lô bất kỳ. Sơ đồ nhánh hai chiều: bên trái nguồn gốc (nhà cung cấp → lô nguyên liệu → lệnh sản xuất → lô bán thành phẩm…), bên phải nơi đi (lệnh dùng lô → lô sinh ra → khách hàng). Bấm ô lô trên sơ đồ để chuyển sang lô đó. 4 ô số: lô liên quan phía sau, số khách đã nhận, đã bán, còn trong kho. Bảng khách đã nhận (bấm số hóa đơn mở chứng từ) và tồn trong kho theo kho, vị trí, thủ kho, QC.
+- **Khóa các lô còn tồn**: một bước chuyển QC sang "Chờ" cho mọi lô liên quan còn tồn (cần lý do ≥ 5 ký tự, ghi nhật ký). Lô Chờ bị chặn xuất bán.
+- **Giả lập giá nguyên liệu** (menu Sản xuất): thanh trượt −30% … +50% cho từng vật tư đang có giá. Tính lại ngay giá vốn hàng bán, lãi gộp, biên lãi gộp, tồn kho cuối kỳ; bảng theo sản phẩm: giá thành hiện tại / giả lập, chênh lệch, biên lãi theo giá bán, giá bán để giữ biên. Không ghi sổ.
+- **Tem lô có mã QR**: tem 2 cột trên A4 (tên hàng, mã lô chữ lớn, mã hóa, kho, vị trí, ngày, hạn dùng, số lượng, QC và người QC, mã QR). In từ: Kho & lô → "In tem các lô" (theo bộ lọc đang xem) hoặc nút "Tem" từng dòng; Truy xuất lô → "In tem lô" / "In tem". Mã QR mở địa chỉ `…#lo=<mã lô>` → vào thẳng trang truy xuất của lô. Thư viện tạo mã QR qrcode-generator 1.4.4 (MIT) nhúng trong file, chạy không cần mạng.
+- Giá vốn theo lô: thêm nút "Truy xuất lô" ở đầu cây cấu thành.
+- Kiểm tra: bấm thử 1366px và 390px, nền sáng và tối, không lỗi, không cuộn ngang; khóa lô, in tem, kéo thanh giả lập, mở liên kết `#lo=`; tự kiểm tra 480 trường hợp, 0 sai.
+
 ## v4.3 — giảm tải các trang dày (2026-10-07)
 
 Rà 10 trang (đo số khối, bảng, cột, chiều cao trang ở 1366px). Sửa 4 trang quá tải:
