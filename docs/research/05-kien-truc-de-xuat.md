@@ -1,10 +1,28 @@
 # 05 — Kiến trúc đề xuất: Kế toán + Kho + Giá vốn + Giá thành (Web SaaS multi-tenant)
 
-> Phiên bản: **0.2** (2026-10-06; bản 0.1 ngày 2026-10-04) · Trạng thái: đề xuất để review
+> Phiên bản: **0.3** (2026-10-07; 0.2 ngày 2026-10-06; 0.1 ngày 2026-10-04) · Trạng thái: đề xuất để review
 > Phạm vi: phần mềm kế toán kiểu MISA cho doanh nghiệp Việt Nam (sản xuất + thương mại), Web SaaS multi-tenant, trước mắt dùng nội bộ.
 > Stack đã chốt: **TypeScript + PostgreSQL**.
-> Liên quan: `01..04` (nghiệp vụ, repo tham khảo, sách, phân tích MISA), `06b-phan-bien-kien-truc.md` (phản biện bản 0.1). Bản này đã tích hợp kết luận của `02-repo-tham-khao.md` và `04-phan-tich-misa.md` (xem §0.1); các chỗ đánh dấu **[ĐỐI CHIẾU 01/03]** cần rà lại với ví dụ số/quy định chi tiết.
-> **Phạm vi & tiến độ: xem `docs/KE-HOACH-DU-AN.md` v0.3 (nguồn duy nhất).** Tài liệu này chỉ mô tả kỹ thuật, không đặt mốc thời gian.
+> Liên quan: `01..04` (nghiệp vụ, repo tham khảo, sách, phân tích MISA), `06b-phan-bien-kien-truc.md` (phản biện bản 0.1), `../PHAN-BIEN-v3.md` (phản biện bản 0.2). Bản này đã tích hợp kết luận của `02-repo-tham-khao.md` và `04-phan-tich-misa.md` (xem §0.1); các chỗ đánh dấu **[ĐỐI CHIẾU 01/03]** cần rà lại với ví dụ số/quy định chi tiết.
+> **Phạm vi & tiến độ: xem `docs/KE-HOACH-DU-AN.md` v0.4 (nguồn duy nhất).** Tài liệu này chỉ mô tả kỹ thuật, không đặt mốc thời gian.
+
+### Đã sửa theo phản biện v3 (bản 0.3)
+
+Quy ước khối SQL (để chạy nguyên văn được, A10): mọi khối ```` ```sql ```` của tài liệu này và của `07` là **DDL chạy theo đúng thứ tự xuất hiện**, 05 trước rồi 07. Khối có dòng đầu `-- mẫu truy vấn` là truy vấn có tham số `$n`, không chạy khi dựng lược đồ; chúng được kiểm cú pháp và tên cột bằng `PREPARE` sau khi dựng xong. Người chạy là vai trò sở hữu lược đồ `app_owner` (không phải superuser, không `BYPASSRLS`, có `CREATEROLE`).
+
+**Kết quả chạy thử (2026-10-07, PostgreSQL 16.15):** 05 rồi 07 chạy nguyên văn, mọi khối DDL không lỗi; mọi truy vấn mẫu qua `PREPARE`; `app.check_rls_coverage()` trả 0 dòng. Chỉ thêm một hàm ngoài tài liệu là `public.uuidv7()` → `gen_random_uuid()` vì PG16 chưa có `uuidv7()`. Các phép thử tấn công của A1–A5, A11 chạy bằng vai trò `app_user` đều bị chặn (bảng ở `07` §11). **Chưa** chạy trên PG18, **chưa** thử hai phiên đồng thời cho các guard mới.
+
+| Mã | Lỗi (PHAN-BIEN-v3 §4) | Cách sửa | Mục |
+|---|---|---|---|
+| A1 | Dòng bút toán sửa/xoá được sau ghi sổ và sau khoá kỳ; `journal_lines` không FK | FK kép `journal_lines → journal_entries → documents`; guard: chỉ thêm dòng vào bút toán do **chính giao dịch đang chạy** tạo (`created_xid`), UPDATE chỉ `is_active` true→false, cấm DELETE; dòng kiểm khoá kỳ qua `acc.assert_period_open` | §4.5, §7.1, §7.2 |
+| A2 | RLS bỏ sót `core`, `cst`, `audit` | Một hàm `app.apply_tenant_rls()` quét **mọi** schema nghiệp vụ; `app.check_rls_coverage()` là phép thử theo danh sách loại trừ (`core.tenants`, `core.sessions`, `sys.*`); `audit.change_log` chỉ ghi qua trigger `SECURITY DEFINER`, `app_user` chỉ đọc | §2.1, §7.3, §7.7 |
+| A3 (phần 05) | `move_kind` tự do | CHECK danh sách `move_kind` + CHECK chiều nhập/xuất theo loại; dòng kho chỉ đổi `status` ACTIVE→CANCELLED (không đổi lô) | §4.7, §7.1 |
+| A9 | Bốn phiên bản trình tự khoá sổ; tính lại toàn bộ vs repost tăng dần; kiểu lưu số | **Một** bảng trình tự khoá kỳ ở §7.2 (01 §6, 07 §4.7, kế hoạch chỉ trích); GĐ1 **tính lại toàn bộ** cost key từ kỳ khoá gần nhất, repost tăng dần có checkpoint là GĐ2 (§5.5); bảng kiểu lưu số §1.4 là nguồn duy nhất | §1.4, §5.5, §7.2 |
+| A10 | DDL 05 + 07 chạy nguyên văn lỗi | Khối nền móng tạo extension, schema, vai trò (§2.1); thêm `core.users`, `core.user_roles`, `core.sessions`, `md.partners`, `md.expense_items`; `inv.lots` chỉ tạo ở 05, 07 dùng `ALTER`; truy vấn mẫu tách khỏi DDL | §2.1, §4.1, §4.6 |
+| A11 | `app.tenant_id`, `app.engine` do `app_user` tự đặt | Ứng dụng chỉ đặt `app.session_token`; tenant và người dùng tra từ `core.sessions` (app_user không đọc được) bằng hàm `SECURITY DEFINER`; cột giá trị của sổ kho chỉ ghi qua `inv.set_valuation` mà chỉ vai trò `engine_user` được gọi; khoá/mở kỳ qua hàm kiểm vai trò KTT | §2.1, §4.7, §7.2 |
+| — | `acc.period_locks`, `md.fx_rate_day_locks` sửa được bằng DML thường (lỗ hổng phát hiện khi sửa A1) | `app_user` chỉ đọc `period_locks`, chỉ thêm `fx_rate_day_locks`; quyền theo bảng `sys.table_privileges` | §7.7, 07 §11 |
+
+A4, A5, phần còn lại của A3 nằm trong `07` (§1, §2.7, §8, §10).
 
 ### Đã sửa theo 06b (bản 0.2)
 
@@ -74,7 +92,7 @@ Phiên bản (kiểm tra 10/2026): PostgreSQL 18 (GA 25/09/2025, có `uuidv7()`)
 | TT99 yêu cầu phần mềm ngăn sửa trái phép, **lưu vết sửa đổi** | 01 | Audit log là **bắt buộc**, không tắt được | §7.3 |
 | TT133 vẫn hiệu lực song song | 01 | Mô hình dữ liệu hỗ trợ cả hai chế độ (TT133: chi phí ghi thẳng 154); chế độ áp dụng do `md.regime_at` theo ngày | §2.3, §5.9 |
 | SXC cố định dưới công suất bình thường → 632 (VAS 02) | 01 | Pool 627 tách **cố định/biến đổi**; đối tượng có **công suất bình thường**; phần dưới công suất kết chuyển 632 | §5.9 |
-| Quy trình khoá sổ 13 bước có phụ thuộc, cờ `dirty` | 01 §6 | **Close orchestrator** với bảng trạng thái bước & lan truyền dirty | §7.2 |
+| Quy trình khoá sổ 13 bước có phụ thuộc, cờ `dirty` | 01 §6 | Bản 0.3: hệ thống **luôn tính lại ngay** giá xuất, giá thành, giá vốn; khoá kỳ là **một thao tác** có kiểm tra (trình tự duy nhất ở §7.2), không có close orchestrator nhiều bước | §7.2 |
 | Thứ tự trong ngày: nhập < chuyển < xuất, rồi thời điểm ghi sổ, số CT | 01 §8.5 | Khoá sắp xếp chuẩn của engine dùng `kind_rank` | §5.1 |
 | ~30 bất biến I1–I7, K1–K9, G1–G5, B1–B7 | 01 §8 | Mỗi bất biến ánh xạ vào constraint DB / kiểm tra khoá sổ / property test | §8.3 |
 
@@ -85,7 +103,7 @@ Phiên bản (kiểm tra 10/2026): PostgreSQL 18 (GA 25/09/2025, có `uuidv7()`)
 ### 1.1 Backend: NestJS (Fastify adapter) thay vì Fastify/tRPC thuần
 
 - Miền nghiệp vụ lớn (≥8 bounded context, hàng trăm loại chứng từ). NestJS cho **module + DI + guard/interceptor** chuẩn hoá: mỗi context là 1 Nest module, chỉ export *application service*, cấm import chéo repository (lint bằng `eslint-plugin-boundaries` / `dependency-cruiser`).
-- Interceptor dùng chung cho: mở transaction, `SET LOCAL app.tenant_id`, audit context (user, IP, request-id), idempotency-key.
+- Interceptor dùng chung cho: mở transaction, `set_config('app.session_token')` (tenant và người dùng do CSDL tự tra — §2.1), request-id, idempotency-key.
 - Dùng **Fastify adapter** để lấy hiệu năng & schema validation.
 - **Không tRPC**: tRPC buộc client là TS, khó cho tích hợp ngoài (hoá đơn điện tử callback, ngân hàng, Excel add-in, mobile). Thay vào đó: **contract-first bằng Zod** trong package `@app/contracts` → (a) validate ở BE, (b) client typed ở FE, (c) sinh OpenAPI.
 - Phương án thay thế chấp nhận được: Fastify + ts-rest không Nest (nhẹ hơn, nhưng tự xây DI/module). Chọn Nest vì team đông dần và cần quy ước.
@@ -112,14 +130,17 @@ Quyết định: **Kysely** cho mọi truy cập DB; schema là nguồn chân l�
 
 ### 1.4 Kiểu số — quy tắc bất di bất dịch
 
-| Đại lượng | Kiểu Postgres | Ghi chú |
-|---|---|---|
-| Số tiền hạch toán (VND) | **`numeric(20,2)`** | VND thường làm tròn 0 số lẻ nhưng để 2 để chứa ngoại tệ quy đổi trung gian; làm tròn theo cấu hình tenant (mặc định 0) tại *dòng chứng từ* |
-| Số tiền nguyên tệ | `numeric(20,2)` | |
-| Tỷ giá | `numeric(18,6)` | |
-| Số lượng | `numeric(20,6)` | |
-| Đơn giá, giá vốn đơn vị | `numeric(24,8)` | chống sai số khi chia |
-| Tỷ lệ phân bổ, hệ số | `numeric(20,12)` | |
+Bảng dưới là **nguồn duy nhất** về kiểu lưu số (A9). `01` §8.5, `07`, demo và golden test trích bảng này; chỗ nào ghi khác (vd "lưu số nguyên VND", "SL 3 số lẻ") là cách **hiển thị/làm tròn**, không phải kiểu lưu.
+
+| Đại lượng | Kiểu Postgres | Làm tròn khi ghi | Ghi chú |
+|---|---|---|---|
+| Số tiền hạch toán (VND) | **`numeric(20,2)`** | Đến `amount_scale` của công ty (mặc định 0 ⇒ tương đương số nguyên đồng), R1(a) | Để 2 số lẻ chỉ để chứa ngoại tệ quy đổi trung gian |
+| Số tiền nguyên tệ | `numeric(20,2)` | Đến `minor_units` của đồng tiền (`sys.currencies`, 07 §5.5) | |
+| Tỷ giá | `numeric(18,6)` | Như nhập | |
+| Số lượng | `numeric(20,6)` | Đến số lẻ của ĐVT (`md.uoms.qty_scale`, mặc định 3; ĐVT "chỉ số nguyên" = 0) ở **mỗi** dòng nhập và mỗi phép cộng trừ; kiểm âm so trên số đã làm tròn | Tránh dư `1,42e-14` như file Excel của khách |
+| Đơn giá, giá vốn đơn vị | `numeric(24,8)` | Chỉ để hiển thị/giải thích (4 số lẻ), không dùng để tính lại giá trị (R1(a)) | |
+| Tỷ lệ phân bổ, hệ số | `numeric(20,12)` | — | |
+| Ứng dụng (TS) | `Decimal` (decimal.js), JSON truyền **chuỗi** | — | Cấm `number` cho tiền và số lượng (demo dùng số thực JS là lỗi L7 của phản biện v3) |
 
 - Domain type `Money`/`Qty` bọc `Decimal` (decimal.js, `precision: 40`, `rounding: ROUND_HALF_UP`). Driver `pg`: `types.setTypeParser(1700, s => s)` (giữ string) rồi map sang Decimal ở repository.
 - ESLint rule cấm `parseFloat`, `Number(` trên field tiền; JSON API truyền số tiền dưới dạng **string**.
@@ -191,21 +212,156 @@ Quyết định: **Kysely** cho mọi truy cập DB; schema là nguồn chân l�
 
 **Quyết định**: Row-level với `tenant_id uuid NOT NULL` ở *mọi* bảng nghiệp vụ, **RLS FORCE**, khoá ngoại **kép** `(tenant_id, id)` để không thể tham chiếu chéo tenant. Kiến trúc “cell”: một tenant lớn có thể được tách sang cluster riêng (cùng schema) — router tenant→cluster ở tầng kết nối.
 
+**Vai trò cơ sở dữ liệu** (ranh giới bảo mật nằm ở vai trò và quyền, không ở biến phiên — phản biện v3 A11):
+
+| Vai trò | Dùng cho | Quyền |
+|---|---|---|
+| `app_owner` | Chạy migration, sở hữu mọi đối tượng và các hàm `SECURITY DEFINER` | Không superuser, không `BYPASSRLS` ⇒ chính nó cũng bị RLS (FORCE) |
+| `app_user` | API | DML theo `sys.table_privileges` (§7.7); không đọc `core.sessions`, không ghi `audit.*`, `acc.period_locks`, cột giá trị của sổ kho, `inv.lots.qc_status` |
+| `engine_user` | Worker tính giá | Thành viên `app_user` + quyền gọi `inv.set_valuation` (§4.7) |
+| `auth_service` | Dịch vụ đăng nhập | Chỉ ghi `core.sessions` (cấp/thu hồi phiên) |
+
+**Ngữ cảnh tenant**: ứng dụng chỉ đặt **một** biến `app.session_token` = token phiên ngẫu nhiên (≥ 256 bit) mà dịch vụ đăng nhập cấp cho người dùng (worker dùng token phiên hệ thống do `auth_service` cấp cho đúng tenant đó). `app.current_tenant()` và `app.current_user_id()` là hàm `SECURITY DEFINER` tra băm SHA-256 của token trong `core.sessions`. `app_user` đặt biến nào khác (`app.tenant_id`, `app.user_id`, `app.engine`…) cũng không có tác dụng, và không đọc được `core.sessions` để lấy token của người khác. `app.request_id` vẫn đặt bằng `set_config` nhưng chỉ là thông tin truy vết, không dùng để phân quyền. Chưa đặt token thì hai hàm trả `NULL`: policy so `tenant_id = NULL` nên không thấy và không ghi được dòng nào (an toàn, và để migration chạy được: kiểm FK khi `ALTER TABLE` cũng đi qua RLS); token sai hoặc hết hạn thì báo lỗi.
+
+Khối nền móng (chạy đầu tiên; hàm PL/pgSQL tham chiếu bảng tạo ở các mục sau — PostgreSQL chỉ kiểm khi gọi):
+
 ```sql
--- Vai trò: owner chạy migration; app_user chỉ DML, KHÔNG bypass RLS
-CREATE ROLE app_user NOINHERIT LOGIN;
+-- Chạy bằng app_owner. ltree, btree_gist là extension "trusted" nên chủ CSDL tạo được.
+CREATE EXTENSION IF NOT EXISTS ltree;
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+CREATE SCHEMA app;  CREATE SCHEMA sys;  CREATE SCHEMA core; CREATE SCHEMA md;
+CREATE SCHEMA acc;  CREATE SCHEMA inv;  CREATE SCHEMA cst;  CREATE SCHEMA mfg; CREATE SCHEMA audit;
 
--- Hàm lấy tenant hiện tại (set bằng SET LOCAL trong mỗi transaction)
+DO $$ BEGIN   -- vai trò là đối tượng toàn cụm: chỉ tạo nếu chưa có (DBA có thể tạo sẵn)
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_user')     THEN CREATE ROLE app_user LOGIN;     END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'engine_user')  THEN CREATE ROLE engine_user LOGIN IN ROLE app_user; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'auth_service') THEN CREATE ROLE auth_service LOGIN; END IF;
+END $$;
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+
+-- Schema chứa dữ liệu theo tenant = mọi schema người dùng trừ sys (dữ liệu hệ thống) và public
+CREATE FUNCTION app.app_schemas() RETURNS text[] LANGUAGE sql STABLE AS $$
+  SELECT coalesce(array_agg(nspname::text ORDER BY nspname), '{}') FROM pg_namespace
+   WHERE nspname !~ '^pg_' AND nspname NOT IN ('information_schema', 'public', 'sys')
+$$;
+-- Danh sách loại trừ RLS tường minh (thêm vào đây phải qua review). sys.* luôn loại trừ.
+CREATE FUNCTION app.rls_exempt() RETURNS text[] LANGUAGE sql IMMUTABLE AS $$
+  SELECT ARRAY['core.tenants',    -- chính là bảng tenant; app_user không có quyền
+               'core.sessions']   -- tra cứu phiên; nếu bật RLS thì current_tenant() đệ quy vào chính nó
+$$;
+
 CREATE FUNCTION app.current_tenant() RETURNS uuid
-LANGUAGE sql STABLE AS $$ SELECT current_setting('app.tenant_id')::uuid $$;
--- current_setting không có missing_ok ⇒ quên set sẽ lỗi, không lộ dữ liệu.
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
+DECLARE v uuid; v_token text := nullif(current_setting('app.session_token', true), '');
+BEGIN
+  IF v_token IS NULL THEN RETURN NULL; END IF;   -- chưa có phiên (vd migration): RLS so với NULL ⇒ 0 dòng, không ghi được
+  SELECT s.tenant_id INTO v FROM core.sessions s
+   WHERE s.token_hash = sha256(convert_to(v_token, 'UTF8'))
+     AND s.revoked_at IS NULL AND s.expires_at > now();
+  IF v IS NULL THEN
+    RAISE EXCEPTION 'Phiên không hợp lệ hoặc đã hết hạn' USING ERRCODE = '28000';
+  END IF;
+  RETURN v;
+END $$;
 
--- Mẫu áp cho mọi bảng (sinh tự động bằng hàm trong migration)
-ALTER TABLE acc.journal_lines ENABLE ROW LEVEL SECURITY;
-ALTER TABLE acc.journal_lines FORCE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation ON acc.journal_lines
-  USING (tenant_id = app.current_tenant())
-  WITH CHECK (tenant_id = app.current_tenant());
+CREATE FUNCTION app.current_user_id() RETURNS uuid
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
+DECLARE v uuid; v_token text := nullif(current_setting('app.session_token', true), '');
+BEGIN
+  IF v_token IS NULL THEN RETURN NULL; END IF;   -- chưa có phiên (vd migration): RLS so với NULL ⇒ 0 dòng, không ghi được
+  SELECT s.user_id INTO v FROM core.sessions s
+   WHERE s.token_hash = sha256(convert_to(v_token, 'UTF8'))
+     AND s.revoked_at IS NULL AND s.expires_at > now();
+  IF v IS NULL THEN
+    RAISE EXCEPTION 'Phiên không hợp lệ hoặc đã hết hạn' USING ERRCODE = '28000';
+  END IF;
+  RETURN v;
+END $$;
+
+-- Vai trò nghiệp vụ của người dùng hiện tại (KTT, BOD, TRUONG_QC… — YEU-CAU §6)
+CREATE FUNCTION app.has_role(p_role text) RETURNS boolean
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
+BEGIN
+  RETURN EXISTS (SELECT 1 FROM core.user_roles r
+                  WHERE r.tenant_id = app.current_tenant() AND r.user_id = app.current_user_id()
+                    AND r.role = p_role);
+END $$;
+
+-- Bật RLS + FORCE + policy cho MỌI bảng có tenant_id ở mọi schema nghiệp vụ (A2). Gọi lại cuối mỗi migration.
+CREATE FUNCTION app.apply_tenant_rls() RETURNS void LANGUAGE plpgsql AS $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT c.oid::regclass AS tbl
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      JOIN pg_attribute a ON a.attrelid = c.oid AND a.attname = 'tenant_id' AND NOT a.attisdropped
+     WHERE c.relkind IN ('r', 'p')
+       AND n.nspname = ANY (app.app_schemas())
+       AND NOT (n.nspname || '.' || c.relname) = ANY (app.rls_exempt())
+  LOOP
+    EXECUTE format('ALTER TABLE %s ENABLE ROW LEVEL SECURITY', r.tbl);
+    EXECUTE format('ALTER TABLE %s FORCE ROW LEVEL SECURITY', r.tbl);
+    EXECUTE format('DROP POLICY IF EXISTS tenant_isolation ON %s', r.tbl);
+    -- (SELECT …) ⇒ tính một lần mỗi câu lệnh (initplan), không gọi lại từng dòng
+    EXECUTE format('CREATE POLICY tenant_isolation ON %s USING (tenant_id = (SELECT app.current_tenant()))'
+                   ' WITH CHECK (tenant_id = (SELECT app.current_tenant()))', r.tbl);
+  END LOOP;
+END $$;
+
+-- Phép thử bắt buộc trong CI: phải trả 0 dòng. Bảng không có tenant_id mà không nằm trong danh sách loại trừ ⇒ lỗi.
+CREATE FUNCTION app.check_rls_coverage() RETURNS TABLE (table_name text, problem text)
+LANGUAGE sql STABLE AS $$
+  SELECT n.nspname || '.' || c.relname,
+         CASE WHEN a.attname IS NULL THEN 'thiếu tenant_id'
+              WHEN NOT c.relrowsecurity OR NOT c.relforcerowsecurity THEN 'chưa ENABLE + FORCE RLS'
+              ELSE 'thiếu policy tenant_isolation' END
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    LEFT JOIN pg_attribute a ON a.attrelid = c.oid AND a.attname = 'tenant_id' AND NOT a.attisdropped
+   WHERE c.relkind IN ('r', 'p')
+     AND n.nspname = ANY (app.app_schemas())
+     AND NOT (n.nspname || '.' || c.relname) = ANY (app.rls_exempt())
+     AND (a.attname IS NULL OR NOT c.relrowsecurity OR NOT c.relforcerowsecurity
+          OR NOT EXISTS (SELECT 1 FROM pg_policy p WHERE p.polrelid = c.oid AND p.polname = 'tenant_isolation'))
+$$;
+
+-- Quyền của app_user theo bảng. Bảng không có dòng ở đây: SELECT/INSERT/UPDATE/DELETE (guard trigger kiểm tiếp);
+-- schema sys: chỉ SELECT. Dòng ở đây: privs là quyền cấp bảng, update_columns là cột được UPDATE (NULL = không).
+CREATE TABLE sys.table_privileges (
+  table_name text PRIMARY KEY,
+  privs text[] NOT NULL CHECK (privs <@ ARRAY['SELECT','INSERT','DELETE']),
+  update_columns text[],
+  reason text NOT NULL
+);
+
+CREATE FUNCTION app.apply_grants() RETURNS void LANGUAGE plpgsql AS $$
+DECLARE r record; p sys.table_privileges;
+BEGIN
+  EXECUTE 'GRANT USAGE ON SCHEMA sys, app TO app_user';
+  FOR r IN
+    SELECT n.nspname, c.relname, c.relkind, format('%I.%I', n.nspname, c.relname) AS fq
+      FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+     WHERE c.relkind IN ('r', 'p', 'v') AND (n.nspname = ANY (app.app_schemas()) OR n.nspname = 'sys')
+  LOOP
+    EXECUTE format('GRANT USAGE ON SCHEMA %I TO app_user', r.nspname);
+    EXECUTE format('REVOKE ALL ON %s FROM app_user', r.fq);
+    SELECT * INTO p FROM sys.table_privileges WHERE table_name = r.nspname || '.' || r.relname;
+    IF FOUND THEN
+      IF cardinality(p.privs) > 0 THEN
+        EXECUTE format('GRANT %s ON %s TO app_user', array_to_string(p.privs, ', '), r.fq);
+      END IF;
+      IF p.update_columns IS NOT NULL THEN
+        EXECUTE format('GRANT UPDATE (%s) ON %s TO app_user',
+                       (SELECT string_agg(quote_ident(x), ', ') FROM unnest(p.update_columns) x), r.fq);
+      END IF;
+    ELSIF r.nspname = 'sys' OR r.relkind = 'v' THEN
+      EXECUTE format('GRANT SELECT ON %s TO app_user', r.fq);
+    ELSE
+      EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON %s TO app_user', r.fq);
+    END IF;
+  END LOOP;
+END $$;
 ```
 
 TS — mọi truy cập DB đi qua helper:
@@ -213,20 +369,17 @@ TS — mọi truy cập DB đi qua helper:
 ```ts
 export async function withTenantTx<T>(ctx: RequestCtx, fn: (tx: Tx) => Promise<T>) {
   return db.transaction().setIsolationLevel('read committed').execute(async (tx) => {
-    await sql`select set_config('app.tenant_id', ${ctx.tenantId}, true),
-                     set_config('app.user_id',   ${ctx.userId},   true),
-                     set_config('app.request_id',${ctx.requestId},true)`.execute(tx);
+    // chỉ token phiên; tenant và người dùng do CSDL tự tra (A11)
+    await sql`select set_config('app.session_token', ${ctx.sessionToken}, true),
+                     set_config('app.request_id',    ${ctx.requestId},    true)`.execute(tx);
     return fn(tx);
   });
 }
 ```
 
-Kiểm thử bắt buộc: test “tenant leak” — tạo 2 tenant, chạy toàn bộ API của tenant A, assert không đọc/ghi được 1 dòng nào của B; test quét `pg_class` (`relkind IN ('r','p')`, kể cả partition con nếu sau này có) đảm bảo mọi bảng trong các schema `core, md, acc, inv, cst, mfg, audit` có `relforcerowsecurity = true` và có cột `tenant_id`, **trừ danh sách loại trừ tường minh** nằm ngay trong test:
-- `core.tenants` — chính là bảng tenant (khoá là `id`, không có `tenant_id`); chỉ role vận hành được đọc/ghi, `app_user` chỉ có quyền đọc qua hàm.
-- mọi bảng schema `sys.*` — dữ liệu hệ thống dùng chung, không thuộc tenant (template hệ thống TK, mẫu báo cáo, thuế suất…); `app_user` chỉ có `SELECT`.
-Bảng mới không có `tenant_id` mà không nằm trong danh sách ⇒ test fail; thêm vào danh sách phải qua review.
+Kiểm thử bắt buộc: (1) `SELECT * FROM app.check_rls_coverage()` trả 0 dòng — quét mọi schema nghiệp vụ (`app.app_schemas()`, kể cả `core`, `cst`, `audit`, schema mới của 07, và partition con nếu sau này có), danh sách loại trừ nằm ở `app.rls_exempt()` và `sys.*`; (2) test "tenant leak" — tạo 2 tenant, chạy toàn bộ API của tenant A, assert không đọc/ghi được dòng nào của B; (3) đặt `app.tenant_id`/`app.user_id` bằng `set_config` không đổi được tenant (A11). Bảng mới không có `tenant_id` mà không nằm trong danh sách loại trừ ⇒ (1) fail; thêm vào danh sách phải qua review.
 
-Hiệu năng RLS: luôn đặt `tenant_id` là **cột đầu tiên** của PK/index; hàm `current_tenant()` là `STABLE` nên planner dùng index được.
+Hiệu năng RLS: luôn đặt `tenant_id` là **cột đầu tiên** của PK/index; policy viết `(SELECT app.current_tenant())` nên hàm chạy một lần mỗi câu lệnh (một lần tra `core.sessions` theo khoá chính).
 
 ### 2.2 Đơn vị kế toán & chi nhánh
 
@@ -387,8 +540,34 @@ CREATE TABLE core.branches (
 CREATE TABLE acc.books (
   tenant_id uuid NOT NULL, id uuid NOT NULL DEFAULT uuidv7(),
   company_id uuid NOT NULL, code text NOT NULL CHECK (code IN ('FIN','MGT')),
-  PRIMARY KEY (tenant_id, id), UNIQUE (tenant_id, company_id, code)
+  PRIMARY KEY (tenant_id, id), UNIQUE (tenant_id, company_id, code),
+  FOREIGN KEY (tenant_id, company_id) REFERENCES core.companies (tenant_id, id)
 );
+
+-- Người dùng theo tenant (danh tính đăng nhập nằm ở dịch vụ OIDC; một người ở nhiều tenant = nhiều dòng)
+CREATE TABLE core.users (
+  tenant_id uuid NOT NULL REFERENCES core.tenants (id),
+  id uuid NOT NULL DEFAULT uuidv7(),
+  login text NOT NULL, full_name text NOT NULL,
+  active boolean NOT NULL DEFAULT true,
+  PRIMARY KEY (tenant_id, id), UNIQUE (tenant_id, login)
+);
+CREATE TABLE core.user_roles (              -- vai trò nghiệp vụ (YEU-CAU §6): KTT, BOD, KT_KHO, TRUONG_QC…
+  tenant_id uuid NOT NULL, user_id uuid NOT NULL, role text NOT NULL,
+  PRIMARY KEY (tenant_id, user_id, role),
+  FOREIGN KEY (tenant_id, user_id) REFERENCES core.users (tenant_id, id)
+);
+-- Phiên đăng nhập: chỉ auth_service ghi; app_user KHÔNG có quyền (đọc qua app.current_tenant()). Loại trừ RLS.
+CREATE TABLE core.sessions (
+  token_hash bytea PRIMARY KEY,             -- sha256(token); token gốc không lưu
+  tenant_id uuid NOT NULL, user_id uuid NOT NULL,
+  is_system boolean NOT NULL DEFAULT false, -- phiên của worker/tác vụ nền
+  expires_at timestamptz NOT NULL, revoked_at timestamptz,
+  FOREIGN KEY (tenant_id, user_id) REFERENCES core.users (tenant_id, id)
+);
+GRANT USAGE ON SCHEMA core TO auth_service;
+GRANT SELECT, INSERT ON core.sessions TO auth_service;
+GRANT UPDATE (revoked_at) ON core.sessions TO auth_service;
 ```
 
 ### 4.2 Hệ thống tài khoản (cây) & vai trò TK
@@ -452,8 +631,10 @@ CREATE TABLE acc.period_locks (
   scope text NOT NULL CHECK (scope IN ('ALL','INVENTORY','COSTING','CASH','TAX')),
   locked_through date NOT NULL DEFAULT '-infinity',  -- mọi posting_date <= ngày này bị chặn
   locked_by uuid, locked_at timestamptz,
+  reason text,                                        -- lý do lần mở khoá gần nhất (bắt buộc khi mở)
   PRIMARY KEY (tenant_id, company_id, scope)
 );
+-- GĐ1 khoá/mở bằng scope 'ALL' qua acc.lock_period / acc.unlock_period (§7.2); app_user chỉ SELECT bảng này.
 -- Khi tạo company: tạo sẵn ĐỦ 5 dòng (mỗi scope) với '-infinity', để giao dịch ghi sổ luôn có dòng
 -- mà khoá FOR SHARE, và thao tác khoá kỳ luôn là UPDATE (khoá xung đột) — xem §7.2 (06b-U1).
 ```
@@ -480,6 +661,7 @@ CREATE TABLE acc.documents (
   description text,
   total_amount numeric(20,2) NOT NULL DEFAULT 0,
   source_ref jsonb,                 -- liên kết: đơn hàng, HĐĐT, lệnh SX…
+  created_by uuid NOT NULL,         -- trigger gán = app.current_user_id() (§7.1); dùng cho phân tách nhiệm vụ
   posted_at timestamptz, posted_by uuid,
   voided_at timestamptz, voided_by uuid, void_reason text,
   row_hash bytea,                   -- băm nội dung khi POSTED (tamper-evident)
@@ -529,7 +711,12 @@ CREATE TABLE acc.journal_entries (
                                              -- CASH cho phiếu thu/chi) — trigger §7.2 đọc cột này (06b-U3)
   is_active boolean NOT NULL DEFAULT true,   -- false khi bị thay bằng phiên bản mới (repost/bỏ ghi)
   superseded_by uuid, valuation_version int, -- cho bút toán do Costing sinh
-  PRIMARY KEY (tenant_id, id)
+  created_xid xid8 NOT NULL DEFAULT pg_current_xact_id(),
+                                             -- giao dịch đã tạo bút toán; trigger §7.1 luôn ghi đè (A1)
+  PRIMARY KEY (tenant_id, id),
+  FOREIGN KEY (tenant_id, company_id)  REFERENCES core.companies (tenant_id, id),
+  FOREIGN KEY (tenant_id, book_id)     REFERENCES acc.books (tenant_id, id),
+  FOREIGN KEY (tenant_id, document_id) REFERENCES acc.documents (tenant_id, id)
 );
 
 CREATE TABLE acc.journal_lines (
@@ -546,7 +733,9 @@ CREATE TABLE acc.journal_lines (
   partner_id uuid, item_id uuid, cost_object_id uuid, expense_item_id uuid,
   warehouse_id uuid, production_order_id uuid, document_line_id uuid,
   is_active boolean NOT NULL DEFAULT true,
-  PRIMARY KEY (tenant_id, id)
+  PRIMARY KEY (tenant_id, id),
+  FOREIGN KEY (tenant_id, entry_id)   REFERENCES acc.journal_entries (tenant_id, id) ON DELETE RESTRICT,   -- A1
+  FOREIGN KEY (tenant_id, account_id) REFERENCES md.accounts (tenant_id, id)
 );
 -- Giai đoạn 1: KHÔNG partition (06b-D2). Điều kiện và yêu cầu khi partition: §4.11.
 CREATE INDEX ON acc.journal_lines (tenant_id, company_id, account_id, posting_date) WHERE is_active;
@@ -596,7 +785,30 @@ Cập nhật bằng job “rebuild balance cho (company, period)” khi nhận `
 
 ```sql
 CREATE TABLE md.uoms (tenant_id uuid NOT NULL, id uuid NOT NULL DEFAULT uuidv7(),
-  code text NOT NULL, name text NOT NULL, PRIMARY KEY (tenant_id, id), UNIQUE (tenant_id, code));
+  code text NOT NULL, name text NOT NULL,
+  qty_scale smallint NOT NULL DEFAULT 3 CHECK (qty_scale BETWEEN 0 AND 6),   -- số lẻ SL (§1.4); 0 = chỉ số nguyên
+  PRIMARY KEY (tenant_id, id), UNIQUE (tenant_id, code));
+
+-- Đối tượng: khách hàng, nhà cung cấp, nhân viên, ngân hàng (một bảng, cờ vai trò)
+CREATE TABLE md.partners (
+  tenant_id uuid NOT NULL, id uuid NOT NULL DEFAULT uuidv7(),
+  company_id uuid NOT NULL, code text NOT NULL, name text NOT NULL,
+  is_customer boolean NOT NULL DEFAULT false, is_supplier boolean NOT NULL DEFAULT false,
+  is_employee boolean NOT NULL DEFAULT false, is_bank boolean NOT NULL DEFAULT false,
+  tax_code text,
+  credit_limit numeric(20,2) CHECK (credit_limit >= 0),      -- hạn mức dư nợ KH / hạn mức NCC cấp (07 §8)
+  payment_term_days smallint CHECK (payment_term_days >= 0),
+  PRIMARY KEY (tenant_id, id), UNIQUE (tenant_id, company_id, code),
+  FOREIGN KEY (tenant_id, company_id) REFERENCES core.companies (tenant_id, id)
+);
+
+-- Khoản mục chi phí (bắt buộc với TT133 vì mọi chi phí SX dồn 154)
+CREATE TABLE md.expense_items (
+  tenant_id uuid NOT NULL, id uuid NOT NULL DEFAULT uuidv7(),
+  company_id uuid NOT NULL, code text NOT NULL, name text NOT NULL,
+  PRIMARY KEY (tenant_id, id), UNIQUE (tenant_id, company_id, code),
+  FOREIGN KEY (tenant_id, company_id) REFERENCES core.companies (tenant_id, id)
+);
 
 CREATE TABLE md.items (
   tenant_id uuid NOT NULL, id uuid NOT NULL DEFAULT uuidv7(),
@@ -626,10 +838,16 @@ CREATE TABLE md.warehouses (tenant_id uuid NOT NULL, id uuid NOT NULL DEFAULT uu
   costing_scope text NOT NULL DEFAULT 'WAREHOUSE' CHECK (costing_scope IN ('WAREHOUSE','COMPANY')),
   PRIMARY KEY (tenant_id, id), UNIQUE (tenant_id, company_id, code));
 
+-- Lô: CHỈ tạo ở đây; 07 §2.7 bổ sung cột bằng ALTER (A10). Mã lô duy nhất theo (công ty, mặt hàng) — 07 §2.1.
 CREATE TABLE inv.lots (tenant_id uuid NOT NULL, id uuid NOT NULL DEFAULT uuidv7(),
-  item_id uuid NOT NULL, lot_no text NOT NULL, mfg_date date, expiry_date date,
-  production_order_id uuid,            -- lô do lệnh SX nào tạo → truy xuất giá thành
-  PRIMARY KEY (tenant_id, id), UNIQUE (tenant_id, item_id, lot_no));
+  company_id uuid NOT NULL, item_id uuid NOT NULL,
+  lot_no text NOT NULL CHECK (lot_no ~ '^[0-9A-Za-z.-]{3,20}$'),   -- lưu chuỗi: không mất số 0 đầu
+  mfg_date date, expiry_date date,
+  production_order_id uuid,            -- lô do lệnh SX nào tạo → truy xuất giá thành (FK thêm ở 07 §2.7)
+  PRIMARY KEY (tenant_id, id),
+  CONSTRAINT lots_no_uq UNIQUE (tenant_id, company_id, item_id, lot_no),
+  FOREIGN KEY (tenant_id, company_id) REFERENCES core.companies (tenant_id, id),
+  FOREIGN KEY (tenant_id, item_id) REFERENCES md.items (tenant_id, id));
 
 CREATE TABLE inv.serials (tenant_id uuid NOT NULL, id uuid NOT NULL DEFAULT uuidv7(),
   item_id uuid NOT NULL, serial_no text NOT NULL, lot_id uuid,
@@ -648,14 +866,24 @@ CREATE TABLE inv.stock_moves (
   item_id uuid NOT NULL, warehouse_id uuid NOT NULL, lot_id uuid, serial_id uuid,
   direction smallint NOT NULL CHECK (direction IN (1,-1)),
   qty numeric(20,6) NOT NULL CHECK (qty > 0),           -- theo ĐVT chính
-  move_kind text NOT NULL,   -- 'PURCHASE','SALE','TRANSFER_IN','TRANSFER_OUT','PROD_ISSUE','PROD_RECEIPT',
-                             -- 'RETURN_IN','RETURN_OUT','ADJUST','OPENING'
+  move_kind text NOT NULL CHECK (move_kind IN (          -- danh sách đóng (A3): không có loại "tự đặt" để lách chặn QC
+    'PURCHASE','OPENING','PROD_RECEIPT','RETURN_IN','TRANSFER_IN',   -- nhập
+    'SALE','PROD_ISSUE','CONSUME','SCRAP','RETURN_OUT','TRANSFER_OUT',-- xuất: CONSUME = dùng chung xưởng/bán hàng/
+                                                                       -- QLDN/CCDC/khuyến mại; SCRAP = xuất huỷ
+    'ADJUST')),                                                      -- kiểm kê thừa (+1) / thiếu (−1)
+  CHECK (move_kind = 'ADJUST'
+         OR (direction = 1  AND move_kind IN ('PURCHASE','OPENING','PROD_RECEIPT','RETURN_IN','TRANSFER_IN'))
+         OR (direction = -1 AND move_kind IN ('SALE','PROD_ISSUE','CONSUME','SCRAP','RETURN_OUT','TRANSFER_OUT'))),
   -- giá vào xác định từ nguồn (mua: giá HĐ + CP mua; nhập TP: từ giá thành; trả lại: giá xuất gốc)
   incoming_rate numeric(24,8),
   valuation_source text NOT NULL CHECK (valuation_source IN ('GIVEN','ENGINE','LINKED')),
   linked_move_id uuid,       -- TRANSFER_IN ↔ TRANSFER_OUT; RETURN ↔ move gốc
   status text NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE','CANCELLED')),
-  PRIMARY KEY (tenant_id, id)
+  PRIMARY KEY (tenant_id, id),
+  FOREIGN KEY (tenant_id, document_id) REFERENCES acc.documents (tenant_id, id),
+  FOREIGN KEY (tenant_id, document_line_id) REFERENCES acc.document_lines (tenant_id, id),
+  FOREIGN KEY (tenant_id, item_id) REFERENCES md.items (tenant_id, id),
+  FOREIGN KEY (tenant_id, warehouse_id) REFERENCES md.warehouses (tenant_id, id)
 );
 
 -- Sổ kho: append-only theo (cost key), có lũy kế
@@ -670,7 +898,9 @@ CREATE TABLE inv.stock_ledger (
                                          -- thứ tự loại trong ngày (01 §8.5), suy ra từ move_kind:
                                          -- 1 = nhập (PURCHASE, PROD_RECEIPT, RETURN_IN, OPENING, ADJUST tăng)
                                          -- 2 = chuyển (TRANSFER_OUT, TRANSFER_IN)
-                                         -- 3 = xuất (SALE, PROD_ISSUE, RETURN_OUT, ADJUST giảm)
+                                         -- 3 = xuất (SALE, PROD_ISSUE, CONSUME, SCRAP, RETURN_OUT, ADJUST giảm)
+                                         -- Trong cùng ngày và cùng rank: theo thời điểm lập (posting_time) rồi seq
+                                         -- (phản biện v3 L4: trả lại rồi bán lại cùng ngày không báo âm giả)
   seq bigint NOT NULL,                   -- thứ tự ghi sổ (sequence) – phá hoà cuối cùng; cấp SAU khi đã lấy
                                          -- khoá cost key (Phụ lục A) ⇒ đơn điệu theo key
   fiscal_year smallint NOT NULL,
@@ -687,7 +917,8 @@ CREATE TABLE inv.stock_ledger (
   value_after numeric(20,2),
   valuation_version int NOT NULL DEFAULT 1,
   is_cancelled boolean NOT NULL DEFAULT false,
-  PRIMARY KEY (tenant_id, id)
+  PRIMARY KEY (tenant_id, id),
+  FOREIGN KEY (tenant_id, stock_move_id) REFERENCES inv.stock_moves (tenant_id, id)
 );   -- Giai đoạn 1: không partition (§4.11)
 
 -- Truy vấn "tồn tại thời điểm T" và repost từ T: index theo thứ tự thời gian của cost key
@@ -703,7 +934,43 @@ CREATE INDEX sle_phys_time ON inv.stock_ledger
   (tenant_id, item_id, warehouse_id, lot_id, posting_date, posting_time, kind_rank, seq) WHERE NOT is_cancelled;
 ```
 
-“Append-only” ở đây nghĩa là: **dòng không bao giờ bị xoá vật lý**; huỷ chứng từ ⇒ `is_cancelled = true` (+ audit); các cột *dẫn xuất* (`valuation_rate`, `value_change`, `qty_after`, `value_after`, `valuation_version`) chỉ được engine giá vốn cập nhật (trigger chặn mọi UPDATE khác, kiểm `current_setting('app.engine')='costing'`). Đây đúng là mô hình *Stock Ledger Entry* của ERPNext — đổi lại thay vì xoá/ghi lại SLE như ERPNext, ta cập nhật tại chỗ có version, vì sổ kho VN cần giữ id ổn định cho truy xuất.
+“Append-only” ở đây nghĩa là: **dòng không bao giờ bị xoá vật lý**; huỷ chứng từ ⇒ `is_cancelled = true` (+ audit); các cột *dẫn xuất* (`valuation_rate`, `value_change`, `valuation_status`, `qty_after`, `value_after`, `valuation_version`) chỉ được engine giá vốn cập nhật. Bản 0.2 dựa vào biến phiên `app.engine` mà `app_user` tự đặt được (A11); bản 0.3 dùng **quyền**: `app_user` chỉ được UPDATE cột `is_cancelled`, cột dẫn xuất chỉ đổi qua hàm `inv.set_valuation` (`SECURITY DEFINER`) mà chỉ vai trò `engine_user` được gọi; trigger chặn đổi mọi cột gốc kể cả với chủ sở hữu. Đây đúng là mô hình *Stock Ledger Entry* của ERPNext — đổi lại thay vì xoá/ghi lại SLE như ERPNext, ta cập nhật tại chỗ có version, vì sổ kho VN cần giữ id ổn định cho truy xuất.
+
+```sql
+CREATE FUNCTION inv.guard_stock_ledger() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE c_derived text[] := ARRAY['valuation_rate','value_change','valuation_status','qty_after',
+                                  'value_after','valuation_version','is_cancelled'];
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    RAISE EXCEPTION 'Sổ kho append-only: không xoá dòng %', OLD.id USING ERRCODE = '55000';
+  END IF;
+  IF (to_jsonb(NEW) - c_derived) <> (to_jsonb(OLD) - c_derived) THEN
+    RAISE EXCEPTION 'Sổ kho: chỉ được đổi cột giá trị dẫn xuất và cờ huỷ' USING ERRCODE = '55000';
+  END IF;
+  IF OLD.is_cancelled AND NOT NEW.is_cancelled THEN
+    RAISE EXCEPTION 'Dòng sổ kho đã huỷ không khôi phục được' USING ERRCODE = '55000';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER stock_ledger_guard BEFORE UPDATE OR DELETE ON inv.stock_ledger
+  FOR EACH ROW EXECUTE FUNCTION inv.guard_stock_ledger();
+
+-- Đường duy nhất để ghi giá trị dẫn xuất (engine tính giá). Kỳ khoá vẫn chặn qua trigger sl_period_lock (§7.2).
+CREATE FUNCTION inv.set_valuation(p_id bigint, p_rate numeric, p_value_change numeric, p_status text,
+                                  p_qty_after numeric, p_value_after numeric)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
+BEGIN
+  UPDATE inv.stock_ledger
+     SET valuation_rate = p_rate, value_change = p_value_change, valuation_status = p_status,
+         qty_after = p_qty_after, value_after = p_value_after, valuation_version = valuation_version + 1
+   WHERE tenant_id = app.current_tenant() AND id = p_id AND NOT is_cancelled;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Không có dòng sổ kho % đang hiệu lực', p_id USING ERRCODE = '02000';
+  END IF;
+END $$;
+REVOKE EXECUTE ON FUNCTION inv.set_valuation(bigint, numeric, numeric, text, numeric, numeric) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION inv.set_valuation(bigint, numeric, numeric, text, numeric, numeric) TO engine_user;
+```
 
 **GL suy ra từ sổ kho (học ERPNext `BaseStockGLComposer`)**: bút toán phần kho của mọi chứng từ kho (Nợ/Có 15x, đối ứng 632/621/627/154/641/642…) **không** tính độc lập mà được *compose* từ `Σ value_change` các dòng `stock_ledger` của từng dòng chứng từ: `value_change > 0` ⇒ Nợ TK kho / Có TK đối ứng của dòng; `< 0` ⇒ ngược lại; chuyển kho dùng TK kho của kho đích. Mỗi khi engine đổi `value_change` (repost/chốt cuối kỳ), composer sinh lại bút toán `source='COSTING'` của chứng từ đó. ⇒ Bất biến K1/K2 (kho = sổ cái 15x; mỗi dòng kho ↔ đúng 1 dòng bút toán) đúng *theo cấu trúc*, không phải nhờ đối chiếu.
 
@@ -711,9 +978,11 @@ CREATE INDEX sle_phys_time ON inv.stock_ledger
 - Với BQ cuối kỳ, khi ghi sổ phiếu xuất, engine gán ngay **giá tạm = BQ tức thời** tại thời điểm đó (`valuation_status='PROVISIONAL'`) ⇒ báo cáo giữa kỳ có số hợp lý, không âm giá trị.
 - “Tính giá xuất kho cuối kỳ” chuyển các dòng của kỳ sang `FINAL` (giá BQ kỳ), sinh lại bút toán; UI/báo cáo luôn hiển thị nhãn **Tạm tính / Đã chốt** và tổng chênh lệch tạm→chốt.
 - Phiếu nhập TP chưa có giá thành ⇒ `PENDING` (giá trị = 0 hoặc giá kế hoạch nếu cấu hình), chuyển `FINAL` khi tính giá thành.
+- **Khách hàng đầu tiên (đích danh theo lô + giá thành theo lệnh SX, 07 §4)**: không có BQ cuối kỳ. Giá lô BTP/TP được tính **ngay** khi lệnh hoàn thành và tính lại mỗi khi chi phí của kỳ đổi (SXC phân bổ theo khối lượng × số ngày phụ thuộc tổng SXC cả tháng), không chờ thao tác "tính giá thành" cuối kỳ. Dòng mang `PROVISIONAL` cho đến khi khoá kỳ thì thành `FINAL`. Màn hình không gắn nhãn "tạm tính" (yêu cầu giao diện tối giản, YEU-CAU NFR-01); trạng thái chỉ hiện trong chi tiết lô và trong điều kiện khoá kỳ.
 - **Kiểm/cảnh báo tồn âm theo `(item, warehouse, lot)`** (đúng cấp K3, không theo cost key — 06b-A4): khi ghi sổ một dòng xuất SL q tại khoá thứ tự T (kể cả backdated), **sau khi đã lấy khoá A1** (Phụ lục A), tính lũy kế vật lý trực tiếp từ `stock_ledger` (không đọc `qty_after`, vì `qty_after` theo cost key và được repost cập nhật bất đồng bộ):
 
   ```sql
+  -- mẫu truy vấn: tồn khả dụng tại T (kiểm âm). Với vị trí chứa (07 §2.8) thêm điều kiện location_id.
   -- $1 tenant, $2 item, $3 warehouse, $4 lot (NULL nếu không theo lô), ($5,$6,$7,$8) = khoá thứ tự T của dòng mới
   WITH s AS (
     SELECT posting_date d, posting_time t, kind_rank k, seq,
@@ -1029,6 +1298,11 @@ layer của lô đó; cost key gồm lot ⇒ mỗi lô là một nguồn giá. V
 
 Ghi chú nguồn (02): ERPNext repost bất đồng bộ có checkpoint/resume, khử trùng lặp, chặn trước kỳ khoá — ta lấy nguyên các ý này. Odoo 17/18 (SVL) **không** hỗ trợ backdate; Odoo 19 bỏ SVL, giá trị nằm trên `stock.move` và có replay từ ngày sớm nhất bị ảnh hưởng — trùng hướng thiết kế ở đây. Khác ERPNext: không lưu FIFO queue JSON trên từng dòng mà dùng `cost_layers` + `valuation_snapshots` (§4.8).
 
+**Phạm vi theo giai đoạn (chốt, A9 — mọi tài liệu trích mục này):**
+- **GĐ1: tính lại toàn bộ.** Mỗi yêu cầu tính lại một cost key được xử lý bằng cách **phát lại toàn bộ** các dòng của key đó từ mốc kỳ khoá gần nhất (số dư cuối kỳ khoá là điểm bắt đầu), trong **một** transaction ngắn dưới khoá cost key. Với đích danh theo lô, một cost key là một lô ở một kho nên chuỗi dòng ngắn (vài chục dòng). Vẫn dùng `cst.repost_requests` làm hàng đợi (gộp yêu cầu, lan truyền lô NVL → lệnh → lô BTP/TP → giá vốn), nhưng **không** checkpoint, không chia lô 5.000 dòng, không `valuation_snapshots`.
+- **GĐ2: repost tăng dần** từ điểm sớm nhất bị ảnh hưởng, chia lô có checkpoint/lease như mô tả dưới đây — chỉ làm khi đo được nhu cầu (phương pháp BQ cho khách khác, key có hàng chục nghìn dòng).
+- Phần còn lại của mục này là thiết kế GĐ2, giữ để không phải thiết kế lại; bảng `cst.repost_requests` dùng chung cho cả hai.
+
 Sự kiện gây repost: ghi sổ/bỏ ghi chứng từ kho có `posting_ts` < ts dòng cuối của key; sửa giá nhập (chi phí mua phân bổ về sau, hoá đơn NCC đến muộn ⇒ landed cost); thay đổi giá thành TP; chuyển kho từ key đã thay đổi.
 
 ```sql
@@ -1052,7 +1326,7 @@ CREATE UNIQUE INDEX repost_one_queued ON cst.repost_requests
 ```
 
 ```sql
--- Upsert gộp (trong transaction ghi sổ, dưới khoá cost key). So sánh đủ (ngày, giờ, kind_rank, seq) — 06b-A6.
+-- mẫu truy vấn: upsert gộp (trong transaction ghi sổ, dưới khoá cost key). So sánh đủ (ngày, giờ, kind_rank, seq) — 06b-A6.
 -- Đã chạy thử trên PG16 (tham chiếu EXCLUDED và bảng đích trong subquery của SET hợp lệ).
 INSERT INTO cst.repost_requests AS r
   (tenant_id, company_id, item_id, cost_key_scope, lot_id, from_date, from_time, from_kind_rank, from_seq, cause)
@@ -1066,7 +1340,7 @@ DO UPDATE SET (from_date, from_time, from_kind_rank, from_seq) =
 RETURNING id;          -- id này là jobId của tín hiệu BullMQ (qua outbox)
 ```
 
-Worker (pseudo-code TS) — **không giữ transaction dài** (06b-A2):
+Worker **GĐ2** (pseudo-code TS) — **không giữ transaction dài** (06b-A2). Worker GĐ1 là trường hợp riêng: một lô duy nhất (toàn bộ key), không checkpoint:
 
 ```ts
 const BATCH = 5_000;
@@ -1123,6 +1397,8 @@ Giữa hai lô, giao dịch ghi sổ khác được chen vào cùng key (khoá c
 - **Hiển thị trạng thái**: báo cáo kho/giá vốn hiển thị banner “Đang tính lại giá từ ngày …” khi còn request QUEUED/RUNNING trong phạm vi báo cáo.
 
 ### 5.6 Phụ thuộc giữa các key & vòng lặp sản xuất (BQ cuối kỳ + giá thành)
+
+> Mục này chỉ dùng cho phương pháp BQ cuối kỳ (khách hàng khác, GĐ2). Khách hàng đầu tiên dùng đích danh theo lô + giá thành theo lệnh SX: chuỗi lô là đồ thị có hướng theo thời gian, không có hệ phương trình (07 §0 dòng 5).
 
 Cuối kỳ, với BQ cuối kỳ, đặt ẩn `c_k` = giá đơn vị của key k trong kỳ.
 
@@ -1216,14 +1492,15 @@ Input kỳ: chi phí tập hợp (journal_lines TK 621/622/627 hoặc 154 chi ti
                    tính bước 1 → cập nhật giá nhập BTP → giá xuất BTP sang bước 2 → … trong cùng vòng lặp §5.6.
                    BTP chuyển một phần sang bước sau: GT = round(SL chuyển × Z_BTP còn lại / SL BTP còn lại) (R1 c),
                    phần còn lại ở 154 của bước trước; tách GT chuyển theo khoản mục bằng R1 (b) (ví dụ số: 01 §4.6).
-     JOB_ORDER   : tổng theo lệnh SX; DD = toàn bộ CP lệnh chưa xong
+     JOB_ORDER   : tổng theo lệnh SX; DD = toàn bộ CP lệnh chưa xong — PHƯƠNG PHÁP ĐÃ CHỐT cho khách hàng đầu tiên:
+                   mỗi lệnh SX công đoạn là một đối tượng tập hợp chi phí, kể cả lệnh ủ qua nhiều kỳ (07 §4)
 6. Ghi product_cost_sheets; Z của đối tượng chia cho các phiếu nhập TP/BTP (nhiều lô, nhiều phiếu) bằng R1 (b)
    (trọng số = SL, hoặc SL × hệ số / giá định mức); cập nhật giá trị nhập cho stock moves PROD_RECEIPT
    (valuation_source='ENGINE'; unit cost 4 số lẻ chỉ để hiển thị);
    sinh bút toán Nợ 155/Có 154 (và kết chuyển 621/622/627 → 154 theo TT200/TT99, hoặc trực tiếp 154 theo TT133).
 ```
 
-**BOM đa cấp** (MISA chỉ 1 cấp): `bom_lines.component_id` có thể là BTP có BOM riêng; `md.items.low_level_code` tính lại mỗi khi BOM đổi (BFS từ TP xuống, LLC = độ sâu lớn nhất); phát hiện BOM vòng ⇒ chặn lưu trừ khi dòng được đánh dấu `is_recycle` (tái chế/thu hồi) — trường hợp đó được giải bằng SCC ở §5.6. **Mô hình dữ liệu và engine đa cấp ngay từ đầu** (khách hàng có quy trình nhiều giai đoạn); phạm vi giao diện theo `KE-HOACH-DU-AN.md` v0.3.
+**BOM đa cấp** (MISA chỉ 1 cấp): `bom_lines.component_id` có thể là BTP có BOM riêng; `md.items.low_level_code` tính lại mỗi khi BOM đổi (BFS từ TP xuống, LLC = độ sâu lớn nhất); phát hiện BOM vòng ⇒ chặn lưu trừ khi dòng được đánh dấu `is_recycle` (tái chế/thu hồi) — trường hợp đó được giải bằng SCC ở §5.6. **Mô hình dữ liệu và engine đa cấp ngay từ đầu** (khách hàng có quy trình nhiều giai đoạn); phạm vi giao diện theo `KE-HOACH-DU-AN.md` v0.4.
 
 Tất cả công thức nằm trong core thuần; số liệu kiểm bằng ví dụ giáo trình (§8.3). **[ĐỐI CHIẾU 01 §4, 03: ví dụ số các phương pháp]**
 
@@ -1323,7 +1600,7 @@ Invariant (property test): với mọi nút trung gian, `Σ in = Σ out` (bảo 
 ### 6.2 Truy ngược từ 1 lô thành phẩm
 
 ```sql
--- Bùng nổ (explode) chi phí của nhập kho TP (lô L) về các lá, nhân tỷ lệ dọc đường
+-- mẫu truy vấn: bùng nổ (explode) chi phí của nhập kho TP (lô L) về các lá, nhân tỷ lệ dọc đường
 WITH RECURSIVE trace AS (
   SELECT e.src_type, e.src_id, e.cost_element, e.amount::numeric AS amount,
          1 AS depth, ARRAY[e.dst_type||':'||e.dst_id] AS path
@@ -1404,8 +1681,8 @@ BEGIN
 
   -- UPDATE
   IF NEW.tenant_id <> OLD.tenant_id OR NEW.id <> OLD.id OR NEW.company_id <> OLD.company_id
-     OR NEW.doc_type <> OLD.doc_type THEN
-    RAISE EXCEPTION 'Không được đổi khoá/loại chứng từ' USING ERRCODE = '55000';
+     OR NEW.doc_type <> OLD.doc_type OR NEW.created_by <> OLD.created_by THEN
+    RAISE EXCEPTION 'Không được đổi khoá/loại/người lập chứng từ' USING ERRCODE = '55000';
   END IF;
 
   IF OLD.status = 'DRAFT' THEN
@@ -1441,6 +1718,15 @@ BEGIN
 END $$;
 CREATE TRIGGER documents_guard BEFORE UPDATE OR DELETE ON acc.documents
   FOR EACH ROW EXECUTE FUNCTION acc.guard_documents();
+
+-- Người lập lấy từ phiên, không nhận từ ứng dụng (phân tách nhiệm vụ ở 07 §8 dựa vào cột này)
+CREATE FUNCTION acc.stamp_documents() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.created_by := app.current_user_id();
+  RETURN NEW;
+END $$;
+CREATE TRIGGER documents_stamp BEFORE INSERT ON acc.documents
+  FOR EACH ROW EXECUTE FUNCTION acc.stamp_documents();
 ```
 (Kỳ đã khoá: bỏ ghi/huỷ bị chặn bởi trigger khoá kỳ gắn trên `acc.documents`, §7.2.)
 
@@ -1468,38 +1754,134 @@ END $$;
 CREATE TRIGGER document_lines_immutable BEFORE INSERT OR UPDATE OR DELETE ON acc.document_lines
   FOR EACH ROW EXECUTE FUNCTION acc.guard_posted_lines();
 ```
-Cùng mẫu (đổi tên cột tham chiếu header) áp cho `inv.stock_moves`. Với `acc.journal_lines` thì guard khác: cấm INSERT vào entry không thuộc giao dịch ghi sổ hiện tại và chỉ cho UPDATE cột `is_active` — chưa viết DDL trong bản này.
+Bút toán và dòng kho được **sinh trong giao dịch ghi sổ** (Phụ lục A), không theo mẫu "nháp → khoá" của dòng chứng từ, nên guard riêng (A1, A3 — bản 0.2 chỉ mô tả bằng lời):
+
+- `acc.journal_entries`: INSERT luôn ghi `created_xid` = giao dịch hiện tại; UPDATE chỉ được vô hiệu hoá (`is_active` true→false, kèm `superseded_by`); cấm DELETE.
+- `acc.journal_lines`: chỉ INSERT vào bút toán **do chính giao dịch đang chạy tạo** (so `created_xid`), cùng công ty/sổ/chi nhánh/ngày/năm với bút toán; UPDATE chỉ `is_active` true→false; cấm DELETE; mọi INSERT/UPDATE kiểm khoá kỳ theo scope của bút toán. Vì vậy sau khi ghi sổ không ai (kể cả ứng dụng có lỗi) thêm được dòng vào bút toán cũ để làm lệch số, và bỏ ghi trong kỳ đã khoá bị chặn.
+- `inv.stock_moves`: INSERT khi chứng từ còn `DRAFT` (đang ghi sổ); UPDATE chỉ `status` ACTIVE→CANCELLED — không đổi được lô, vật tư, loại, số lượng (A3 cách 2); cấm DELETE.
+
+```sql
+CREATE FUNCTION acc.guard_journal_entries() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    NEW.created_xid := pg_current_xact_id();          -- không nhận giá trị do ứng dụng đặt
+    RETURN NEW;
+  ELSIF TG_OP = 'DELETE' THEN
+    RAISE EXCEPTION 'Không được xoá bút toán %', OLD.id USING ERRCODE = '55000';
+  END IF;
+  IF NOT (OLD.is_active AND NOT NEW.is_active)
+     OR (to_jsonb(NEW) - '{is_active,superseded_by}'::text[]) <> (to_jsonb(OLD) - '{is_active,superseded_by}'::text[]) THEN
+    RAISE EXCEPTION 'Bút toán % chỉ được vô hiệu hoá (is_active → false)', OLD.id USING ERRCODE = '55000';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER journal_entries_guard BEFORE INSERT OR UPDATE OR DELETE ON acc.journal_entries
+  FOR EACH ROW EXECUTE FUNCTION acc.guard_journal_entries();
+
+CREATE FUNCTION acc.guard_journal_lines() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE e acc.journal_entries;
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    RAISE EXCEPTION 'Không được xoá dòng bút toán %', OLD.id USING ERRCODE = '55000';
+  END IF;
+  SELECT * INTO e FROM acc.journal_entries
+   WHERE tenant_id = NEW.tenant_id AND id = NEW.entry_id FOR SHARE;
+  IF TG_OP = 'UPDATE' THEN
+    IF NOT (OLD.is_active AND NOT NEW.is_active)
+       OR (to_jsonb(NEW) - 'is_active') <> (to_jsonb(OLD) - 'is_active') THEN
+      RAISE EXCEPTION 'Dòng bút toán % chỉ được vô hiệu hoá', OLD.id USING ERRCODE = '55000';
+    END IF;
+  ELSE  -- INSERT
+    IF NOT FOUND OR e.created_xid <> pg_current_xact_id() OR NOT e.is_active THEN
+      RAISE EXCEPTION 'Chỉ thêm dòng vào bút toán vừa tạo trong cùng giao dịch ghi sổ (bút toán %)', NEW.entry_id
+        USING ERRCODE = '55000';
+    END IF;
+    IF (NEW.company_id, NEW.book_id, NEW.branch_id, NEW.posting_date, NEW.fiscal_year)
+       IS DISTINCT FROM (e.company_id, e.book_id, e.branch_id, e.posting_date, e.fiscal_year) THEN
+      RAISE EXCEPTION 'Dòng bút toán phải cùng công ty/sổ/chi nhánh/ngày/năm với bút toán' USING ERRCODE = '23514';
+    END IF;
+  END IF;
+  PERFORM acc.assert_period_open(NEW.tenant_id, NEW.company_id, NEW.posting_date, e.lock_scope);   -- §7.2
+  RETURN NEW;
+END $$;
+CREATE TRIGGER journal_lines_guard BEFORE INSERT OR UPDATE OR DELETE ON acc.journal_lines
+  FOR EACH ROW EXECUTE FUNCTION acc.guard_journal_lines();
+
+CREATE FUNCTION inv.guard_stock_moves() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE v_status text;
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    RAISE EXCEPTION 'Không được xoá dòng kho %', OLD.id USING ERRCODE = '55000';
+  ELSIF TG_OP = 'UPDATE' THEN
+    IF NOT (OLD.status = 'ACTIVE' AND NEW.status = 'CANCELLED')
+       OR (to_jsonb(NEW) - 'status') <> (to_jsonb(OLD) - 'status') THEN
+      RAISE EXCEPTION 'Dòng kho % chỉ được huỷ (status → CANCELLED)', OLD.id USING ERRCODE = '55000';
+    END IF;
+    RETURN NEW;
+  END IF;
+  SELECT status INTO v_status FROM acc.documents
+   WHERE tenant_id = NEW.tenant_id AND id = NEW.document_id FOR SHARE;
+  IF v_status IS DISTINCT FROM 'DRAFT' THEN
+    RAISE EXCEPTION 'Chỉ sinh dòng kho khi đang ghi sổ chứng từ % (trạng thái %)', NEW.document_id, v_status
+      USING ERRCODE = '55000';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER stock_moves_guard BEFORE INSERT OR UPDATE OR DELETE ON inv.stock_moves
+  FOR EACH ROW EXECUTE FUNCTION inv.guard_stock_moves();
+```
 
 ### 7.2 Khoá kỳ
 
-Khoá sổ **theo kỳ tháng**: `locked_through` luôn là ngày cuối một kỳ trong `acc.fiscal_periods` (khoá theo ngày giữa kỳ có thể bổ sung về sau). Chống race giữa "đang ghi sổ" và "đang khoá kỳ" (06b-U1) bằng khoá dòng xung đột: giao dịch ghi sổ đọc `period_locks … FOR SHARE`; thao tác khoá kỳ `UPDATE` cùng dòng ⇒ phải chờ mọi giao dịch ghi sổ đang chạy commit/rollback, và giao dịch ghi sổ đến sau phải chờ thao tác khoá xong rồi mới đọc được `locked_through` mới. Đã chạy thử trên PG16, kể cả hai phiên đồng thời: phiên khoá kỳ chờ đến khi giao dịch ghi sổ đang mở commit, sau đó chứng từ mới trong kỳ bị chặn. Chưa thử trên PG18.
+Bản 0.3 (quyết định người dùng 2026-10-07): hệ thống **luôn tính lại ngay** giá xuất kho, giá thành lệnh SX và giá vốn khi có chứng từ (§5.5 GĐ1); không còn quy trình khoá sổ nhiều bước (close orchestrator 13 bước của bản 0.2, quy trình 12 bước của demo). Khoá kỳ vẫn **bắt buộc** vì luật: TT99 yêu cầu phần mềm ngăn sửa dữ liệu trái phép và lưu vết sửa đổi; Luật Kế toán chỉ cho sửa sổ đã khoá bằng ghi bổ sung/ghi đỏ. Khoá kỳ là **một thao tác** của KTT: hệ thống chạy các kiểm tra cân đối, đạt thì khoá, không đạt thì báo đúng chỗ sai.
+
+**Trình tự cuối kỳ — nguồn duy nhất** (A9; `01` §6, `07` §4.7, `KE-HOACH-DU-AN.md` và `YEU-CAU-KHACH-HANG.md` TH-03 chỉ trích bảng này):
+
+| # | Việc | Ai | Ghi chú |
+|---|---|---|---|
+| 1 | Chứng từ của kỳ đã ghi sổ; phiếu QC và quyết định xử lý hàng không đạt đã chốt | Các bộ phận | Chứng từ nháp ngày trong kỳ: cảnh báo, không chặn (sau khi khoá sẽ không ghi sổ được) |
+| 2 | Kiểm kê theo lô + vị trí, ghi phiếu điều chỉnh chênh lệch | Thủ kho, KT kho | Giá trị tính lại ngay khi ghi phiếu |
+| 3 | Chứng từ định kỳ: khấu hao, phân bổ CCDC, trích lãi vay (1C), lương (chứng từ tổng hợp) | KT tổng hợp | Trước 1C nhập bằng chứng từ tổng hợp. SXC mới ⇒ giá thành lệnh của kỳ tự tính lại |
+| 4 | Đánh giá lại ngoại tệ (nếu KTT chọn làm hằng tháng — A5) | KTT | Chứng từ hệ thống, chạy lại được |
+| 5 | **Kết chuyển lãi/lỗ** (TH-02): giảm trừ DT, DT thuần, DT tài chính, thu nhập khác, giá vốn, chi phí, thuế TNDN → 911 → 4212, theo bảng của chế độ (`01` §5.4) | KTT/KT tổng hợp | Chứng từ hệ thống; chạy lại = huỷ bản cũ, sinh bản mới; tự đánh dấu "cần chạy lại" khi có chứng từ mới trong kỳ |
+| 6 | **Khoá kỳ** = `acc.lock_period` (một thao tác) | KTT | Tự kiểm, lỗi thì không khoá: kỳ trước đã khoá; không còn yêu cầu tính lại đang chờ có ngày ≤ cuối kỳ; mọi dòng kho ≤ cuối kỳ có giá; Σ Nợ = Σ Có toàn kỳ (I3); không tồn âm (K3); kết chuyển (bước 5) không cần chạy lại; dòng tiền có mã (07 §9) |
+
+Không có bước "tính giá xuất kho", "tính giá thành", "cập nhật giá nhập TP": các việc đó xảy ra ngay khi ghi chứng từ. Mở khoá: chỉ KTT, bắt buộc lý do, mở luôn các kỳ sau (một giá trị `locked_through`), ghi nhật ký qua trigger audit (§7.3).
+
+Chống race giữa "đang ghi sổ" và "đang khoá kỳ" (06b-U1): giao dịch ghi sổ đọc `period_locks … FOR SHARE`; thao tác khoá kỳ `UPDATE` cùng dòng ⇒ phải chờ mọi giao dịch ghi sổ đang chạy, và giao dịch đến sau đọc được `locked_through` mới. Đã chạy thử trên PG16 ở bản 0.2 (hai phiên đồng thời); bản 0.3 chuyển phần đọc vào hàm `SECURITY DEFINER` vì `app_user` không còn quyền UPDATE trên `period_locks` (mà `FOR SHARE` đòi quyền đó) — hai phiên đồng thời **chưa** thử lại.
 
 ```sql
+-- Kiểm một ngày có thuộc kỳ đã khoá không (scope ALL + scope riêng). SECURITY DEFINER: app_user chỉ có SELECT
+-- trên period_locks nên không tự FOR SHARE được, và càng không UPDATE được (trước bản 0.3 thì sửa được — lỗ hổng).
+CREATE FUNCTION acc.assert_period_open(p_tenant uuid, p_company uuid, p_date date, p_scope text)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
+DECLARE v_lock date;
+BEGIN
+  FOR v_lock IN
+    SELECT locked_through FROM acc.period_locks
+     WHERE tenant_id = p_tenant AND company_id = p_company AND scope IN ('ALL', p_scope)
+       FOR SHARE                                 -- xung đột với UPDATE của thao tác khoá kỳ
+  LOOP
+    IF p_date <= v_lock THEN
+      RAISE EXCEPTION 'Kỳ đã khoá sổ đến % (scope %)', v_lock, p_scope USING ERRCODE = '55P04';
+    END IF;
+  END LOOP;
+END $$;
+
 -- Scope lấy từ trigger argument, hoặc 'ROW' = đọc cột lock_scope của chính dòng (journal_entries, documents) — 06b-U3
 CREATE FUNCTION acc.guard_period_lock() RETURNS trigger LANGUAGE plpgsql AS $$
-DECLARE
-  v_scopes text[];
-  v_row    jsonb;
-  v_lock   date;
+DECLARE v_row jsonb; v_scope text;
 BEGIN
   -- kiểm cả hàng mới (INSERT/UPDATE) và hàng cũ (UPDATE dời ngày ra khỏi kỳ khoá, DELETE)
   FOREACH v_row IN ARRAY ARRAY[to_jsonb(NEW), to_jsonb(OLD)] LOOP
     CONTINUE WHEN v_row IS NULL;
-    v_scopes := ARRAY['ALL',
-                      CASE WHEN TG_ARGV[0] = 'ROW' THEN v_row->>'lock_scope' ELSE TG_ARGV[0] END];
-    IF TG_TABLE_NAME = 'stock_ledger' AND TG_OP = 'UPDATE' THEN
-      v_scopes := v_scopes || 'COSTING';          -- engine cập nhật giá trị ⇒ còn bị khoá COSTING
+    v_scope := CASE WHEN TG_ARGV[0] = 'ROW' THEN v_row->>'lock_scope' ELSE TG_ARGV[0] END;
+    PERFORM acc.assert_period_open((v_row->>'tenant_id')::uuid, (v_row->>'company_id')::uuid,
+                                   (v_row->>'posting_date')::date, v_scope);
+    IF TG_TABLE_NAME = 'stock_ledger' AND TG_OP = 'UPDATE' THEN   -- engine cập nhật giá trị ⇒ còn bị khoá COSTING
+      PERFORM acc.assert_period_open((v_row->>'tenant_id')::uuid, (v_row->>'company_id')::uuid,
+                                     (v_row->>'posting_date')::date, 'COSTING');
     END IF;
-    FOR v_lock IN
-      SELECT locked_through FROM acc.period_locks
-       WHERE tenant_id = (v_row->>'tenant_id')::uuid AND company_id = (v_row->>'company_id')::uuid
-         AND scope = ANY (v_scopes)
-       FOR SHARE                                   -- xung đột với UPDATE của thao tác khoá kỳ
-    LOOP
-      IF (v_row->>'posting_date')::date <= v_lock THEN
-        RAISE EXCEPTION 'Kỳ đã khoá sổ đến % (scope %)', v_lock, v_scopes USING ERRCODE = '55P04';
-      END IF;
-    END LOOP;
   END LOOP;
   RETURN COALESCE(NEW, OLD);
 END $$;
@@ -1509,52 +1891,72 @@ CREATE TRIGGER je_period_lock BEFORE INSERT OR UPDATE OR DELETE ON acc.journal_e
   FOR EACH ROW EXECUTE FUNCTION acc.guard_period_lock('ROW');
 CREATE TRIGGER sl_period_lock BEFORE INSERT OR UPDATE OR DELETE ON inv.stock_ledger
   FOR EACH ROW EXECUTE FUNCTION acc.guard_period_lock('INVENTORY');
--- journal_lines: dòng thuộc entry đã được kiểm qua je_period_lock (entry và dòng cùng posting_date, D8)
+-- journal_lines: kiểm trong acc.guard_journal_lines (§7.1) theo scope của bút toán (A1)
 
--- Thao tác khoá kỳ (một transaction, chạy trong bước LOCK của close orchestrator)
-CREATE FUNCTION acc.lock_period(p_tenant uuid, p_company uuid, p_period uuid, p_scope text, p_user uuid)
-RETURNS void LANGUAGE plpgsql AS $$
-DECLARE v_end date;
+-- Khoá kỳ: một thao tác, một transaction. Chỉ KTT. Kiểm tra lỗi thì rollback cả việc khoá.
+CREATE FUNCTION acc.lock_period(p_company uuid, p_period uuid)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
+DECLARE v_tenant uuid := app.current_tenant(); v_start date; v_end date; v_prev_end date;
+        v_cur date; v_n bigint; v_diff numeric;
 BEGIN
-  -- một thao tác đóng/khoá kỳ tại một thời điểm cho mỗi công ty
-  PERFORM pg_advisory_xact_lock(hashtextextended('close:' || p_tenant || ':' || p_company, 0));
-  SELECT end_date INTO STRICT v_end FROM acc.fiscal_periods
-   WHERE tenant_id = p_tenant AND company_id = p_company AND id = p_period;
-  -- UPDATE lấy khoá dòng ⇒ chờ mọi giao dịch ghi sổ đang giữ FOR SHARE trên dòng này
-  UPDATE acc.period_locks SET locked_through = v_end, locked_by = p_user, locked_at = now()
-   WHERE tenant_id = p_tenant AND company_id = p_company AND scope = p_scope
-     AND locked_through < v_end;
-  IF NOT FOUND THEN RAISE EXCEPTION 'Kỳ đã khoá hoặc thiếu dòng period_locks' USING ERRCODE = '55000'; END IF;
+  IF NOT app.has_role('KTT') THEN
+    RAISE EXCEPTION 'Chỉ kế toán trưởng được khoá kỳ' USING ERRCODE = '42501';
+  END IF;
+  SELECT start_date, end_date INTO STRICT v_start, v_end FROM acc.fiscal_periods
+   WHERE tenant_id = v_tenant AND company_id = p_company AND id = p_period;
+  -- FOR UPDATE: chờ mọi giao dịch ghi sổ đang giữ FOR SHARE; giao dịch đến sau phải chờ thao tác này xong
+  SELECT locked_through INTO STRICT v_cur FROM acc.period_locks
+   WHERE tenant_id = v_tenant AND company_id = p_company AND scope = 'ALL' FOR UPDATE;
+  SELECT max(end_date) INTO v_prev_end FROM acc.fiscal_periods
+   WHERE tenant_id = v_tenant AND company_id = p_company AND end_date < v_start;
+  IF v_cur >= v_end THEN RAISE EXCEPTION 'Kỳ đã khoá' USING ERRCODE = '55000'; END IF;
+  IF v_prev_end IS NOT NULL AND v_cur < v_prev_end THEN
+    RAISE EXCEPTION 'Kỳ trước (đến %) chưa khoá', v_prev_end USING ERRCODE = '55000';
+  END IF;
   -- Từ đây (READ COMMITTED, câu lệnh mới ⇒ snapshot mới) thấy mọi giao dịch ghi sổ đã commit trước đó.
-  -- Kiểm lại trong CÙNG transaction, lỗi thì rollback cả việc khoá:
-  --   không còn repost QUEUED/RUNNING có điểm bắt đầu ≤ v_end; không còn dòng kho ≠ FINAL ≤ v_end;
-  --   không tồn âm; kỳ trước đã khoá; bất biến I/K/G/B pass (gọi các hàm kiểm tương ứng).
+  SELECT count(*) INTO v_n FROM cst.repost_requests
+   WHERE tenant_id = v_tenant AND company_id = p_company AND status IN ('QUEUED','RUNNING') AND from_date <= v_end;
+  IF v_n > 0 THEN RAISE EXCEPTION 'Còn % yêu cầu tính lại giá chưa xong', v_n USING ERRCODE = '55000'; END IF;
+  SELECT count(*) INTO v_n FROM inv.stock_ledger
+   WHERE tenant_id = v_tenant AND company_id = p_company AND posting_date <= v_end
+     AND valuation_status = 'PENDING' AND NOT is_cancelled;
+  IF v_n > 0 THEN RAISE EXCEPTION 'Còn % dòng kho chưa có giá', v_n USING ERRCODE = '55000'; END IF;
+  SELECT coalesce(sum(debit) - sum(credit), 0) INTO v_diff FROM acc.journal_lines
+   WHERE tenant_id = v_tenant AND company_id = p_company AND is_active AND posting_date BETWEEN v_start AND v_end;
+  IF v_diff <> 0 THEN RAISE EXCEPTION 'Sổ cái kỳ lệch Nợ/Có %', v_diff USING ERRCODE = '23514'; END IF;
+  -- Kiểm tra của từng phân hệ gọi thêm ở đây: tồn âm (K3), kết chuyển 911 không cần chạy lại, mã dòng tiền (07 §9).
+  UPDATE inv.stock_ledger SET valuation_status = 'FINAL'          -- trước khi dời locked_through
+   WHERE tenant_id = v_tenant AND company_id = p_company AND posting_date <= v_end
+     AND valuation_status = 'PROVISIONAL' AND NOT is_cancelled;
+  UPDATE acc.period_locks SET locked_through = v_end, locked_by = app.current_user_id(), locked_at = now(),
+         reason = NULL
+   WHERE tenant_id = v_tenant AND company_id = p_company AND scope = 'ALL';
+END $$;
+
+-- Mở khoá: chỉ KTT, bắt buộc lý do; mở từ kỳ p_period trở đi (một giá trị locked_through). Nhật ký: trigger audit.
+CREATE FUNCTION acc.unlock_period(p_company uuid, p_period uuid, p_reason text)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
+DECLARE v_tenant uuid := app.current_tenant(); v_start date;
+BEGIN
+  IF NOT app.has_role('KTT') THEN
+    RAISE EXCEPTION 'Chỉ kế toán trưởng được mở khoá kỳ' USING ERRCODE = '42501';
+  END IF;
+  IF coalesce(length(trim(p_reason)), 0) < 10 THEN
+    RAISE EXCEPTION 'Mở khoá phải ghi lý do' USING ERRCODE = '23514';
+  END IF;
+  SELECT start_date INTO STRICT v_start FROM acc.fiscal_periods
+   WHERE tenant_id = v_tenant AND company_id = p_company AND id = p_period;
+  UPDATE acc.period_locks
+     SET locked_through = coalesce((SELECT max(end_date) FROM acc.fiscal_periods
+                                     WHERE tenant_id = v_tenant AND company_id = p_company AND end_date < v_start),
+                                   '-infinity'),
+         locked_by = app.current_user_id(), locked_at = now(), reason = p_reason
+   WHERE tenant_id = v_tenant AND company_id = p_company AND scope = 'ALL' AND locked_through >= v_start;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Kỳ chưa khoá' USING ERRCODE = '55000'; END IF;
 END $$;
 ```
-**Close orchestrator** (quy trình 13 bước của 01 §6, có phụ thuộc và cờ `dirty`):
 
-```sql
-CREATE TABLE acc.period_close_steps (
-  tenant_id uuid NOT NULL, company_id uuid NOT NULL, fiscal_period_id uuid NOT NULL,
-  step_code text NOT NULL,   -- theo 01 §6 (bản đã đưa kiểm kê lên trước tính giá — 06a-L2):
-                             -- 'DOCS_COMPLETE','FX_REVAL','PREPAID_DEPR_PAYROLL',
-                             -- 'STOCKTAKE_LANDED_NEG_STOCK' (3: kiểm kê → phân bổ CP mua → kiểm tồn âm),
-                             -- 'COST_ISSUE_PURCHASED','COLLECT_ALLOCATE_154','PRODUCT_COST','COST_ISSUE_FG',
-                             -- 'INV_PROVISION' (8: dự phòng 2294),'VAT_OFFSET','CLOSE_911','INVARIANT_CHECK',
-                             -- 'REPORTS','LOCK'
-  step_no smallint NOT NULL, depends_on text[] NOT NULL,
-  status text NOT NULL CHECK (status IN ('TODO','RUNNING','DONE','DIRTY','FAILED','SKIPPED')),
-  run_ref uuid, input_hash bytea,         -- idempotent: cùng input_hash ⇒ không chạy lại
-  finished_at timestamptz, finished_by uuid, result jsonb,   -- số liệu/cảnh báo của bước
-  PRIMARY KEY (tenant_id, company_id, fiscal_period_id, step_code)
-);
-```
-
-- Mỗi bước là 1 job BullMQ idempotent (chạy lại = void kết quả cũ cùng bước + sinh mới, trong 1 transaction).
-- **Lan truyền dirty**: sự kiện `DocumentPosted/Unposted`, `ValuationChanged` trong kỳ N ⇒ đặt `DIRTY` cho bước bị ảnh hưởng *và mọi bước phụ thuộc* (vd sửa phiếu xuất NVL ⇒ 4→5→6→7→10→11 dirty), và cho kỳ N+1… nếu tồn đầu thay đổi (K6).
-- Các bước 4–7 lặp theo cấp BOM được gộp trong một costing run (§5.6) nên không cần người dùng lặp tay.
-- **Khoá (bước 13)** chỉ thành công khi: mọi bước DONE (không DIRTY), không còn repost QUEUED/RUNNING, không còn dòng kho ≠ FINAL, không tồn âm, các bất biến I/K/G/B pass. Khoá theo thứ tự thời gian (không khoá N+1 khi N chưa khoá); mở khoá cần quyền đặc biệt + lý do + log, và mở luôn các kỳ sau.
-- BCTC in khi kỳ còn dirty ⇒ gắn watermark cảnh báo (B7).
+Kỳ đã khoá thì giá trị đã chốt: sửa ở kỳ khoá (giảm giá hàng mua về sau, trả lại hàng) ghi ở kỳ đang mở theo quy tắc của `YEU-CAU-KHACH-HANG.md` §3.3.1, §3.4.1. Chuyển `PROVISIONAL → FINAL` nằm trong `acc.lock_period`, không phải bước riêng.
 
 ### 7.3 Nhật ký thay đổi (audit log)
 
@@ -1562,19 +1964,61 @@ CREATE TABLE acc.period_close_steps (
 CREATE TABLE audit.change_log (
   tenant_id uuid NOT NULL, id bigint GENERATED ALWAYS AS IDENTITY,
   occurred_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-  user_id uuid, request_id text, ip inet,
+  user_id uuid NOT NULL,                     -- từ phiên (app.current_user_id()), không từ biến ứng dụng tự đặt
+  request_id text,                           -- chỉ để truy vết, ứng dụng tự đặt
   table_name text NOT NULL, row_pk jsonb NOT NULL,
-  op char(1) NOT NULL,                       -- I/U/D
-  old_data jsonb, new_data jsonb,            -- chỉ cột thay đổi với U
-  action text,                               -- ngữ nghĩa: 'POST','UNPOST','VOID','LOCK_PERIOD'…
+  op char(1) NOT NULL CHECK (op IN ('I','U','D')),
+  old_data jsonb, new_data jsonb,            -- với U: chỉ cột thay đổi
   xid xid8 NOT NULL DEFAULT pg_current_xact_id(),   -- để job niêm phong (sau GĐ1) biết dòng đã chắc chắn commit
   PRIMARY KEY (tenant_id, id)
 );   -- Giai đoạn 1: không partition (§4.11); không hash chain
-REVOKE UPDATE, DELETE, TRUNCATE ON audit.change_log FROM app_user;
+
+-- Ghi log CHỈ qua trigger này (SECURITY DEFINER, chủ là app_owner); app_user chỉ SELECT audit.change_log (A2).
+-- TG_ARGV = tên các cột khoá chính của bảng được gắn (do app.apply_audit_triggers truyền).
+CREATE FUNCTION audit.log_change() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $$
+DECLARE o jsonb; n jsonb; k text; v_pk jsonb := '{}'; v_row jsonb;
+BEGIN
+  IF TG_OP <> 'INSERT' THEN o := to_jsonb(OLD); END IF;
+  IF TG_OP <> 'DELETE' THEN n := to_jsonb(NEW); END IF;
+  v_row := coalesce(n, o);
+  FOREACH k IN ARRAY TG_ARGV LOOP v_pk := v_pk || jsonb_build_object(k, v_row -> k); END LOOP;
+  IF TG_OP = 'UPDATE' THEN                    -- chỉ giữ cột thay đổi
+    FOR k IN SELECT jsonb_object_keys(n) LOOP
+      IF n -> k IS NOT DISTINCT FROM o -> k THEN n := n - k; o := o - k; END IF;
+    END LOOP;
+    IF n = '{}'::jsonb THEN RETURN NULL; END IF;
+  END IF;
+  INSERT INTO audit.change_log (tenant_id, user_id, request_id, table_name, row_pk, op, old_data, new_data)
+  VALUES ((v_row ->> 'tenant_id')::uuid, app.current_user_id(), current_setting('app.request_id', true),
+          TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME, v_pk, left(TG_OP, 1), o, n);
+  RETURN NULL;
+END $$;
+
+-- Gắn trigger audit cho MỌI bảng có tenant_id ở schema nghiệp vụ (trừ audit.*); gọi lại cuối mỗi migration.
+CREATE FUNCTION app.apply_audit_triggers() RETURNS void LANGUAGE plpgsql AS $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT c.oid, c.oid::regclass AS tbl,
+           (SELECT coalesce(string_agg(quote_literal(a2.attname), ', ' ORDER BY a2.attnum), '')
+              FROM pg_index i JOIN pg_attribute a2 ON a2.attrelid = i.indrelid AND a2.attnum = ANY (i.indkey)
+             WHERE i.indrelid = c.oid AND i.indisprimary) AS pk_args
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      JOIN pg_attribute a ON a.attrelid = c.oid AND a.attname = 'tenant_id' AND NOT a.attisdropped
+     WHERE c.relkind = 'r' AND n.nspname = ANY (app.app_schemas()) AND n.nspname <> 'audit'
+       AND NOT (n.nspname || '.' || c.relname) = ANY (app.rls_exempt())
+  LOOP
+    EXECUTE format('DROP TRIGGER IF EXISTS zz_audit ON %s', r.tbl);
+    EXECUTE format('CREATE TRIGGER zz_audit AFTER INSERT OR UPDATE OR DELETE ON %s'
+                   ' FOR EACH ROW EXECUTE FUNCTION audit.log_change(%s)', r.tbl, r.pk_args);
+  END LOOP;
+END $$;
 ```
-- **Bắt buộc, không tắt được**: TT99 yêu cầu phần mềm kế toán ngăn sửa dữ liệu trái phép và lưu vết sửa đổi (01 §1.1); test CI kiểm mọi bảng nghiệp vụ/danh mục đều có trigger audit.
-- Trigger generic `audit.log_change()` gắn vào bảng nghiệp vụ & danh mục; lấy `app.user_id`, `app.request_id` từ `current_setting`.
-- **Hash chain: không làm trong Giai đoạn 1** (bản 0.1 gọi là P3; 06b-U2). Đường ghi sổ **không** lấy bất kỳ advisory lock nào theo tenant (khoá đó tuần tự hoá toàn tenant và gây deadlock với khoá cost key). Khi làm: hash **bất đồng bộ** — trigger chỉ INSERT log; job niêm phong theo tenant định kỳ nối chuỗi các dòng có `xid < pg_snapshot_xmin(pg_current_snapshot())` (chắc chắn đã kết thúc), theo thứ tự `id`, ghi `hash = sha256(prev_hash || jsonb chuẩn hoá của dòng)` vào bảng `audit.chain` riêng; neo hash cuối ngày ra object storage Object Lock. Trong Giai đoạn 1, chống sửa trái phép dựa vào: role DB không có quyền UPDATE/DELETE/TRUNCATE trên log, chứng từ bất biến (§7.1), `row_hash` trên chứng từ đã ghi sổ.
+- **Bắt buộc, không tắt được**: TT99 yêu cầu phần mềm kế toán ngăn sửa dữ liệu trái phép và lưu vết sửa đổi (01 §1.1). `app.apply_audit_triggers()` gắn trigger cho mọi bảng nghiệp vụ và danh mục (kể cả sửa định mức, loại vật tư — phản biện v3 L1); test CI: mọi bảng có `tenant_id` ngoài `audit.*` có trigger `zz_audit`.
+- Không ai ngoài trigger ghi được log: `app_user` chỉ có `SELECT` (bảng quyền §7.7); hàm chạy bằng quyền `app_owner` và vẫn bị RLS (WITH CHECK `tenant_id` = tenant của phiên) nên không ghi log sang tenant khác. `user_id` lấy từ phiên (§2.1), không lấy biến `app.user_id` do ứng dụng đặt như bản 0.2.
+- **Hash chain: không làm trong Giai đoạn 1** (bản 0.1 gọi là P3; 06b-U2). Đường ghi sổ **không** lấy bất kỳ advisory lock nào theo tenant (khoá đó tuần tự hoá toàn tenant và gây deadlock với khoá cost key). Khi làm: hash **bất đồng bộ** — trigger chỉ INSERT log; job niêm phong theo tenant định kỳ nối chuỗi các dòng có `xid < pg_snapshot_xmin(pg_current_snapshot())` (chắc chắn đã kết thúc), theo thứ tự `id`, ghi `hash = sha256(prev_hash || jsonb chuẩn hoá của dòng)` vào bảng `audit.chain` riêng; neo hash cuối ngày ra object storage Object Lock. Trong Giai đoạn 1, chống sửa trái phép dựa vào: quyền (log chỉ ghi qua trigger), chứng từ bất biến (§7.1), `row_hash` trên chứng từ đã ghi sổ.
 - Nhật ký truy cập (đăng nhập, xuất báo cáo, in chứng từ) ghi riêng `audit.access_log`.
 
 ### 7.4 Số chứng từ liên tục (không nhảy số)
@@ -1594,7 +2038,10 @@ CREATE TABLE acc.document_sequences (
   PRIMARY KEY (tenant_id, company_id, doc_type, fiscal_year, series)
 );
 
--- Cấp số: tạo dòng nếu chưa có (đầu năm), tăng nếu đã có; luôn trả đúng 1 dòng.
+```
+
+```sql
+-- mẫu truy vấn: cấp số — tạo dòng nếu chưa có (đầu năm), tăng nếu đã có; luôn trả đúng 1 dòng.
 INSERT INTO acc.document_sequences AS s
   (tenant_id, company_id, doc_type, fiscal_year, series, prefix_template, next_no)
 VALUES ($1, $2, $3, $4, $5, $6, 2)             -- $6 = prefix_template của loại CT; số cấp ra = 1
@@ -1623,18 +2070,41 @@ Unique `documents_no_uq` có `fiscal_year` (§4.4) nên kể cả khi tenant ch�
 
 ---
 
+### 7.7 Hoàn tất lược đồ: quyền, RLS, audit
+
+Chạy cuối 05; `07` §11 chạy lại cùng ba hàm sau khi thêm bảng. Bảng nào cần quyền hẹp hơn mặc định thì có dòng trong `sys.table_privileges` kèm lý do.
+
+```sql
+INSERT INTO sys.table_privileges (table_name, privs, update_columns, reason) VALUES
+  ('core.tenants',        '{}',                    NULL, 'chỉ vận hành'),
+  ('core.sessions',       '{}',                    NULL, 'chỉ auth_service; đọc qua app.current_tenant()'),
+  ('core.user_roles',     '{SELECT}',              NULL, 'phân quyền do quản trị, không do API nghiệp vụ'),
+  ('audit.change_log',    '{SELECT}',              NULL, 'chỉ trigger audit.log_change ghi (A2)'),
+  ('acc.period_locks',    '{SELECT}',              NULL, 'khoá/mở qua acc.lock_period / acc.unlock_period'),
+  ('acc.journal_entries', '{SELECT,INSERT}',       '{is_active,superseded_by}', 'A1: chỉ vô hiệu hoá'),
+  ('acc.journal_lines',   '{SELECT,INSERT}',       '{is_active}',               'A1: chỉ vô hiệu hoá'),
+  ('inv.stock_moves',     '{SELECT,INSERT}',       '{status}',                  'chỉ huỷ dòng'),
+  ('inv.stock_ledger',    '{SELECT,INSERT}',       '{is_cancelled}',            'giá trị qua inv.set_valuation (A11)'),
+  ('inv.lots',            '{SELECT,INSERT,DELETE}','{mfg_date,expiry_date}',    'lô; 07 §11 mở rộng danh sách cột');
+
+SELECT app.apply_tenant_rls();
+SELECT app.apply_grants();
+SELECT app.apply_audit_triggers();
+GRANT EXECUTE ON FUNCTION app.current_tenant(), app.current_user_id(), app.has_role(text) TO app_user;
+```
+
 ## 8. Thứ tự kỹ thuật, rủi ro, kiểm thử
 
 ### 8.1 Thứ tự phụ thuộc kỹ thuật (không phải tiến độ)
 
-**Phạm vi & tiến độ: xem `docs/KE-HOACH-DU-AN.md` v0.3 (nguồn duy nhất).** Bản 0.1 của tài liệu này có lộ trình Phase 0–3 kèm số tuần/tháng; phần đó đã bỏ (lỗi C2/C3) vì lệch kế hoạch. Mục này chỉ ghi khối kỹ thuật nào phải có trước khối nào, để kế hoạch xếp đợt phát hành:
+**Phạm vi & tiến độ: xem `docs/KE-HOACH-DU-AN.md` v0.4 (nguồn duy nhất).** Bản 0.1 của tài liệu này có lộ trình Phase 0–3 kèm số tuần/tháng; phần đó đã bỏ (lỗi C2/C3) vì lệch kế hoạch. Mục này chỉ ghi khối kỹ thuật nào phải có trước khối nào, để kế hoạch xếp đợt phát hành:
 
-1. **Nền móng**: monorepo, CI (lint, typecheck, Vitest, Testcontainers), dbmate, kysely-codegen; RLS helper + test tenant-leak (§2.1, có danh sách loại trừ); audit `change_log` (không hash chain); outbox + worker khung; xác thực, RBAC cơ bản; `domain-core` (Money/Qty/Decimal, **R1** và `largestRemainder` §1.4, Period); golden-test harness đọc YAML có khối `rounding` (§8.3).
+1. **Nền móng**: monorepo, CI (lint, typecheck, Vitest, Testcontainers), dbmate, kysely-codegen; vai trò CSDL + phiên + `app.apply_tenant_rls/apply_grants/apply_audit_triggers` + `app.check_rls_coverage()` (§2.1, §7.7); test tenant-leak; audit `change_log` chỉ ghi qua trigger (không hash chain); chạy nguyên văn DDL 05 + 07 và bộ phép thử tấn công của 07 §11 trong CI; outbox + worker khung; xác thực, RBAC cơ bản; `domain-core` (Money/Qty/Decimal, **R1** và `largestRemainder` §1.4, Period); golden-test harness đọc YAML có khối `rounding` (§8.3).
 2. **Danh mục & chế độ kế toán**: template TK (TT99, TT133, TT200 lịch sử), `company_chart_assignments` + `md.regime_at` (§2.3), account roles, VTHH (có `costing_method`, lô), ĐVT quy đổi, kho, đối tượng. Phụ thuộc 1.
 3. **Chứng từ + posting engine**: guard trạng thái/dòng (§7.1), khoá kỳ (§7.2), số CT theo năm (§7.4), constraint trigger Nợ = Có (§4.5), bỏ ghi/version. Phụ thuộc 2.
-4. **Sổ kho + engine giá**: stock ledger, khoá cost key (§5.1, Phụ lục A), kiểm âm theo `(item, kho, lô)` (§4.7), GL compose từ `value_change`, các phương pháp giá (đích danh theo lô là phương pháp khách hàng dùng), repost theo lô có checkpoint (§5.5). Phụ thuộc 3.
-5. **Giá thành**: cost element (§4.10), tập hợp/phân bổ (§5.9), dở dang, phân bước có tính giá BTP (§5.8, ví dụ 01 §4.6), SCC/hệ tuyến tính (§5.6), truy vết (§6). Phụ thuộc 4.
-6. **Đóng kỳ**: close orchestrator theo 01 §6 (kiểm kê trước tính giá), kết chuyển 911 theo chế độ, khoá kỳ tháng. Phụ thuộc 4, 5.
+4. **Sổ kho + engine giá**: stock ledger, khoá cost key (§5.1, Phụ lục A), kiểm âm theo `(item, kho, lô, vị trí)` (§4.7, 07 §2.8), GL compose từ `value_change`, đích danh theo lô (phương pháp khách hàng dùng), **tính lại toàn bộ cost key** (§5.5 GĐ1; repost tăng dần có checkpoint là GĐ2). Phụ thuộc 3.
+5. **Giá thành theo lệnh SX**: cost element (§4.10), tập hợp/phân bổ (§5.9), dở dang = chi phí luỹ kế lệnh, BTP có lô (07 §4), giá vốn theo lô + cây cấu thành (07 §4.8, §6). SCC/hệ tuyến tính (§5.6) chỉ cho BQ (GĐ2). Phụ thuộc 4.
+6. **Khoá kỳ**: `acc.lock_period` một thao tác + kiểm tra (§7.2), kết chuyển 911 theo chế độ. Khoá kỳ cơ bản (không cần giá thành) làm được ngay khi có 3 + 4; điều kiện "mọi dòng kho có giá" chỉ chặn khi có lô TP chưa có giá thành. Phụ thuộc 3, 4 (5 cho điều kiện giá thành).
 7. **Báo cáo**: sổ sách, N-X-T, thẻ kho, thẻ giá thành, BCTC theo chế độ, drill-down. Phụ thuộc 3–6.
 8. **Sau Giai đoạn 1 (định hướng kỹ thuật, không cam kết)**: partition (§4.11), hash chain bất đồng bộ (§7.3), repost tăng dần tối ưu, SaaS hoá (onboarding, billing, cell/cluster, read replica), report designer, lưu trữ lạnh tự động.
 
@@ -1648,7 +2118,7 @@ Unique `documents_no_uq` có `fiscal_year` (§4.4) nên kể cả khi tenant ch�
 | 4 | **Toàn vẹn kế toán bị phá** (chứng từ có thẻ kho nhưng không có bút toán, Nợ≠Có) | Sai sổ | Posting đồng bộ trong 1 transaction; constraint trigger; job đối chiếu hàng đêm (kho 15x vs sổ cái, document vs journal), cảnh báo |
 | 5 | **Thay đổi chế độ/quy định** (TT99 thay TT200, NĐ 70/2025, mẫu tờ khai) | Phải sửa code liên tục | Account roles, báo cáo dạng công thức cấu hình, mẫu tờ khai là dữ liệu có version |
 | 6 | **Số học Decimal sai** do lẫn `number` | Lệch xu | ESLint rule, API dùng string, branded types `Money`, property test |
-| 7 | **Phạm vi phình** (muốn bằng MISA ngay) | Trễ | Phạm vi chốt ở `KE-HOACH-DU-AN.md` v0.3; mỗi phân hệ có “definition of done” bằng báo cáo đối chiếu |
+| 7 | **Phạm vi phình** (muốn bằng MISA ngay) | Trễ | Phạm vi chốt ở `KE-HOACH-DU-AN.md` v0.4; mỗi phân hệ có “definition of done” bằng báo cáo đối chiếu |
 | 9 | **Quy định chưa ổn định** (TT99 mới áp dụng; dự thảo thay TT133; số hiệu mẫu sổ TT99 chưa xác minh — 01 §9) | Sửa mẫu/biểu nhiều lần | Mọi thứ phụ thuộc văn bản là dữ liệu có version; theo dõi văn bản như một backlog riêng |
 | 8 | **Kysely/SQL nặng → khó bảo trì** | Chậm phát triển | Báo cáo phức tạp viết thành SQL function có test riêng (pgTAP hoặc Vitest gọi function), tài liệu hoá |
 
@@ -1730,10 +2200,10 @@ Unique `documents_no_uq` có `fiscal_year` (§4.4) nên kể cả khi tenant ch�
      | K8 FIFO Σ remaining = tồn | `cost_layers` | property |
      | K9 thẻ kho = sổ chi tiết | cùng nguồn `stock_ledger` | hệ quả cấu trúc |
      | G1–G5 giá thành | §5.9 bước 6 | golden + property |
-     | B1–B7 cuối kỳ & báo cáo | close orchestrator (§7.2) | golden BCTC + integration |
+     | B1–B7 cuối kỳ & báo cáo | điều kiện của `acc.lock_period` + kết chuyển (§7.2) | golden BCTC + integration |
 4. **Integration (Testcontainers `postgres:18` + Redis)** — RLS/tenant leak, trigger bất biến, khoá kỳ, constraint trigger Nợ/Có (cố ý insert lệch ⇒ COMMIT phải lỗi), số chứng từ liên tục dưới tải song song (100 transaction đồng thời ⇒ dãy số liền, không trùng), repost đồng thời trên cùng key.
    - Tối ưu tốc độ: 1 container/worker Vitest, mỗi test dùng `TEMPLATE` database đã migrate sẵn (`CREATE DATABASE t_x TEMPLATE base`) ⇒ < 1s/test.
-5. **E2E (Playwright)** — luồng chính: nhập mua → bán → tính giá → khoá sổ → BCTC; lưới nhập liệu bàn phím.
+5. **E2E (Playwright)** — luồng chính: nhập mua → sản xuất → bán → giá vốn theo lô (tự tính) → khoá kỳ → BCTC; lưới nhập liệu bàn phím.
 6. **Đối chiếu song song với MISA (UAT)** — nhập lại 2–3 tháng dữ liệu thật; so từng báo cáo (CĐPS, N-X-T, giá thành); chênh lệch phải giải thích được.
 7. **Hiệu năng (nightly)** — dataset sinh: 50k mã hàng, 2 triệu dòng kho/năm, 5 triệu dòng sổ cái; ngưỡng: ghi sổ chứng từ 50 dòng < 300ms p95; repost 1 key 100k dòng < 30s; tính giá xuất kho cuối kỳ toàn công ty < 10 phút; B01 < 3s.
 
@@ -1762,7 +2232,7 @@ async function postDocument(ctx, docId) {
     for (const m of moves) {
       if (m.direction < 0) await assertStockAvailable(tx, m);    // §4.7: theo (item, kho, lô), đọc SAU khi đã khoá
       const sle = await appendLedger(tx, m);                     // seq cấp SAU khoá ⇒ đơn điệu theo cost key
-      const pending = await hasOpenRepost(tx, keyOf(sle));       // còn request QUEUED/RUNNING của key?
+      const pending = await hasOpenRepost(tx, keyOf(sle));       // còn request QUEUED/RUNNING của key? (GĐ1: tính lại toàn bộ key, §5.5)
       if (isBackdated(sle) || needsValuation(sle) || pending)
         await enqueueRepost(tx, keyOf(sle), sortKeyOf(sle));     // upsert gộp §5.5 + outbox (jobId = request id)
       else await valueInline(tx, sle);                           // moving avg/đích danh, không backdated: tính ngay

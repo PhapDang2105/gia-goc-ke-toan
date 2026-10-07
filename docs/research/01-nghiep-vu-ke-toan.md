@@ -453,7 +453,9 @@ Ví dụ: DT 5111 = 1.000tr; 5212 = 20tr; 632 = 700tr; 641 = 50tr; 642 = 80tr; 5
 
 ## 6. Quy trình khóa sổ cuối kỳ
 
-Thứ tự bắt buộc (mũi tên = phụ thuộc dữ liệu):
+> **Cập nhật 2026-10-07 (phản biện v3 A9):** trình tự cuối kỳ và điều kiện khoá kỳ **của sản phẩm** chỉ có một nguồn: `05-kien-truc-de-xuat.md` §7.2. Sản phẩm luôn tính lại giá xuất, giá thành theo lệnh SX và giá vốn ngay khi có chứng từ, nên các bước 4–7 dưới đây không còn là thao tác của người dùng; khoá kỳ là một thao tác có kiểm tra. Bảng dưới giữ làm **nền lý thuyết về phụ thuộc dữ liệu** (phần mềm tính theo đúng thứ tự này khi tính lại), không phải quy trình thao tác.
+
+Thứ tự phụ thuộc dữ liệu (mũi tên = phụ thuộc):
 
 | # | Bước | Điều kiện trước | Kết quả | Ghi chú |
 |---|---|---|---|---|
@@ -472,7 +474,7 @@ Thứ tự bắt buộc (mũi tên = phụ thuộc dữ liệu):
 | 12 | Lập BCTC (năm) / báo cáo quản trị (tháng) | 11 | | |
 | 13 | **Khóa sổ kỳ** (theo kỳ tháng) | 11 | Kỳ bị khóa; số dư cuối thành số dư đầu kỳ sau | Mở khóa cần quyền đặc biệt + ghi log + lý do |
 
-_(Bản trước đặt kiểm kê ở bước 8, sau tính giá; đã chuyển lên bước 3 theo 06a-L2. Số bước 0–13 giữ nguyên để khớp `05` §7.2.)_
+_(Bản trước đặt kiểm kê ở bước 8, sau tính giá; đã chuyển lên bước 3 theo 06a-L2.)_
 
 **Ràng buộc phụ thuộc:**
 - Bất kỳ chứng từ nào sửa ở bước ≤ k làm **mất hiệu lực** kết quả các bước > k → hệ thống đánh dấu `dirty` cho kỳ (và các kỳ sau nếu ảnh hưởng tồn đầu), yêu cầu chạy lại.
@@ -554,7 +556,7 @@ Thời hạn nộp BCTC năm (DN ngoài nhà nước): chậm nhất **90 ngày*
 | B7 | Kỳ có trạng thái `dirty` (tính giá/giá thành chưa chạy lại sau khi sửa) ⇒ không được khóa, BCTC in ra phải gắn cảnh báo |
 
 ### 8.5 Quy tắc kỹ thuật
-- Tiền: lưu **số nguyên VND** (hoặc decimal(18,0)); đơn giá decimal(18,4+); SL decimal(18,4+). Ngoại tệ decimal(18,2) + tỷ giá decimal(18,4). Không dùng float.
+- Kiểu lưu số: **nguồn duy nhất là `05` §1.4** (A9). Tóm tắt: tiền VND lưu `numeric(20,2)` nhưng luôn làm tròn đến đồng trước khi ghi (tương đương số nguyên); SL `numeric(20,6)`, làm tròn theo số lẻ của ĐVT (mặc định 3); đơn giá chỉ để hiển thị. Không dùng float.
 - **Luật làm tròn duy nhất R1** (dùng nguyên văn ở mọi tài liệu, golden test và demo; các mục khác trong tài liệu này chỉ trích dẫn R1):
   - (a) ROUND_HALF_UP đến đồng cho mọi số tiền. Đơn giá lưu 4 số lẻ chỉ để hiển thị/giải thích; giá trị luôn tính từ tổng giá trị, không nhân lại từ đơn giá đã làm tròn.
   - (b) Phân bổ một số tiền T cho n phần theo trọng số w (SXC, chi phí mua, Z cho các phiếu nhập kho, trích theo lương…): **largest remainder** — mỗi phần lấy phần nguyên floor(T·wᵢ/W) đến đồng; số đồng còn thiếu cộng 1 đồng lần lượt cho các phần có phần lẻ lớn nhất; hòa thì theo thứ tự ổn định (ngày, số CT, số dòng).
